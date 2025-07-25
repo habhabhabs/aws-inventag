@@ -144,7 +144,7 @@ gh pr create --title "feat!: redesign CLI interface" --label "release:major"
 ## Release Assets
 
 Each release includes:
-- **Source Code**: `aws-inventag-v1.0.0.tar.gz` and `aws-inventag-v1.0.0.zip`
+- **Source Code**: `inventag-aws-v1.0.0.tar.gz` and `inventag-aws-v1.0.0.zip`
 - **Release Notes**: Detailed changelog and installation instructions
 - **Git Tag**: `v1.0.0` for version tracking
 

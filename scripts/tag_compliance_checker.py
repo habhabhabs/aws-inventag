@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-AWS InvenTag - Tag Compliance Checker
-Enterprise-grade AWS resource tag compliance validation tool.
+InvenTag - Tag Compliance Checker
+Enterprise-grade AWS™ resource tag compliance validation tool.
 
-Part of AWS InvenTag: Python tool to check on AWS cloud inventory and tagging.
+Part of InvenTag: Python tool to check on AWS™ cloud inventory and tagging.
 Integrate into your CI/CD flow to meet your organization's stringent compliance requirements.
+
+AWS™ is a trademark of Amazon Web Services, Inc. InvenTag is not affiliated with AWS.
 
 Features:
 - Comprehensive tag policy validation across all AWS services

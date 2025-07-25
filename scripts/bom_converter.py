@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-AWS InvenTag - BOM Converter
-Professional AWS resource inventory to Excel/CSV converter.
+InvenTag - BOM Converter
+Professional AWS™ resource inventory to Excel/CSV converter.
 
-Part of AWS InvenTag: Python tool to check on AWS cloud inventory and tagging.
+Part of InvenTag: Python tool to check on AWS™ cloud inventory and tagging.
 Integrate into your CI/CD flow to meet your organization's stringent compliance requirements.
+
+AWS™ is a trademark of Amazon Web Services, Inc. InvenTag is not affiliated with AWS.
 
 Features:
 - Creates service-specific Excel sheets for organized reporting
@@ -1048,8 +1050,8 @@ class BOMConverter:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="AWS InvenTag BOM Converter - Professional AWS resource inventory to Excel/CSV converter",
-        epilog="Part of AWS InvenTag: Python tool for AWS cloud inventory and tagging compliance.",
+        description="InvenTag BOM Converter - Professional AWS™ resource inventory to Excel/CSV converter",
+        epilog="Part of InvenTag: Python tool for AWS™ cloud inventory and tagging compliance.",
     )
     parser.add_argument("--input", "-i", required=True, help="Input JSON or YAML file")
     parser.add_argument("--output", "-o", required=True, help="Output filename")
