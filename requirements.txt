@@ -1,0 +1,4 @@
+boto3>=1.26.0
+PyYAML>=6.0
+openpyxl>=3.0.0
+colorama>=0.4.4
