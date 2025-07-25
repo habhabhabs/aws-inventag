@@ -35,8 +35,9 @@ jobs:
         echo "✅ PR title follows conventional commit format"
 
     - name: Check PR Description
+      env:
+        PR_BODY: ${{ github.event.pull_request.body }}
       run: |
-        PR_BODY="${{ github.event.pull_request.body }}"
         if [ -z "$PR_BODY" ] || [ ${#PR_BODY} -lt 20 ]; then
           echo "❌ PR description is too short or empty"
           echo "Please provide a meaningful description of your changes"
@@ -45,10 +46,13 @@ jobs:
         echo "✅ PR description looks good"
 
     - name: Check for Breaking Changes
+      env:
+        PR_TITLE: ${{ github.event.pull_request.title }}
+        PR_BODY: ${{ github.event.pull_request.body }}
       run: |
         # Check if this is marked as a breaking change
-        if [[ "${{ github.event.pull_request.title }}" == *"!"* ]] || 
-           [[ "${{ github.event.pull_request.body }}" == *"BREAKING CHANGE"* ]]; then
+        if [[ "$PR_TITLE" == *"!"* ]] || 
+           [[ "$PR_BODY" == *"BREAKING CHANGE"* ]]; then
           echo "⚠️ This PR contains breaking changes"
           echo "Please ensure you've updated documentation and version numbers"
         fi
