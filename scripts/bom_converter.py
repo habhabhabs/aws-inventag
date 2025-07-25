@@ -28,6 +28,16 @@ from datetime import datetime
 import os
 from botocore.exceptions import ClientError
 
+try:
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+    OPENPYXL_AVAILABLE = True
+except ImportError:
+    OPENPYXL_AVAILABLE = False
+    # Create a placeholder for type hints when openpyxl is not available
+    Workbook = Any
+
 
 class BOMConverter:
     def __init__(self, enrich_vpc_info: bool = True):
@@ -779,12 +789,8 @@ class BOMConverter:
     def to_excel(self, output_filename: str):
         """Convert data to Excel format with separate sheets per AWS service."""
         try:
-            # Try to import openpyxl, fall back to CSV if not available
-            try:
-                from openpyxl import Workbook
-                from openpyxl.styles import Font, PatternFill, Alignment
-                from openpyxl.utils import get_column_letter
-            except ImportError:
+            # Check if openpyxl is available, fall back to CSV if not available
+            if not OPENPYXL_AVAILABLE:
                 print("Warning: openpyxl not available. Falling back to CSV format.")
                 csv_filename = output_filename.replace('.xlsx', '.csv')
                 self.to_csv(csv_filename)
@@ -824,8 +830,6 @@ class BOMConverter:
     
     def _create_summary_sheet(self, wb: 'Workbook', resources_by_service: Dict[str, List[Dict]]):
         """Create summary sheet with overview statistics."""
-        from openpyxl.styles import Font, PatternFill, Alignment
-        from openpyxl.utils import get_column_letter
         
         summary_ws = wb.create_sheet("Summary", 0)
         
@@ -881,8 +885,6 @@ class BOMConverter:
     
     def _create_service_sheet(self, wb: 'Workbook', service_name: str, service_resources: List[Dict]):
         """Create a sheet for a specific AWS service."""
-        from openpyxl.styles import Font, PatternFill
-        from openpyxl.utils import get_column_letter
         
         # Sanitize sheet name (Excel sheet names have restrictions)
         safe_service_name = service_name.replace('/', '_').replace('\\', '_')[:31]
