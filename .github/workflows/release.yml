@@ -261,8 +261,8 @@ jobs:
         
         ### Docker Usage
         ```bash
-        docker build -t aws-inventag:${{ steps.version.outputs.new_version }} .
-        docker run --rm -v ~/.aws:/root/.aws aws-inventag:${{ steps.version.outputs.new_version }}
+        docker build -t inventag-aws:${{ steps.version.outputs.new_version }} .
+        docker run --rm -v ~/.aws:/root/.aws inventag-aws:${{ steps.version.outputs.new_version }}
         ```
         
         ## Full Changelog
@@ -300,22 +300,22 @@ jobs:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # Create a source archive
-        git archive --format=tar.gz --prefix=aws-inventag-${{ steps.version.outputs.new_version }}/ HEAD > aws-inventag-${{ steps.version.outputs.new_version }}.tar.gz
+        git archive --format=tar.gz --prefix=inventag-aws-${{ steps.version.outputs.new_version }}/ HEAD > inventag-aws-${{ steps.version.outputs.new_version }}.tar.gz
         
         # Upload to release
-        gh release upload ${{ steps.version.outputs.tag_name }} aws-inventag-${{ steps.version.outputs.new_version }}.tar.gz
+        gh release upload ${{ steps.version.outputs.tag_name }} inventag-aws-${{ steps.version.outputs.new_version }}.tar.gz
 
     - name: Create ZIP archive for release
       run: |
         # Create a clean ZIP archive of the repository
-        mkdir -p aws-inventag-${{ steps.version.outputs.new_version }}
-        git archive HEAD | tar -x -C aws-inventag-${{ steps.version.outputs.new_version }}/
+        mkdir -p inventag-aws-${{ steps.version.outputs.new_version }}
+        git archive HEAD | tar -x -C inventag-aws-${{ steps.version.outputs.new_version }}/
         
         # Create ZIP file
-        zip -r aws-inventag-${{ steps.version.outputs.new_version }}.zip aws-inventag-${{ steps.version.outputs.new_version }}/
+        zip -r inventag-aws-${{ steps.version.outputs.new_version }}.zip inventag-aws-${{ steps.version.outputs.new_version }}/
         
         # Upload ZIP to release
-        gh release upload ${{ steps.version.outputs.tag_name }} aws-inventag-${{ steps.version.outputs.new_version }}.zip
+        gh release upload ${{ steps.version.outputs.tag_name }} inventag-aws-${{ steps.version.outputs.new_version }}.zip
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
