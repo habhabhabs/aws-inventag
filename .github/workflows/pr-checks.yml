@@ -95,6 +95,7 @@ jobs:
       env:
         PR_TITLE: ${{ github.event.pull_request.title }}
         PR_BODY: ${{ github.event.pull_request.body }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         # Check if this is marked as a breaking change
         if [[ "$PR_TITLE" == *"!"* ]] || 
@@ -114,8 +115,6 @@ jobs:
             echo "✅ Breaking changes properly labeled with 'release:major'"
           fi
         fi
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Check File Changes
       run: |
