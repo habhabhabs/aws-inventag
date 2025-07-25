@@ -47,14 +47,17 @@ class ComprehensiveTagComplianceChecker:
         return logging.getLogger(__name__)
     
     def _get_available_regions(self) -> List[str]:
-        """Get all available AWS regions."""
+        """Get all available AWS regions with fallback."""
         try:
             ec2 = self.session.client('ec2', region_name='us-east-1')
             regions = ec2.describe_regions()['Regions']
-            return [region['RegionName'] for region in regions]
+            region_list = [region['RegionName'] for region in regions]
+            self.logger.info(f"Successfully retrieved {len(region_list)} AWS regions")
+            return region_list
         except Exception as e:
-            self.logger.error(f"Failed to get regions: {e}")
-            return ['us-east-1']
+            self.logger.warning(f"Failed to get all regions: {e}")
+            self.logger.info("Falling back to default regions: us-east-1, ap-southeast-1")
+            return ['us-east-1', 'ap-southeast-1']  # Fallback to key regions
     
     def _load_tag_policy(self) -> Dict[str, Any]:
         """Load tag policy from configuration file."""
