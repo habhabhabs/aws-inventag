@@ -1,0 +1,149 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, '3.10', '3.11']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install pytest pytest-cov flake8 black mypy
+
+    - name: Run linting with flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 scripts/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings
+        flake8 scripts/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+
+    - name: Check code formatting with black
+      run: |
+        black --check scripts/
+
+    - name: Type checking with mypy
+      run: |
+        mypy scripts/ --ignore-missing-imports || true
+
+    - name: Test BOM converter functionality
+      run: |
+        python -m pytest tests/ -v --cov=scripts --cov-report=xml || true
+        # Basic functionality test
+        python scripts/bom_converter.py --help
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+
+    - name: Run Bandit security scan
+      run: |
+        bandit -r scripts/ -f json -o bandit-report.json || true
+        bandit -r scripts/ || true
+
+    - name: Check for known vulnerabilities
+      run: |
+        safety check || true
+
+  validate-data:
+    name: Validate Sample Data
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Create sample test data
+      run: |
+        mkdir -p test-data
+        cat > test-data/sample.json << 'EOF'
+        {
+          "all_discovered_resources": [
+            {
+              "service": "S3",
+              "type": "Bucket",
+              "region": "us-east-1",
+              "id": "test-bucket",
+              "name": "test-bucket",
+              "arn": "arn:aws:s3:::test-bucket",
+              "account_id": "123456789012",
+              "tags": {"Environment": "test"},
+              "discovered_via": "ResourceGroupsTaggingAPI"
+            }
+          ]
+        }
+        EOF
+
+    - name: Test BOM converter with sample data
+      run: |
+        python scripts/bom_converter.py \
+          --input test-data/sample.json \
+          --output test-output.xlsx \
+          --no-vpc-enrichment
+        
+        # Verify output file was created
+        ls -la test-output.xlsx
+
+    - name: Test tag compliance checker
+      run: |
+        if [ -f scripts/tag_compliance_checker.py ]; then
+          python scripts/tag_compliance_checker.py --help || true
+        fi

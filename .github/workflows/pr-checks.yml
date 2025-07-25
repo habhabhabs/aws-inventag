@@ -1,0 +1,153 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Validate PR Title
+      run: |
+        PR_TITLE="${{ github.event.pull_request.title }}"
+        echo "PR Title: $PR_TITLE"
+        
+        # Check if title follows conventional commit format
+        if [[ ! "$PR_TITLE" =~ ^(feat|fix|docs|style|refactor|test|chore|perf|build|ci)(\(.+\))?: .+ ]]; then
+          echo "❌ PR title should follow conventional commit format:"
+          echo "   feat: add new feature"
+          echo "   fix: fix bug"
+          echo "   docs: update documentation"
+          echo "   etc."
+          exit 1
+        fi
+        echo "✅ PR title follows conventional commit format"
+
+    - name: Check PR Description
+      run: |
+        PR_BODY="${{ github.event.pull_request.body }}"
+        if [ -z "$PR_BODY" ] || [ ${#PR_BODY} -lt 20 ]; then
+          echo "❌ PR description is too short or empty"
+          echo "Please provide a meaningful description of your changes"
+          exit 1
+        fi
+        echo "✅ PR description looks good"
+
+    - name: Check for Breaking Changes
+      run: |
+        # Check if this is marked as a breaking change
+        if [[ "${{ github.event.pull_request.title }}" == *"!"* ]] || 
+           [[ "${{ github.event.pull_request.body }}" == *"BREAKING CHANGE"* ]]; then
+          echo "⚠️ This PR contains breaking changes"
+          echo "Please ensure you've updated documentation and version numbers"
+        fi
+
+    - name: Check File Changes
+      run: |
+        # Get list of changed files
+        git diff --name-only origin/main...HEAD > changed_files.txt
+        cat changed_files.txt
+        
+        # Check if critical files are modified
+        if grep -q "scripts/bom_converter.py" changed_files.txt; then
+          echo "🔧 Core BOM converter modified - ensure thorough testing"
+        fi
+        
+        if grep -q "requirements.txt\|setup.py\|pyproject.toml" changed_files.txt; then
+          echo "📦 Dependencies modified - check for security vulnerabilities"
+        fi
+
+  size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check PR Size
+      run: |
+        # Count lines added/removed
+        ADDITIONS=$(git diff --numstat origin/main...HEAD | awk '{sum+=$1} END {print sum}')
+        DELETIONS=$(git diff --numstat origin/main...HEAD | awk '{sum+=$2} END {print sum}')
+        TOTAL_CHANGES=$((ADDITIONS + DELETIONS))
+        
+        echo "Lines added: $ADDITIONS"
+        echo "Lines deleted: $DELETIONS"
+        echo "Total changes: $TOTAL_CHANGES"
+        
+        # Warn if PR is very large
+        if [ $TOTAL_CHANGES -gt 1000 ]; then
+          echo "⚠️ This is a large PR with $TOTAL_CHANGES line changes"
+          echo "Consider breaking it into smaller, focused PRs"
+        elif [ $TOTAL_CHANGES -gt 500 ]; then
+          echo "📏 This is a medium-sized PR with $TOTAL_CHANGES line changes"
+        else
+          echo "✅ PR size looks reasonable ($TOTAL_CHANGES line changes)"
+        fi
+
+  conflict-check:
+    name: Merge Conflict Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check for merge conflicts
+      run: |
+        git fetch origin main
+        if ! git merge-tree $(git merge-base HEAD origin/main) HEAD origin/main | grep -q "<<<<<<< "; then
+          echo "✅ No merge conflicts detected"
+        else
+          echo "❌ Merge conflicts detected"
+          echo "Please resolve conflicts before merging"
+          exit 1
+        fi
+
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.changed_files.*.filename, 'requirements.txt') || contains(github.event.pull_request.changed_files.*.filename, 'setup.py')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Check for new dependencies
+      run: |
+        if [ -f requirements.txt ]; then
+          echo "🔍 Checking for potentially risky dependencies..."
+          
+          # List of potentially risky packages to watch for
+          RISKY_PACKAGES="exec eval subprocess os system"
+          
+          while read -r package; do
+            for risky in $RISKY_PACKAGES; do
+              if echo "$package" | grep -qi "$risky"; then
+                echo "⚠️ Potentially risky package detected: $package"
+              fi
+            done
+          done < requirements.txt
+          
+          echo "✅ Dependency check completed"
+        fi
