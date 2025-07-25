@@ -25,7 +25,7 @@
 ## 📁 Project Structure
 
 ```
-aws-cloud-bom-automation/
+aws-inventag/
 ├── README.md                    # This file - main documentation
 ├── requirements.txt             # Python dependencies
 ├── scripts/                     # Main tools
