@@ -1,8 +1,20 @@
 #!/usr/bin/env python3
 """
-Comprehensive AWS Tag Compliance Checker
-Validates ALL AWS resources against tagging policies using Resource Groups Tagging API.
-This version discovers ALL resource types across ALL AWS services.
+AWS InvenTag - Tag Compliance Checker
+Enterprise-grade AWS resource tag compliance validation tool.
+
+Part of AWS InvenTag: Python tool to check on AWS cloud inventory and tagging.
+Integrate into your CI/CD flow to meet your organization's stringent compliance requirements.
+
+Features:
+- Comprehensive tag policy validation across all AWS services
+- Multi-method resource discovery (ResourceGroupsTaggingAPI, AWSConfig, Service APIs)
+- Professional compliance reporting with Excel output
+- CI/CD integration for automated compliance monitoring
+- Custom tag policy support with exemptions and patterns
+
+Usage:
+    python tag_compliance_checker.py --input inventory.json --output compliance-report.xlsx
 """
 
 import argparse
