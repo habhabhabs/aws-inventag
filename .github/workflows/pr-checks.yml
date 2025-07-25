@@ -45,6 +45,52 @@ jobs:
         fi
         echo "✅ PR description looks good"
 
+    - name: Check Release Labels
+      run: |
+        # Get PR labels
+        PR_LABELS=$(gh pr view ${{ github.event.number }} --json labels --jq '.labels[].name' || echo "")
+        echo "PR Labels: $PR_LABELS"
+        
+        # Check for version bump labels
+        RELEASE_LABELS=$(echo "$PR_LABELS" | grep "^release:" || echo "")
+        
+        if [ -n "$RELEASE_LABELS" ]; then
+          echo "🏷️ Release labels found: $RELEASE_LABELS"
+          
+          # Validate only one release label
+          RELEASE_COUNT=$(echo "$RELEASE_LABELS" | wc -l)
+          if [ $RELEASE_COUNT -gt 1 ]; then
+            echo "❌ Multiple release labels found. Please use only one:"
+            echo "$RELEASE_LABELS"
+            echo "Valid labels: release:patch, release:minor, release:major"
+            exit 1
+          fi
+          
+          # Validate the release label is valid
+          if echo "$RELEASE_LABELS" | grep -E "^release:(patch|minor|major)$" > /dev/null; then
+            echo "✅ Valid release label: $RELEASE_LABELS"
+            
+            # For major releases, require additional confirmation
+            if echo "$RELEASE_LABELS" | grep "release:major" > /dev/null; then
+              echo "⚠️ MAJOR RELEASE DETECTED"
+              echo "This will increment the major version (e.g., 1.0.0 → 2.0.0)"
+              echo "Please ensure this PR contains breaking changes that warrant a major release"
+            fi
+          else
+            echo "❌ Invalid release label: $RELEASE_LABELS"
+            echo "Valid labels: release:patch, release:minor, release:major"
+            exit 1
+          fi
+        else
+          echo "ℹ️ No release labels found - will default to patch release when merged to main"
+          echo "To specify version bump, add one of these labels:"
+          echo "  - release:patch (for bug fixes, minor updates)"
+          echo "  - release:minor (for new features, backwards compatible)"
+          echo "  - release:major (for breaking changes)"
+        fi
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Check for Breaking Changes
       env:
         PR_TITLE: ${{ github.event.pull_request.title }}
@@ -55,7 +101,21 @@ jobs:
            [[ "$PR_BODY" == *"BREAKING CHANGE"* ]]; then
           echo "⚠️ This PR contains breaking changes"
           echo "Please ensure you've updated documentation and version numbers"
+          
+          # Get PR labels to check if major release label is present
+          PR_LABELS=$(gh pr view ${{ github.event.number }} --json labels --jq '.labels[].name' || echo "")
+          
+          if ! echo "$PR_LABELS" | grep -q "release:major"; then
+            echo "❌ Breaking changes detected but no 'release:major' label found"
+            echo "PRs with breaking changes should be labeled with 'release:major'"
+            echo "Add the 'release:major' label to this PR"
+            exit 1
+          else
+            echo "✅ Breaking changes properly labeled with 'release:major'"
+          fi
         fi
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Check File Changes
       run: |
