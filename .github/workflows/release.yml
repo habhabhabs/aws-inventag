@@ -1,14 +1,33 @@
-name: Release
+name: Automated Release
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
-  create-release:
-    name: Create Release
+  check-for-release:
+    name: Check if Release Needed
     runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version_bump: ${{ steps.check.outputs.version_bump }}
+      pr_number: ${{ steps.check.outputs.pr_number }}
     
     steps:
     - name: Checkout code
@@ -16,61 +35,301 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Generate changelog
-      id: changelog
+    - name: Check for release triggers
+      id: check
       run: |
-        # Get the latest tag
-        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        # Default to no release
+        echo "should_release=false" >> $GITHUB_OUTPUT
+        echo "version_bump=patch" >> $GITHUB_OUTPUT
+        echo "pr_number=" >> $GITHUB_OUTPUT
         
-        if [ -z "$LATEST_TAG" ]; then
-          echo "First release - generating changelog from all commits"
-          git log --pretty=format:"- %s (%h)" --no-merges > CHANGELOG.md
-        else
-          echo "Generating changelog since $LATEST_TAG"
-          git log ${LATEST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges > CHANGELOG.md
+        # Check if manual dispatch with version bump
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "should_release=true" >> $GITHUB_OUTPUT
+          echo "version_bump=${{ github.event.inputs.version_bump }}" >> $GITHUB_OUTPUT
+          echo "Manual release triggered with ${{ github.event.inputs.version_bump }} bump"
+          exit 0
         fi
         
-        # Read changelog into output
-        echo "changelog<<EOF" >> $GITHUB_OUTPUT
-        cat CHANGELOG.md >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-
-    - name: Create Release
-      uses: actions/create-release@v1
+        # Check if this is a merge to main
+        if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          # Get the merged PR info from the commit message
+          COMMIT_MSG=$(git log --format=%B -n 1 ${{ github.sha }})
+          echo "Commit message: $COMMIT_MSG"
+          
+          # Check if this is a merge commit from a PR
+          if echo "$COMMIT_MSG" | grep -q "Merge pull request #"; then
+            # Extract PR number
+            PR_NUM=$(echo "$COMMIT_MSG" | grep -o "#[0-9]\+" | sed 's/#//')
+            echo "pr_number=$PR_NUM" >> $GITHUB_OUTPUT
+            
+            # Get PR labels to determine version bump
+            PR_LABELS=$(gh pr view $PR_NUM --json labels --jq '.labels[].name' || echo "")
+            echo "PR Labels: $PR_LABELS"
+            
+            # Determine version bump from labels
+            if echo "$PR_LABELS" | grep -q "release:major"; then
+              echo "should_release=true" >> $GITHUB_OUTPUT
+              echo "version_bump=major" >> $GITHUB_OUTPUT
+              echo "Major release triggered by PR #$PR_NUM"
+            elif echo "$PR_LABELS" | grep -q "release:minor"; then
+              echo "should_release=true" >> $GITHUB_OUTPUT
+              echo "version_bump=minor" >> $GITHUB_OUTPUT
+              echo "Minor release triggered by PR #$PR_NUM"
+            elif echo "$PR_LABELS" | grep -q "release:patch"; then
+              echo "should_release=true" >> $GITHUB_OUTPUT
+              echo "version_bump=patch" >> $GITHUB_OUTPUT
+              echo "Patch release triggered by PR #$PR_NUM"
+            else
+              # Default to patch release for any PR merge to main
+              echo "should_release=true" >> $GITHUB_OUTPUT
+              echo "version_bump=patch" >> $GITHUB_OUTPUT
+              echo "Default patch release for PR #$PR_NUM (no version label found)"
+            fi
+          else
+            echo "Direct push to main - no release triggered"
+          fi
+        fi
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: check-for-release
+    if: needs.check-for-release.outputs.should_release == 'true'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
       with:
-        tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref_name }}
-        body: |
-          ## Changes in ${{ github.ref_name }}
-          
-          ${{ steps.changelog.outputs.changelog }}
-          
-          ## Installation
-          
-          ```bash
-          git clone https://github.com/habhabhabs/aws-inventag.git
-          cd aws-inventag
-          pip install -r requirements.txt
-          ```
-          
-          ## Usage
-          
-          ```bash
-          # Convert JSON/YAML to Excel BOM
-          python scripts/bom_converter.py --input data.json --output bom.xlsx
-          
-          # Check tag compliance
-          python scripts/tag_compliance_checker.py --input data.json
-          ```
-          
-        draft: false
-        prerelease: false
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install semver
+
+    - name: Calculate new version
+      id: version
+      run: |
+        # Read current version
+        CURRENT_VERSION=$(python -c "import json; print(json.load(open('version.json'))['version'])")
+        echo "Current version: $CURRENT_VERSION"
+        
+        # Calculate new version based on bump type
+        BUMP_TYPE="${{ needs.check-for-release.outputs.version_bump }}"
+        echo "Bump type: $BUMP_TYPE"
+        
+        NEW_VERSION=$(python -c "
+        import semver
+        version = '$CURRENT_VERSION'
+        if '$BUMP_TYPE' == 'major':
+            new_ver = semver.VersionInfo.parse(version).bump_major()
+        elif '$BUMP_TYPE' == 'minor':
+            new_ver = semver.VersionInfo.parse(version).bump_minor()
+        else:
+            new_ver = semver.VersionInfo.parse(version).bump_patch()
+        print(str(new_ver))
+        ")
+        
+        echo "New version: $NEW_VERSION"
+        echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "tag_name=v$NEW_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Update version file
+      run: |
+        # Update version.json with new version
+        python -c "
+        import json
+        with open('version.json', 'r') as f:
+            data = json.load(f)
+        data['version'] = '${{ steps.version.outputs.new_version }}'
+        data['release_notes'] = 'Release ${{ steps.version.outputs.new_version }}'
+        with open('version.json', 'w') as f:
+            json.dump(data, f, indent=2)
+        "
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Get commits since last tag
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        
+        if [ -z "$LAST_TAG" ]; then
+          echo "No previous tags found, generating notes from first commit"
+          COMMIT_RANGE="$(git rev-list --max-parents=0 HEAD)..HEAD"
+        else
+          echo "Last tag: $LAST_TAG"
+          COMMIT_RANGE="$LAST_TAG..HEAD"
+        fi
+        
+        echo "Generating release notes for commits: $COMMIT_RANGE"
+        
+        # Generate release notes
+        cat > release_notes.md << 'EOF'
+        # Release ${{ steps.version.outputs.new_version }}
+        
+        ## What's Changed
+        
+        EOF
+        
+        # Add commit messages (exclude merge commits)
+        git log $COMMIT_RANGE --pretty=format:"- %s" --no-merges >> release_notes.md
+        
+        # Add PR info if available
+        if [ -n "${{ needs.check-for-release.outputs.pr_number }}" ]; then
+          echo "" >> release_notes.md
+          echo "**Triggered by PR #${{ needs.check-for-release.outputs.pr_number }}**" >> release_notes.md
+        fi
+        
+        # Add changelog sections based on commit types
+        echo "" >> release_notes.md
+        echo "## Changes by Type" >> release_notes.md
+        echo "" >> release_notes.md
+        
+        # Features
+        FEATURES=$(git log $COMMIT_RANGE --pretty=format:"- %s" --no-merges | grep -i "^- feat" || true)
+        if [ -n "$FEATURES" ]; then
+          echo "### ✨ New Features" >> release_notes.md
+          echo "$FEATURES" >> release_notes.md
+          echo "" >> release_notes.md
+        fi
+        
+        # Bug fixes
+        FIXES=$(git log $COMMIT_RANGE --pretty=format:"- %s" --no-merges | grep -i "^- fix" || true)
+        if [ -n "$FIXES" ]; then
+          echo "### 🐛 Bug Fixes" >> release_notes.md
+          echo "$FIXES" >> release_notes.md
+          echo "" >> release_notes.md
+        fi
+        
+        # Documentation
+        DOCS=$(git log $COMMIT_RANGE --pretty=format:"- %s" --no-merges | grep -i "^- docs" || true)
+        if [ -n "$DOCS" ]; then
+          echo "### 📚 Documentation" >> release_notes.md
+          echo "$DOCS" >> release_notes.md
+          echo "" >> release_notes.md
+        fi
+        
+        # Performance improvements
+        PERF=$(git log $COMMIT_RANGE --pretty=format:"- %s" --no-merges | grep -i "^- perf" || true)
+        if [ -n "$PERF" ]; then
+          echo "### ⚡ Performance Improvements" >> release_notes.md
+          echo "$PERF" >> release_notes.md
+          echo "" >> release_notes.md
+        fi
+        
+        # Other changes
+        OTHER=$(git log $COMMIT_RANGE --pretty=format:"- %s" --no-merges | grep -v -i "^- feat\|^- fix\|^- docs\|^- perf" || true)
+        if [ -n "$OTHER" ]; then
+          echo "### 🔧 Other Changes" >> release_notes.md
+          echo "$OTHER" >> release_notes.md
+          echo "" >> release_notes.md
+        fi
+        
+        # Add installation/usage info
+        cat >> release_notes.md << 'EOF'
+        
+        ## Installation & Usage
+        
+        ### Quick Start
+        ```bash
+        # Clone the repository
+        git clone https://github.com/${{ github.repository }}.git
+        cd $(basename ${{ github.repository }})
+        
+        # Install dependencies
+        pip install -r requirements.txt
+        
+        # Run AWS resource inventory
+        python scripts/aws_resource_inventory.py --output inventory
+        
+        # Convert to Excel/CSV format
+        python scripts/bom_converter.py --input inventory.json --output report.xlsx
+        
+        # Check tag compliance
+        python scripts/tag_compliance_checker.py --config config/tag_policy_example.yaml --output compliance_report
+        ```
+        
+        ### Docker Usage
+        ```bash
+        docker build -t aws-inventag:${{ steps.version.outputs.new_version }} .
+        docker run --rm -v ~/.aws:/root/.aws aws-inventag:${{ steps.version.outputs.new_version }}
+        ```
+        
+        ## Full Changelog
+        **Full Changelog**: https://github.com/${{ github.repository }}/compare/$LAST_TAG...${{ steps.version.outputs.tag_name }}
+        EOF
+        
+        echo "Release notes generated:"
+        cat release_notes.md
+
+    - name: Commit version bump
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        git add version.json
+        git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}" || exit 0
+        git push
+
+    - name: Create Git Tag
+      run: |
+        git tag ${{ steps.version.outputs.tag_name }}
+        git push origin ${{ steps.version.outputs.tag_name }}
+
+    - name: Create GitHub Release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create ${{ steps.version.outputs.tag_name }} \
+          --title "Release ${{ steps.version.outputs.new_version }}" \
+          --notes-file release_notes.md \
+          --latest
+
+    - name: Upload Release Assets
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Create a source archive
+        git archive --format=tar.gz --prefix=aws-inventag-${{ steps.version.outputs.new_version }}/ HEAD > aws-inventag-${{ steps.version.outputs.new_version }}.tar.gz
+        
+        # Upload to release
+        gh release upload ${{ steps.version.outputs.tag_name }} aws-inventag-${{ steps.version.outputs.new_version }}.tar.gz
+
+    - name: Create ZIP archive for release
+      run: |
+        # Create a clean ZIP archive of the repository
+        mkdir -p aws-inventag-${{ steps.version.outputs.new_version }}
+        git archive HEAD | tar -x -C aws-inventag-${{ steps.version.outputs.new_version }}/
+        
+        # Create ZIP file
+        zip -r aws-inventag-${{ steps.version.outputs.new_version }}.zip aws-inventag-${{ steps.version.outputs.new_version }}/
+        
+        # Upload ZIP to release
+        gh release upload ${{ steps.version.outputs.tag_name }} aws-inventag-${{ steps.version.outputs.new_version }}.zip
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Post-release notification
+      run: |
+        echo "🚀 Successfully created release ${{ steps.version.outputs.new_version }}"
+        echo "📦 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag_name }}"
+        echo "📋 Version bumped from ${{ steps.version.outputs.current_version }} to ${{ steps.version.outputs.new_version }} (${{ needs.check-for-release.outputs.version_bump }} release)"
 
   test-release:
     name: Test Release
     runs-on: ubuntu-latest
+    needs: release
+    if: needs.check-for-release.outputs.should_release == 'true'
     
     steps:
     - name: Checkout code
@@ -96,4 +355,11 @@ jobs:
         if [ -f scripts/tag_compliance_checker.py ]; then
           python scripts/tag_compliance_checker.py --help
           echo "✅ Tag compliance checker works correctly"
+        fi
+
+    - name: Test AWS resource inventory
+      run: |
+        if [ -f scripts/aws_resource_inventory.py ]; then
+          python scripts/aws_resource_inventory.py --help
+          echo "✅ AWS resource inventory works correctly"
         fi
