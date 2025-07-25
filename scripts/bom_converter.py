@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
 """
-Enhanced BOM Converter Utility
-Converts JSON/YAML AWS resource inventory to Excel/CSV format.
-Creates separate Excel sheets per AWS service and enriches VPC/subnet information.
-Uses minimal dependencies for portability.
+AWS InvenTag - BOM Converter
+Professional AWS resource inventory to Excel/CSV converter.
+
+Part of AWS InvenTag: Python tool to check on AWS cloud inventory and tagging.
+Integrate into your CI/CD flow to meet your organization's stringent compliance requirements.
+
+Features:
+- Creates service-specific Excel sheets for organized reporting
+- Intelligent data enhancement with VPC names and account IDs
+- Standardizes resource types and IDs across discovery methods
+- Professional formatting with summary dashboards
+- CI/CD ready for automated compliance workflows
+
+Usage:
+    python bom_converter.py --input inventory.json --output report.xlsx
 """
 
 import argparse
@@ -941,7 +952,10 @@ class BOMConverter:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Enhanced BOM Converter - Convert JSON/YAML to Excel/CSV with service sheets and VPC info')
+    parser = argparse.ArgumentParser(
+        description='AWS InvenTag BOM Converter - Professional AWS resource inventory to Excel/CSV converter',
+        epilog='Part of AWS InvenTag: Python tool for AWS cloud inventory and tagging compliance.'
+    )
     parser.add_argument('--input', '-i', required=True, 
                        help='Input JSON or YAML file')
     parser.add_argument('--output', '-o', required=True, 

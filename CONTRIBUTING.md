@@ -1,6 +1,8 @@
-# Contributing to AWS Inventag
+# Contributing to AWS InvenTag
 
-Thank you for your interest in contributing to AWS Inventag! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to **AWS InvenTag**! This document provides guidelines and information for contributors.
+
+> **AWS InvenTag**: Python tool to check on AWS cloud inventory and tagging. Integrate into your CI/CD flow to meet your organization's stringent compliance requirements.
 
 ## 🚀 Getting Started
 
@@ -261,4 +263,4 @@ By contributing, you agree that your contributions will be licensed under the sa
 
 ---
 
-Thank you for contributing to AWS Inventag! 🚀
+Thank you for contributing to AWS InvenTag! 🚀

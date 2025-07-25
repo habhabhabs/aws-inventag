@@ -1,8 +1,24 @@
-# AWS Cloud BOM Automation
+# 🏷️ AWS InvenTag
 
-**Comprehensive AWS resource discovery and tag compliance tools with Excel reporting.**
+> **Python tool to check on AWS cloud inventory and tagging. Integrate into your CI/CD flow to meet your organization's stringent compliance requirements.**
 
-Discovers ALL AWS resources across ALL services and validates them against your tagging policies. Generates professional Excel reports with separate sheets per service.
+[![CI/CD Pipeline](https://github.com/habhabhabs/aws-inventag/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/habhabhabs/aws-inventag/actions)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![AWS](https://img.shields.io/badge/AWS-Compatible-orange.svg)](https://aws.amazon.com/)
+
+## 🎯 Overview
+
+**AWS InvenTag** is a comprehensive Python toolkit for AWS resource inventory management and tag compliance checking. Designed for enterprise environments, it automates the discovery, analysis, and reporting of AWS resources while ensuring adherence to organizational tagging policies.
+
+### ✨ Key Features
+
+- 🔍 **Multi-Method Discovery** - Leverages ResourceGroupsTaggingAPI, AWSConfig, and service-specific APIs
+- 📊 **Professional BOM Generation** - Creates detailed Excel/CSV reports with service-specific sheets
+- 🏷️ **Tag Compliance Checking** - Validates resources against organizational tagging policies
+- 🔧 **Intelligent Data Enhancement** - Enriches resources with VPC names, account IDs, and inferred tags
+- 🚀 **CI/CD Ready** - Easy integration into automated compliance workflows
+- 📈 **Comprehensive Reporting** - Summary dashboards with compliance percentages and service breakdowns
 
 ## 📁 Project Structure
 
