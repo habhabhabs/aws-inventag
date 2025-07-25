@@ -1,11 +1,13 @@
-# 🏷️ AWS InvenTag - Project Description
+# 🏷️ InvenTag - Project Description
 
 ## Tagline
-**Python tool to check on AWS cloud inventory and tagging. Integrate into your CI/CD flow to meet your organization's stringent compliance requirements.**
+**Python tool to check on AWS™ cloud inventory and tagging. Integrate into your CI/CD flow to meet your organization's stringent compliance requirements.**
+
+> **Disclaimer**: AWS™ is a trademark of Amazon Web Services, Inc. InvenTag is an independent tool and is not affiliated with, endorsed by, or sponsored by Amazon Web Services, Inc.
 
 ## Executive Summary
 
-AWS InvenTag is an enterprise-grade Python toolkit designed to solve the critical challenges of AWS resource inventory management and tag compliance at scale. As organizations grow their cloud footprint, maintaining visibility and governance over thousands of resources becomes increasingly complex. AWS InvenTag addresses these challenges by providing automated discovery, intelligent analysis, and professional reporting capabilities that integrate seamlessly into modern DevOps workflows.
+InvenTag is an enterprise-grade Python toolkit designed to solve the critical challenges of AWS™ resource inventory management and tag compliance at scale. As organizations grow their cloud footprint, maintaining visibility and governance over thousands of resources becomes increasingly complex. InvenTag addresses these challenges by providing automated discovery, intelligent analysis, and professional reporting capabilities that integrate seamlessly into modern DevOps workflows.
 
 ## Problem Statement
 
@@ -25,7 +27,7 @@ AWS InvenTag is an enterprise-grade Python toolkit designed to solve the critica
 
 ## Solution Overview
 
-### AWS InvenTag Architecture
+### InvenTag Architecture
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Discovery     │    │   Enhancement   │    │    Reporting    │
@@ -77,7 +79,7 @@ AWS InvenTag is an enterprise-grade Python toolkit designed to solve the critica
 ## Technical Innovation
 
 ### 1. **Multi-Source Data Fusion**
-AWS InvenTag uniquely combines data from multiple AWS discovery methods, intelligently merging and deduplicating resources to provide the most complete view possible.
+InvenTag uniquely combines data from multiple AWS™ discovery methods, intelligently merging and deduplicating resources to provide the most complete view possible.
 
 ### 2. **Pattern-Based Tag Inference**
 Revolutionary tag inference engine that analyzes organizational tagging patterns to predict missing tags for resources discovered through AWSConfig and ServiceSpecificAPI.
@@ -186,4 +188,4 @@ Smart compliance checking that goes beyond simple tag presence to validate tag v
 
 ---
 
-**AWS InvenTag**: Transforming cloud governance from reactive to proactive, from manual to automated, from complex to simple. 🏷️✨
+**InvenTag**: Transforming cloud governance from reactive to proactive, from manual to automated, from complex to simple. 🏷️✨

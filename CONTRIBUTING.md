@@ -1,8 +1,10 @@
-# Contributing to AWS InvenTag
+# Contributing to InvenTag
 
-Thank you for your interest in contributing to **AWS InvenTag**! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to **InvenTag**! This document provides guidelines and information for contributors.
 
-> **AWS InvenTag**: Python tool to check on AWS cloud inventory and tagging. Integrate into your CI/CD flow to meet your organization's stringent compliance requirements.
+> **InvenTag**: Python tool to check on AWS™ cloud inventory and tagging. Integrate into your CI/CD flow to meet your organization's stringent compliance requirements.
+
+> **Disclaimer**: AWS™ is a trademark of Amazon Web Services, Inc. InvenTag is not affiliated with AWS.
 
 ## 🚀 Getting Started
 
@@ -17,8 +19,8 @@ Thank you for your interest in contributing to **AWS InvenTag**! This document p
 
 1. **Fork and Clone**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/aws-inventag.git
-   cd aws-inventag
+   git clone https://github.com/YOUR_USERNAME/inventag-aws.git
+   cd inventag-aws
    ```
 
 2. **Set up Development Environment**
@@ -263,4 +265,4 @@ By contributing, you agree that your contributions will be licensed under the sa
 
 ---
 
-Thank you for contributing to AWS InvenTag! 🚀
+Thank you for contributing to InvenTag! 🚀

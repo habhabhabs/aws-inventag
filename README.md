@@ -1,17 +1,19 @@
-# 🏷️ AWS InvenTag
+# 🏷️ InvenTag
 
-> **Python tool to check on AWS cloud inventory and tagging. Integrate into your CI/CD flow to meet your organization's stringent compliance requirements.**
+> **Python tool to check on AWS™ cloud inventory and tagging. Integrate into your CI/CD flow to meet your organization's stringent compliance requirements.**
 
-[![Automated Release](https://github.com/habhabhabs/aws-inventag/workflows/Automated%20Release/badge.svg)](https://github.com/habhabhabs/aws-inventag/actions)
-[![PR Checks](https://github.com/habhabhabs/aws-inventag/workflows/PR%20Checks/badge.svg)](https://github.com/habhabhabs/aws-inventag/actions)
+[![Automated Release](https://github.com/habhabhabs/inventag-aws/workflows/Automated%20Release/badge.svg)](https://github.com/habhabhabs/inventag-aws/actions)
+[![PR Checks](https://github.com/habhabhabs/inventag-aws/workflows/PR%20Checks/badge.svg)](https://github.com/habhabhabs/inventag-aws/actions)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![AWS](https://img.shields.io/badge/AWS-Compatible-orange.svg)](https://aws.amazon.com/)
-[![Version](https://img.shields.io/badge/dynamic/json?color=blue&label=version&query=version&url=https%3A//raw.githubusercontent.com/habhabhabs/aws-inventag/main/version.json)](https://github.com/habhabhabs/aws-inventag/releases/latest)
+[![Version](https://img.shields.io/badge/dynamic/json?color=blue&label=version&query=version&url=https%3A//raw.githubusercontent.com/habhabhabs/inventag-aws/main/version.json)](https://github.com/habhabhabs/inventag-aws/releases/latest)
 
 ## 🎯 Overview
 
-**AWS InvenTag** is a comprehensive Python toolkit for AWS resource inventory management and tag compliance checking. Designed for enterprise environments, it automates the discovery, analysis, and reporting of AWS resources while ensuring adherence to organizational tagging policies.
+**InvenTag** is a comprehensive Python toolkit for AWS™ resource inventory management and tag compliance checking. Designed for enterprise environments, it automates the discovery, analysis, and reporting of AWS™ resources while ensuring adherence to organizational tagging policies.
+
+> **Disclaimer**: AWS™ is a trademark of Amazon Web Services, Inc. InvenTag is an independent tool and is not affiliated with, endorsed by, or sponsored by Amazon Web Services, Inc.
 
 ### ✨ Key Features
 
@@ -25,7 +27,7 @@
 ## 📁 Project Structure
 
 ```
-aws-inventag/
+inventag-aws/
 ├── README.md                    # This file - main documentation
 ├── requirements.txt             # Python dependencies
 ├── scripts/                     # Main tools
@@ -193,8 +195,8 @@ jobs:
 
 **Release Documentation:**
 - 📖 See [`RELEASE.md`](RELEASE.md) for complete release management guide
-- 🔗 [Latest Release](https://github.com/habhabhabs/aws-inventag/releases/latest)
-- 📊 [All Releases](https://github.com/habhabhabs/aws-inventag/releases)
+- 🔗 [Latest Release](https://github.com/habhabhabs/inventag-aws/releases/latest)
+- 📊 [All Releases](https://github.com/habhabhabs/inventag-aws/releases)
 
 ## 📋 Main Tools
 
@@ -422,10 +424,10 @@ jobs:
     steps:
     - name: Deploy to AWS Lambda
       run: |
-        zip -r aws-inventag.zip scripts/ config/ requirements.txt
+        zip -r inventag-aws.zip scripts/ config/ requirements.txt
         aws lambda update-function-code \
           --function-name compliance-checker \
-          --zip-file fileb://aws-inventag.zip
+          --zip-file fileb://inventag-aws.zip
 ```
 
 **2. Multi-Account Scanning:**

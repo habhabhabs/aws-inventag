@@ -1,6 +1,8 @@
 # 🚀 Deployment Guide: GitLab CI/CD & GitHub Actions
 
-This guide shows how to deploy AWS InvenTag in your own repository using GitLab CI/CD or GitHub Actions for automated AWS compliance monitoring.
+This guide shows how to deploy InvenTag in your own repository using GitLab CI/CD or GitHub Actions for automated AWS™ compliance monitoring.
+
+> **Disclaimer**: AWS™ is a trademark of Amazon Web Services, Inc. InvenTag is an independent tool and is not affiliated with, endorsed by, or sponsored by Amazon Web Services, Inc.
 
 ## 📋 Table of Contents
 
@@ -19,7 +21,7 @@ This guide shows how to deploy AWS InvenTag in your own repository using GitLab 
 3. **AWS Credentials** (Access Key + Secret or IAM Role)
 
 ### Repository Setup
-1. **Copy AWS InvenTag files** to your repository:
+1. **Copy InvenTag files** to your repository:
    ```bash
    # Copy essential files
    mkdir aws-compliance
