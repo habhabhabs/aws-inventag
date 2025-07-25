@@ -26,6 +26,7 @@ class ComprehensiveTagComplianceChecker:
     def __init__(self, regions: Optional[List[str]] = None, config_file: Optional[str] = None):
         """Initialize the Comprehensive Tag Compliance Checker."""
         self.session = boto3.Session()
+        self.logger = self._setup_logging()
         self.regions = regions or self._get_available_regions()
         self.config_file = config_file
         self.tag_policy = self._load_tag_policy()
@@ -36,7 +37,6 @@ class ComprehensiveTagComplianceChecker:
             'untagged': [],
             'summary': {}
         }
-        self.logger = self._setup_logging()
         
     def _setup_logging(self) -> logging.Logger:
         """Set up logging configuration."""
