@@ -4,11 +4,13 @@ A comprehensive AWS resource inventory tool that discovers and catalogs all AWS 
 
 ## Features
 
-- **Comprehensive Resource Discovery**: Scans EC2, S3, RDS, Lambda, IAM, VPC, CloudFormation, ECS, EKS, and CloudWatch resources
+- **Comprehensive Resource Discovery**: Discovers ALL AWS resources across ALL services using multiple discovery methods
 - **Multi-Region Support**: Discovers resources across all AWS regions or specified regions
 - **Multiple Output Formats**: JSON, YAML, Excel (.xlsx), and CSV
 - **S3 Integration**: Upload inventory reports directly to S3
 - **Detailed Resource Information**: Captures tags, configurations, and metadata
+- **Enhanced Excel Output**: Separate sheets per AWS service with VPC/subnet name enrichment
+- **Comprehensive Tag Compliance**: Validates ALL AWS resources against tagging policies
 - **Lightweight Converter**: Separate utility for format conversion with minimal dependencies
 
 ## Installation
@@ -53,30 +55,29 @@ python aws_resource_inventory.py --export-excel
 python aws_resource_inventory.py --verbose
 ```
 
-### BOM Converter Utility
+### Enhanced BOM Converter Utility
 
-Convert existing JSON/YAML files to Excel/CSV:
+Convert existing JSON/YAML files to Excel/CSV with enhanced features:
 
 ```bash
-# Convert to Excel
+# Convert to Excel with separate sheets per AWS service and VPC/subnet names
 python bom_converter.py --input aws_resources_20250725_123456.json --output inventory.xlsx --format excel
 
-# Convert to CSV
+# Convert to CSV with AWS service as column
 python bom_converter.py --input aws_resources_20250725_123456.yaml --output inventory.csv --format csv
+
+# Skip VPC enrichment for faster processing
+python bom_converter.py --input inventory.json --output fast_report.xlsx --no-vpc-enrichment
 ```
 
 ## Supported AWS Services
 
-- **EC2**: Instances, EBS Volumes, Security Groups
-- **S3**: Buckets
-- **RDS**: Database Instances
-- **Lambda**: Functions
-- **IAM**: Roles, Users (global)
-- **VPC**: VPCs, Subnets
-- **CloudFormation**: Stacks
-- **ECS**: Clusters
-- **EKS**: Clusters
-- **CloudWatch**: Alarms
+**The tools discover ALL AWS resources across ALL services using multiple discovery methods:**
+
+- **Primary Discovery**: Resource Groups Tagging API (discovers resources from ANY AWS service)
+- **Additional Discovery**: AWS Config, CloudTrail, and service-specific APIs
+- **Comprehensive Coverage**: EC2, S3, RDS, Lambda, IAM, VPC, CloudFormation, ECS, EKS, CloudWatch, DynamoDB, SNS, SQS, API Gateway, ElastiCache, OpenSearch, Route53, KMS, CloudWatch Logs, and many more
+- **Future-Proof**: Automatically discovers resources from new AWS services as they're added
 
 ## Output Format
 
@@ -109,13 +110,22 @@ Example resource entry:
 }
 ```
 
-## Excel Output Features
+## Enhanced Excel Output Features
 
-The Excel output includes:
-- **Main Sheet**: Complete resource inventory with auto-sized columns
-- **Summary Sheet**: Resource counts by service, region, and type
-- **Formatted Headers**: Bold headers with background colors
+The enhanced Excel output includes:
+- **Service-Specific Sheets**: Separate sheet for each AWS service (EC2, S3, RDS, etc.)
+- **Summary Sheet**: Overview with service breakdown and resource counts
+- **VPC/Subnet Enrichment**: Automatic lookup of VPC and subnet names from tags
+- **Formatted Headers**: Bold headers with background colors and proper column sizing
+- **Prioritized Columns**: Important fields (service, type, region, id, name, VPC info) appear first
 - **Flattened Data**: Nested objects are flattened for tabular view
+
+## CSV Output Features
+
+The CSV output includes:
+- **Service Column**: AWS service name prominently displayed as first column
+- **VPC/Subnet Enrichment**: Includes VPC and subnet names when available
+- **All Resource Data**: Complete flattened view of all resource attributes
 
 ## Error Handling
 
@@ -127,55 +137,90 @@ The Excel output includes:
 ## Dependencies
 
 - **boto3**: AWS SDK for Python
-- **PyYAML**: YAML processing
-- **openpyxl**: Excel file generation (optional, falls back to CSV if not available)
+- **PyYAML**: YAML processing  
+- **openpyxl**: Excel file generation with service sheets (optional, falls back to CSV if not available)
+- **colorama**: Colored console output for tag compliance checker
+- **colorama**: Colored console output for better readability
 
-## AWS Permissions
+## Security & AWS Permissions
 
-The tool requires read-only permissions for the AWS services it scans. Example IAM policy:
+### 🔒 **Read-Only Operation Guarantee**
 
+**All scripts operate in READ-ONLY mode and cannot modify your AWS infrastructure:**
+
+- ✅ **Only read/describe/list operations** are used
+- ✅ **No create, update, delete, or modify actions** 
+- ✅ **No infrastructure changes possible**
+- ✅ **Safe to run in production environments**
+
+The only write operation is the optional `s3:PutObject` for uploading reports to S3.
+
+### 📋 **Required IAM Permissions**
+
+The tools require comprehensive read-only permissions across AWS services. Use the provided IAM policy file:
+
+**File**: [`iam-policy-read-only.json`](./iam-policy-read-only.json)
+
+This policy includes three permission sets:
+
+#### 1. **Basic Resource Inventory** (aws_resource_inventory.py):
 ```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "ec2:Describe*",
-        "s3:ListAllMyBuckets",
-        "s3:GetBucketLocation",
-        "s3:GetBucketTagging",
-        "rds:Describe*",
-        "lambda:List*",
-        "iam:List*",
-        "cloudformation:List*",
-        "cloudformation:Describe*",
-        "ecs:List*",
-        "ecs:Describe*",
-        "eks:List*",
-        "eks:Describe*",
-        "cloudwatch:Describe*"
-      ],
-      "Resource": "*"
-    }
-  ]
-}
+"ec2:DescribeRegions", "ec2:DescribeInstances", "ec2:DescribeVolumes",
+"s3:ListAllMyBuckets", "s3:GetBucketTagging", 
+"rds:DescribeDBInstances", "lambda:ListFunctions",
+"iam:ListRoles", "cloudformation:ListStacks", 
+"ecs:ListClusters", "eks:ListClusters"
 ```
 
-For S3 upload functionality, also add:
+#### 2. **Comprehensive Discovery** (tag_compliance_checker.py):
 ```json
-{
-  "Effect": "Allow",
-  "Action": [
-    "s3:PutObject"
-  ],
-  "Resource": "arn:aws:s3:::your-bucket-name/*"
-}
+"resourcegroupstaggingapi:GetResources",
+"config:DescribeConfigurationRecorderStatus",
+"cloudtrail:LookupEvents",
+"logs:DescribeLogGroups", "route53:ListHostedZones",
+"apigateway:GET", "dynamodb:ListTables",
+"sns:ListTopics", "sqs:ListQueues",
+"kms:ListKeys", "elasticache:DescribeCacheClusters",
+"opensearch:ListDomainNames", "es:ListDomainNames"
 ```
+
+#### 3. **Optional S3 Upload**:
+```json
+"s3:PutObject" on "arn:aws:s3:::YOUR-REPORTS-BUCKET-NAME/*"
+```
+
+### 🛡️ **Security Best Practices**
+
+1. **Use the minimal policy**: Only grant permissions for services you want to scan
+2. **Restrict S3 upload**: Replace `YOUR-REPORTS-BUCKET-NAME` with your specific bucket
+3. **Consider MFA**: Require MFA for the IAM user/role running these scripts
+4. **Regular rotation**: Rotate access keys regularly
+5. **Monitoring**: Enable CloudTrail to monitor API usage
+
+### 🚀 **Quick Setup**
+
+1. **Create IAM policy**:
+   ```bash
+   aws iam create-policy \
+     --policy-name AWSResourceInventoryReadOnly \
+     --policy-document file://iam-policy-read-only.json
+   ```
+
+2. **Attach to user/role**:
+   ```bash
+   aws iam attach-user-policy \
+     --user-name your-user-name \
+     --policy-arn arn:aws:iam::ACCOUNT:policy/AWSResourceInventoryReadOnly
+   ```
+
+3. **Update S3 bucket name** in the policy (if using S3 upload):
+   ```bash
+   # Edit iam-policy-read-only.json and replace YOUR-REPORTS-BUCKET-NAME
+   ```
 
 ## Tag Compliance Checker
 
-The `tag_compliance_checker.py` utility validates AWS resources against your organization's tagging policies.
+The `tag_compliance_checker.py` utility validates ALL AWS resources across your entire account against your organization's tagging policies using comprehensive discovery methods.
 
 ### Usage
 
@@ -307,26 +352,32 @@ exemptions:
     reason: "Specific resource exemptions"
 ```
 
-### Output and Reports
+### Enhanced Output and Reports
 
-The compliance checker generates:
+The comprehensive compliance checker generates:
 
-1. **Console Summary**: 
-   - Total resources scanned
+1. **Enhanced Console Summary**: 
+   - Total resources discovered across all services
+   - Service-by-service compliance breakdown with rates
+   - Discovery methods used (RGT API, Config, CloudTrail, Service APIs)
    - Compliant vs non-compliant counts
-   - Compliance percentage
+   - Overall compliance percentage
    - Most commonly missing tags
 
-2. **Detailed JSON/YAML Report**:
-   - Complete list of compliant resources
+2. **Comprehensive JSON/YAML Report**:
+   - Complete list of all discovered resources (full inventory)
+   - Compliant resources with full details
    - Non-compliant resources with missing/incorrect tags
    - Untagged resources
-   - Summary statistics
+   - Summary statistics with service breakdown
+   - Discovery method attribution
 
-3. **Color-Coded Output**:
-   - Green: Compliant resources
-   - Red: Non-compliant resources and errors
+3. **Color-Coded Console Output**:
+   - Cyan: Headers and section titles
+   - Green: Compliant resources and success messages
+   - Red: Non-compliant resources, errors, and failures
    - Yellow: Untagged resources and warnings
+   - Service-level compliance rates with color coding
 
 ### Exit Codes
 
@@ -335,25 +386,64 @@ The compliance checker generates:
 
 This makes the tool suitable for CI/CD pipelines and automated compliance checking.
 
-### Supported Services for Tag Compliance
+### Comprehensive Resource Discovery for Tag Compliance
 
-The checker validates tags on the same services as the inventory tool:
-- EC2 (Instances, EBS Volumes, Security Groups)
-- S3 (Buckets)
-- RDS (Database Instances)
-- Lambda (Functions)
-- IAM (Roles, Users)
-- VPC (VPCs, Subnets)
-- CloudFormation (Stacks)
-- ECS (Clusters)
-- EKS (Clusters)
+The tag compliance checker discovers and validates ALL AWS resources using:
+
+#### Discovery Methods:
+1. **Resource Groups Tagging API**: Primary method discovering ALL taggable resources across ALL AWS services
+2. **AWS Config Service**: Additional resources and configuration history (if enabled)
+3. **CloudTrail Analysis**: Recently created resources from the last 7 days
+4. **Service-Specific APIs**: Direct API calls for comprehensive coverage including:
+   - CloudWatch Logs (Log Groups)
+   - Route53 (Hosted Zones)
+   - API Gateway (REST & HTTP APIs)
+   - ElastiCache (Cache Clusters)
+   - DynamoDB (Tables)
+   - SNS/SQS (Topics & Queues)
+   - KMS (Customer-managed Keys)
+   - Elasticsearch/OpenSearch (Domains)
+
+#### Service Coverage:
+**All AWS services are covered** including but not limited to:
+- **Compute**: EC2, Lambda, ECS, EKS, Batch, Lightsail
+- **Storage**: S3, EBS, EFS, FSx, Storage Gateway
+- **Database**: RDS, DynamoDB, ElastiCache, Neptune, DocumentDB
+- **Networking**: VPC, Route53, CloudFront, API Gateway, Load Balancers
+- **Security**: IAM, KMS, Secrets Manager, Certificate Manager
+- **Management**: CloudFormation, Systems Manager, CloudWatch
+- **Analytics**: Kinesis, EMR, Glue, Athena, QuickSight
+- **Machine Learning**: SageMaker, Comprehend, Rekognition
+- **And many more...**
+
+The tool automatically discovers resources from ANY AWS service that supports the Resource Groups Tagging API, making it future-proof as new services are added.
 
 ## Output Files
 
 Files are generated with timestamps:
-- `aws_resources_YYYYMMDD_HHMMSS.json`
-- `aws_resources_YYYYMMDD_HHMMSS.yaml`
-- `aws_resources_YYYYMMDD_HHMMSS.xlsx`
-- `aws_resources_YYYYMMDD_HHMMSS.csv`
-- `tag_compliance_report_YYYYMMDD_HHMMSS.json`
-- `tag_compliance_report_YYYYMMDD_HHMMSS.yaml`
+- `aws_resources_YYYYMMDD_HHMMSS.json` - Complete resource inventory
+- `aws_resources_YYYYMMDD_HHMMSS.yaml` - Complete resource inventory (YAML)
+- `aws_resources_YYYYMMDD_HHMMSS.xlsx` - Enhanced Excel with service sheets and VPC names
+- `aws_resources_YYYYMMDD_HHMMSS.csv` - CSV with service column and VPC names
+- `comprehensive_tag_compliance_report_YYYYMMDD_HHMMSS.json` - Full compliance report
+- `comprehensive_tag_compliance_report_YYYYMMDD_HHMMSS.yaml` - Full compliance report (YAML)
+
+## Enhanced Features Summary
+
+### Resource Discovery Enhancements:
+- **4x Discovery Methods**: RGT API + Config + CloudTrail + Service APIs
+- **Complete Coverage**: ALL AWS services, not just a subset
+- **Automatic Deduplication**: Removes duplicates found by multiple methods
+- **Future-Proof**: Discovers new services automatically
+
+### Excel Output Enhancements:
+- **Service-Specific Sheets**: Each AWS service gets its own sheet
+- **VPC/Subnet Names**: Automatic lookup and inclusion of VPC/subnet names
+- **Smart Column Ordering**: Important fields (service, type, region, VPC info) first
+- **Enhanced Summary**: Service breakdown with resource types
+
+### Tag Compliance Enhancements:
+- **Comprehensive Discovery**: ALL resources across ALL services
+- **Service Breakdown**: Compliance rates per AWS service
+- **Discovery Attribution**: Shows which method found each resource
+- **Enhanced Reporting**: Complete inventory included in compliance reports
