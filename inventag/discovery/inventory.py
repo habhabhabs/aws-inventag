@@ -19,16 +19,26 @@ class AWSResourceInventory:
     def __init__(self, regions: Optional[List[str]] = None):
         """Initialize the AWS Resource Inventory tool."""
         self.session = boto3.Session()
-        self.regions = regions or self._get_available_regions()
         self.resources = []
         self.logger = self._setup_logging()
+        self.regions = regions or self._get_available_regions()
 
     def _setup_logging(self) -> logging.Logger:
-        """Set up logging configuration."""
-        logging.basicConfig(
-            level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-        )
-        return logging.getLogger(__name__)
+        """Set up logging configuration with fallback handling."""
+        try:
+            logging.basicConfig(
+                level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+            )
+            logger = logging.getLogger(__name__)
+            logger.info("Logger initialized successfully")
+            return logger
+        except Exception as e:
+            # Fallback to basic logging if setup fails
+            fallback_logger = logging.getLogger(__name__)
+            fallback_logger.addHandler(logging.StreamHandler())
+            fallback_logger.setLevel(logging.INFO)
+            fallback_logger.warning(f"Failed to setup logging, using fallback: {e}")
+            return fallback_logger
 
     def _get_available_regions(self) -> List[str]:
         """Get all available AWS regions with fallback."""
