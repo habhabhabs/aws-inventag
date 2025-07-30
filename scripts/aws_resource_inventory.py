@@ -20,7 +20,7 @@ try:
     from inventag.discovery import AWSResourceInventory
 except ImportError:
     # Fallback for development/testing
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     from inventag.discovery import AWSResourceInventory
 
 

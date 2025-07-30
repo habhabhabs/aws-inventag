@@ -39,7 +39,7 @@ try:
     from inventag.compliance import ComprehensiveTagComplianceChecker
 except ImportError:
     # Fallback for development/testing
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     from inventag.compliance import ComprehensiveTagComplianceChecker
 
 
@@ -120,26 +120,28 @@ Examples:
             # For backward compatibility, we need to load the data
             import json
             import yaml
-            
-            with open(args.input, 'r') as f:
-                if args.input.lower().endswith('.json'):
+
+            with open(args.input, "r") as f:
+                if args.input.lower().endswith(".json"):
                     data = json.load(f)
                 else:
                     data = yaml.safe_load(f)
-            
+
             # Extract resources from the data structure
             if isinstance(data, list):
                 resources = data
             elif isinstance(data, dict):
                 # Try common keys
-                resources = (data.get('all_discovered_resources') or 
-                           data.get('resources') or 
-                           data.get('compliant_resources', []) + 
-                           data.get('non_compliant_resources', []) + 
-                           data.get('untagged_resources', []))
+                resources = (
+                    data.get("all_discovered_resources")
+                    or data.get("resources")
+                    or data.get("compliant_resources", [])
+                    + data.get("non_compliant_resources", [])
+                    + data.get("untagged_resources", [])
+                )
             else:
                 resources = []
-            
+
             results = checker.check_compliance(resources)
         else:
             print("Discovering resources and checking compliance...")
@@ -147,16 +149,17 @@ Examples:
 
         # Generate filename with timestamp
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        
+
         if args.format == "excel":
             filename = f"{args.output}_{timestamp}.xlsx"
             # For Excel output, we'll use the BOM converter
             temp_json = f"{args.output}_{timestamp}_temp.json"
             checker.save_results(temp_json, "json")
-            
+
             # Import and use BOM converter for Excel output
             try:
                 from inventag.reporting import BOMConverter
+
                 converter = BOMConverter()
                 converter.load_data(temp_json)
                 converter.export_to_excel(filename)

@@ -33,7 +33,7 @@ try:
     from inventag.reporting import BOMConverter
 except ImportError:
     # Fallback for development/testing
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     from inventag.reporting import BOMConverter
 
 
@@ -133,6 +133,7 @@ Examples:
         print(f"Error: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         sys.exit(1)
 
