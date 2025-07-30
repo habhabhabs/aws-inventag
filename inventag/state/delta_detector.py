@@ -581,7 +581,7 @@ class DeltaDetector:
         elif new_value is None:
             return f"Removed {attribute_path}: {old_value}"
         else:
-            return f"Changed {attribute_path}: {old_value} → {new_value}"
+            return f"Changed {attribute_path}: {old_value} -> {new_value}"
     
     def _detect_compliance_changes(self, old_resource: Dict, new_resource: Dict) -> List[AttributeChange]:
         """Detect compliance-specific changes"""
@@ -600,7 +600,7 @@ class DeltaDetector:
                 change_type=ChangeType.MODIFIED,
                 category=ChangeCategory.COMPLIANCE,
                 severity=severity,
-                description=f"Compliance status changed: {old_compliance} → {new_compliance}"
+                description=f"Compliance status changed: {old_compliance} -> {new_compliance}"
             )
             compliance_changes.append(change)
         

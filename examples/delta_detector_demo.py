@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 DeltaDetector Demo - Comprehensive change tracking demonstration
 
@@ -7,8 +8,14 @@ comprehensive change tracking between AWS resource inventory states.
 """
 
 import json
+import sys
 from datetime import datetime, timezone
 from inventag.state.delta_detector import DeltaDetector, ChangeType, ChangeSeverity, ChangeCategory
+
+# Ensure proper encoding for Windows console
+if sys.platform == 'win32':
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
 
 
 def create_sample_old_resources():
@@ -206,7 +213,7 @@ def print_delta_report_summary(delta_report):
             
             # Show detailed attribute changes
             for change in resource.attribute_changes[:5]:  # Show first 5 changes
-                print(f"    • {change.attribute_path}: {change.old_value} → {change.new_value}")
+                print(f"    * {change.attribute_path}: {change.old_value} -> {change.new_value}")
                 print(f"      Category: {change.category.value}, Severity: {change.severity.value}")
             
             if len(resource.attribute_changes) > 5:
@@ -215,7 +222,7 @@ def print_delta_report_summary(delta_report):
             if resource.compliance_changes:
                 print(f"  Compliance Changes: {len(resource.compliance_changes)}")
                 for change in resource.compliance_changes:
-                    print(f"    • {change.attribute_path}: {change.old_value} → {change.new_value}")
+                    print(f"    * {change.attribute_path}: {change.old_value} -> {change.new_value}")
             
             if resource.security_impact:
                 print(f"  Security Impact: {resource.security_impact}")
@@ -271,13 +278,13 @@ def print_delta_report_summary(delta_report):
     if impact['high_impact_changes']:
         print("\nHigh Impact Changes:")
         for change in impact['high_impact_changes']:
-            print(f"  • {change['service']}: {change['resource_arn']}")
+            print(f"  * {change['service']}: {change['resource_arn']}")
             print(f"    Impact: {change['potential_impact']}")
     
     if impact['cascade_risks']:
         print("\nCascade Risks:")
         for risk in impact['cascade_risks']:
-            print(f"  • {risk['service']}: {risk['resource_arn']}")
+            print(f"  * {risk['service']}: {risk['resource_arn']}")
             print(f"    Risk Level: {risk['risk_level']}")
             print(f"    Description: {risk['description']}")
     print()
@@ -346,7 +353,7 @@ def main():
             print(f"Resource: {ec2_change.resource_id}")
             print("Attribute Changes:")
             for change in ec2_change.attribute_changes:
-                print(f"  • {change.attribute_path}")
+                print(f"  * {change.attribute_path}")
                 print(f"    Old: {change.old_value}")
                 print(f"    New: {change.new_value}")
                 print(f"    Category: {change.category.value}")
