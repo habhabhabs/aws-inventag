@@ -118,6 +118,42 @@ python examples/network_security_analysis_demo.py
 - Security posture assessment and vulnerability detection
 - Integration with service enrichment and state management
 
+### `cost_analysis_demo.py`
+**Cost Analysis & Optimization Demonstration** - Comprehensive cost estimation, forgotten resource detection, and optimization recommendations.
+
+**Usage:**
+```bash
+python examples/cost_analysis_demo.py
+```
+
+**Features demonstrated:**
+- Resource cost estimation using AWS Pricing API integration
+- Expensive resource identification with configurable thresholds
+- Forgotten resource detection based on CloudWatch activity patterns
+- Cost trend analysis with alerting for significant changes
+- Comprehensive optimization recommendations with potential savings
+- Integration with InvenTag resource discovery workflow
+- Cost breakdown analysis by service and resource type
+- Risk assessment and prioritization for cost optimization
+
+### `bom_processor_demo.py`
+**BOM Data Processor Demonstration** - Central orchestrator for processing raw inventory data and coordinating with specialized analyzers.
+
+**Usage:**
+```bash
+python examples/bom_processor_demo.py
+```
+
+**Features demonstrated:**
+- Comprehensive data processing pipeline with multi-format input support
+- Intelligent resource extraction and standardization
+- Coordinated analysis integration (network, security, service enrichment)
+- Configurable processing options with selective analysis
+- Performance optimization with parallel processing and caching
+- Error handling and graceful degradation
+- Processing statistics and monitoring capabilities
+- Integration patterns with state management and compliance checking
+
 ## Output Files
 
 After running the tools, you'll find timestamped output files here:
@@ -418,6 +454,168 @@ for resource in enriched_resources:
         print(f'{resource[\"service\"]} {resource[\"name\"]} in VPC {resource[\"vpc_name\"]}')
         if 'subnet_utilization_percentage' in resource:
             print(f'  Subnet utilization: {resource[\"subnet_utilization_percentage\"]:.1f}%')
+"
+```
+
+### BOM Data Processor Usage
+
+#### Basic Comprehensive Processing
+```bash
+# Process inventory data with all analysis components
+python -c "
+from inventag import AWSResourceInventory
+from inventag.reporting.bom_processor import BOMDataProcessor, BOMProcessingConfig
+import boto3
+
+# Discover resources
+inventory = AWSResourceInventory(regions=['us-east-1'])
+resources = inventory.discover_resources()
+
+# Configure comprehensive processing
+config = BOMProcessingConfig(
+    enable_network_analysis=True,
+    enable_security_analysis=True,
+    enable_service_enrichment=True,
+    enable_service_descriptions=True,
+    enable_tag_mapping=True
+)
+
+# Process with BOM processor
+processor = BOMDataProcessor(config, boto3.Session())
+bom_data = processor.process_inventory_data(resources)
+
+print(f'Processed {len(bom_data.resources)} resources')
+print(f'Network Analysis: {len(bom_data.network_analysis)} VPCs analyzed')
+print(f'Security Analysis: {bom_data.security_analysis.get(\"total_security_groups\", 0)} security groups')
+print(f'Compliance Rate: {bom_data.compliance_summary.get(\"compliance_percentage\", 0):.1f}%')
+"
+```
+
+#### Performance-Optimized Processing
+```bash
+# High-performance configuration for large datasets
+python -c "
+from inventag.reporting.bom_processor import BOMDataProcessor, BOMProcessingConfig
+import boto3
+import time
+
+# Performance-optimized configuration
+config = BOMProcessingConfig(
+    enable_parallel_processing=True,
+    max_worker_threads=8,
+    cache_results=True,
+    processing_timeout=600
+)
+
+processor = BOMDataProcessor(config, boto3.Session())
+
+# Monitor processing performance
+start_time = time.time()
+bom_data = processor.process_inventory_data(large_dataset)
+processing_time = time.time() - start_time
+
+stats = processor.get_processing_statistics()
+print(f'Processing completed in {processing_time:.2f} seconds')
+print(f'Throughput: {stats.processed_resources / processing_time:.1f} resources/second')
+print(f'Success rate: {(stats.processed_resources / stats.total_resources) * 100:.1f}%')
+"
+```
+
+#### Selective Analysis Configuration
+```bash
+# Network-focused analysis only
+python -c "
+from inventag.reporting.bom_processor import BOMDataProcessor, BOMProcessingConfig
+import boto3
+
+# Configure for network analysis only
+network_config = BOMProcessingConfig(
+    enable_network_analysis=True,
+    enable_security_analysis=False,
+    enable_service_enrichment=False,
+    enable_service_descriptions=False,
+    enable_tag_mapping=False
+)
+
+processor = BOMDataProcessor(network_config, boto3.Session())
+bom_data = processor.process_inventory_data(resources)
+
+# Focus on network analysis results
+network_summary = bom_data.network_analysis
+print(f'VPC Count: {network_summary.get(\"total_vpcs\", 0)}')
+print(f'Subnet Count: {network_summary.get(\"total_subnets\", 0)}')
+print(f'Average Utilization: {network_summary.get(\"average_utilization\", 0):.1f}%')
+"
+```
+
+#### Integration with State Management
+```bash
+# Process and save comprehensive state
+python -c "
+from inventag import AWSResourceInventory
+from inventag.reporting.bom_processor import BOMDataProcessor, BOMProcessingConfig
+from inventag.state import StateManager
+import boto3
+
+# Discover and process resources
+inventory = AWSResourceInventory(regions=['us-east-1', 'us-west-2'])
+resources = inventory.discover_resources()
+
+config = BOMProcessingConfig()
+processor = BOMDataProcessor(config, boto3.Session())
+bom_data = processor.process_inventory_data(resources)
+
+# Save comprehensive state with all analysis
+state_manager = StateManager()
+state_id = state_manager.save_state(
+    resources=bom_data.resources,
+    account_id='123456789012',
+    regions=['us-east-1', 'us-west-2'],
+    network_analysis=bom_data.network_analysis,
+    security_analysis=bom_data.security_analysis,
+    compliance_data=bom_data.compliance_summary,
+    tags={'processing': 'bom_processor', 'comprehensive': 'true'}
+)
+
+print(f'Comprehensive state saved: {state_id}')
+print(f'Processing statistics: {bom_data.processing_statistics}')
+"
+```
+
+#### Error Handling and Recovery
+```bash
+# Robust processing with error handling
+python -c "
+from inventag.reporting.bom_processor import BOMDataProcessor, BOMProcessingConfig
+import boto3
+
+config = BOMProcessingConfig(processing_timeout=300)
+processor = BOMDataProcessor(config, boto3.Session())
+
+try:
+    bom_data = processor.process_inventory_data(resources)
+    
+    # Check for processing errors
+    if bom_data.error_summary.get('has_errors', False):
+        print('Processing completed with errors:')
+        for error in bom_data.error_summary.get('errors', []):
+            print(f'  - {error}')
+    
+    # Check for warnings
+    if bom_data.error_summary.get('has_warnings', False):
+        print('Processing completed with warnings:')
+        for warning in bom_data.error_summary.get('warnings', []):
+            print(f'  - {warning}')
+    
+    print(f'Successfully processed {len(bom_data.resources)} resources')
+    
+except Exception as e:
+    print(f'Processing failed: {e}')
+    
+    # Get partial results if available
+    stats = processor.get_processing_statistics()
+    if stats.processed_resources > 0:
+        print(f'Partial processing completed: {stats.processed_resources} resources')
 "
 ```
 

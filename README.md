@@ -24,6 +24,7 @@
 - 🔧 **Intelligent Data Enhancement** - Enriches resources with VPC names, account IDs, and inferred tags
 - 🌐 **Network Analysis** - Comprehensive VPC/subnet analysis with IP utilization and capacity planning
 - 🔒 **Security Analysis** - Security posture assessment with vulnerability detection and compliance checks
+- 💰 **Cost Analysis** - Resource cost estimation, forgotten resource detection, and optimization recommendations
 - 🚀 **CI/CD Ready** - Easy integration into automated compliance workflows
 - 📈 **Comprehensive Reporting** - Summary dashboards with compliance percentages and service breakdowns
 - 🔄 **State Management** - Track changes over time with persistent state storage and versioning
@@ -46,13 +47,15 @@ inventag-aws/
 │   │   ├── service_descriptions.py    # Service description management framework
 │   │   ├── tag_mapping.py             # Tag mapping and transformation utilities
 │   │   ├── network_analyzer.py        # NetworkAnalyzer for VPC/subnet analysis
-│   │   └── security_analyzer.py       # SecurityAnalyzer for security posture
+│   │   ├── security_analyzer.py       # SecurityAnalyzer for security posture
+│   │   └── cost_analyzer.py           # CostAnalyzer for cost estimation and optimization
 │   ├── compliance/                    # Tag compliance module
 │   │   ├── __init__.py
 │   │   └── checker.py                 # ComprehensiveTagComplianceChecker
 │   ├── reporting/                     # BOM generation module
 │   │   ├── __init__.py
-│   │   └── converter.py               # BOMConverter class
+│   │   ├── converter.py               # BOMConverter class
+│   │   └── bom_processor.py           # BOMDataProcessor - central orchestrator
 │   └── state/                         # State management module
 │       ├── __init__.py
 │       ├── state_manager.py           # StateManager for persistence
@@ -69,6 +72,12 @@ inventag-aws/
 │   ├── tag_policy_example.json        # Example tag policy (JSON)
 │   └── README.md                      # Config documentation
 ├── docs/                        # Detailed documentation
+│   ├── BOM_DATA_PROCESSOR.md          # BOM Data Processor comprehensive guide
+│   ├── COST_ANALYSIS.md               # Cost analysis and optimization guide
+│   ├── NETWORK_ANALYSIS.md            # Network analysis and capacity planning
+│   ├── SERVICE_ENRICHMENT.md          # Service enrichment framework
+│   ├── SERVICE_DESCRIPTIONS.md        # Service description management
+│   ├── STATE_MANAGEMENT.md            # State management and change tracking
 │   └── SECURITY.md                    # Security guide & permissions
 ├── examples/                    # Examples and demo scripts
 │   ├── quick_start.sh                 # Automated demo script
@@ -367,6 +376,9 @@ python examples/service_description_demo.py
 
 # Network analysis demonstration
 python examples/network_security_analysis_demo.py
+
+# Cost analysis demonstration
+python examples/cost_analysis_demo.py
 ```
 
 ### 🔧 **Key State Management Features**
@@ -698,6 +710,426 @@ class CustomServiceHandler(ServiceHandler):
 enricher.register_custom_handler('CUSTOM_SERVICE', CustomServiceHandler)
 ```
 
+## 💰 Cost Analysis & Optimization
+
+InvenTag includes a comprehensive Cost Analyzer that provides resource cost estimation, forgotten resource detection, and optimization recommendations using the AWS Pricing API and CloudWatch metrics.
+
+### 🔧 **Cost Analysis Features**
+
+#### **Resource Cost Estimation** - AWS Pricing API Integration
+- **Real-Time Pricing Data**: Accurate cost estimates using current AWS pricing
+- **Service-Specific Calculations**: Tailored cost models for EC2, RDS, S3, Lambda, and more
+- **Multi-Pricing Model Support**: On-demand, reserved, and spot pricing considerations
+- **Confidence Levels**: Reliability indicators for cost estimates (high, medium, low)
+- **Cost Breakdown Analysis**: Detailed component-level cost attribution
+
+#### **Expensive Resource Identification** - Configurable Cost Thresholds
+- **Customizable Thresholds**: Organization-specific cost thresholds
+- **Service-Specific Analysis**: Different thresholds for different AWS services
+- **Cost Ranking**: Resources sorted by estimated monthly cost
+- **Impact Assessment**: Potential savings from optimization actions
+
+#### **Forgotten Resource Detection** - Activity Pattern Analysis
+- **CloudWatch Metrics Integration**: CPU, network, database connections, S3 requests
+- **Configurable Inactivity Periods**: Customizable thresholds for "forgotten" classification
+- **Risk Level Assessment**: High, medium, low risk categorization
+- **Automated Recommendations**: Specific actions for each forgotten resource
+
+#### **Cost Trend Analysis** - Historical Cost Tracking
+- **AWS Cost Explorer Integration**: Historical cost data and trend analysis
+- **Trend Direction Detection**: Increasing, decreasing, or stable cost patterns
+- **Alert Generation**: Notifications for significant cost changes
+- **Service-Level Trends**: Cost analysis grouped by AWS service
+
+#### **Optimization Recommendations** - Actionable Cost Reduction
+- **Rightsizing Suggestions**: Instance type optimization recommendations
+- **Underutilization Detection**: Resources with low utilization patterns
+- **Reserved Instance Analysis**: Opportunities for reserved pricing
+- **Storage Class Optimization**: S3 storage class recommendations
+- **Implementation Effort Assessment**: Easy, medium, hard implementation categories
+
+### 🛠️ **Cost Analysis Framework**
+
+```python
+from inventag.discovery.cost_analyzer import CostAnalyzer, CostThresholds
+from decimal import Decimal
+
+# Configure custom thresholds
+thresholds = CostThresholds(
+    expensive_resource_monthly_threshold=Decimal('200.00'),  # $200/month
+    forgotten_resource_days_threshold=45,                    # 45 days inactive
+    high_cost_alert_threshold=Decimal('2000.00'),           # $2000/month
+    cost_trend_alert_percentage=30.0,                       # 30% change
+    unused_resource_utilization_threshold=10.0              # 10% utilization
+)
+
+# Initialize cost analyzer
+analyzer = CostAnalyzer(thresholds=thresholds)
+
+# Estimate costs for resources
+cost_estimates = analyzer.estimate_resource_costs(resources)
+
+# Identify expensive resources
+expensive_resources = analyzer.identify_expensive_resources(cost_estimates)
+
+# Detect forgotten resources
+forgotten_resources = analyzer.detect_forgotten_resources(resources)
+
+# Generate optimization recommendations
+recommendations = analyzer.generate_cost_optimization_recommendations(
+    cost_estimates=cost_estimates,
+    forgotten_resources=forgotten_resources
+)
+
+print(f"Total monthly cost: ${sum(est.estimated_monthly_cost for est in cost_estimates)}")
+print(f"Expensive resources: {len(expensive_resources)}")
+print(f"Forgotten resources: {len(forgotten_resources)}")
+print(f"Optimization opportunities: {len(recommendations)}")
+```
+
+### 🎯 **Cost Analysis Use Cases**
+
+#### **Monthly Cost Estimation**
+```python
+# Get detailed cost breakdown for resources
+for estimate in cost_estimates:
+    print(f"Resource: {estimate.resource_id}")
+    print(f"Service: {estimate.service}")
+    print(f"Monthly Cost: ${estimate.estimated_monthly_cost}")
+    print(f"Confidence: {estimate.confidence_level}")
+    
+    # Show cost breakdown by component
+    for component, cost in estimate.cost_breakdown.items():
+        print(f"  {component}: ${cost}")
+```
+
+#### **Forgotten Resource Management**
+```python
+# Identify and manage forgotten resources
+for forgotten in forgotten_resources:
+    if forgotten.risk_level == 'high':
+        print(f"HIGH RISK: {forgotten.resource_id}")
+        print(f"Inactive for {forgotten.days_since_last_activity} days")
+        print(f"Monthly cost: ${forgotten.estimated_monthly_cost}")
+        print("Recommendations:")
+        for rec in forgotten.recommendations:
+            print(f"  - {rec}")
+```
+
+#### **Cost Optimization Planning**
+```python
+# Prioritize optimization recommendations
+high_impact_recs = [r for r in recommendations if r.potential_monthly_savings > Decimal('50.00')]
+total_savings = sum(r.potential_monthly_savings for r in high_impact_recs)
+
+print(f"High-impact recommendations: {len(high_impact_recs)}")
+print(f"Potential monthly savings: ${total_savings}")
+
+for rec in sorted(high_impact_recs, key=lambda x: x.potential_monthly_savings, reverse=True):
+    print(f"- {rec.resource_id}: ${rec.potential_monthly_savings}/month savings")
+    print(f"  Type: {rec.recommendation_type}")
+    print(f"  Effort: {rec.implementation_effort}")
+```
+
+### 🔄 **Integration with InvenTag Workflow**
+
+```python
+from inventag.discovery import AWSResourceInventory
+from inventag.discovery.cost_analyzer import CostAnalyzer
+from inventag.reporting import BOMConverter
+
+# Discover resources
+inventory = AWSResourceInventory(regions=['us-east-1', 'us-west-2'])
+resources = inventory.discover_resources()
+
+# Analyze costs
+analyzer = CostAnalyzer()
+cost_estimates = analyzer.estimate_resource_costs(resources)
+
+# Enrich resources with cost data
+for resource in resources:
+    cost_estimate = next(
+        (est for est in cost_estimates if est.resource_id == resource['id']), 
+        None
+    )
+    if cost_estimate:
+        resource['estimated_monthly_cost'] = float(cost_estimate.estimated_monthly_cost)
+        resource['cost_confidence'] = cost_estimate.confidence_level
+
+# Generate BOM with cost information
+converter = BOMConverter()
+converter.data = resources
+converter.export_to_excel('cost_analysis_bom.xlsx')
+```
+
+### 📊 **Supported AWS Services for Cost Analysis**
+
+| Service | Resource Types | Pricing Factors | Activity Metrics |
+|---------|----------------|-----------------|------------------|
+| **EC2** | Instances, Volumes | Instance type, volume type, size | CPU utilization, network traffic |
+| **RDS** | DB Instances, Clusters | Instance class, engine, storage | Database connections, CPU usage |
+| **S3** | Buckets | Storage class, region, data transfer | Request count, data access |
+| **Lambda** | Functions | Memory, execution time, requests | Function invocations |
+| **ELB/ALB** | Load Balancers | Load balancer type, data processing | Request count, response time |
+| **CloudFront** | Distributions | Data transfer, requests | Request metrics |
+| **VPC** | NAT Gateways, Endpoints | Data processing, hours | Data transfer |
+| **DynamoDB** | Tables | Read/write capacity, storage | Request metrics |
+
+## 📊 BOM Data Processing & Orchestration
+
+InvenTag includes a comprehensive BOM Data Processor that serves as the central orchestrator for processing raw inventory data and coordinating with specialized analyzers to produce enriched, analysis-ready datasets.
+
+### 🔧 **BOM Data Processor Features**
+
+#### **Central Orchestration** - Unified Data Processing Pipeline
+- **Multi-Format Input Support**: Handles inventory, compliance, and custom data formats
+- **Intelligent Data Extraction**: Automatically detects and extracts resources from various container formats
+- **Resource Standardization**: Normalizes resource data across different discovery methods
+- **Service Reclassification**: Intelligently reclassifies VPC-related resources for better organization
+- **Deduplication**: Advanced deduplication with preference for more complete resource records
+
+#### **Comprehensive Analysis Integration** - Coordinated Enrichment Pipeline
+- **Network Analysis**: VPC/subnet analysis with IP utilization and capacity planning
+- **Security Analysis**: Security posture assessment with vulnerability detection
+- **Service Enrichment**: Deep attribute extraction for AWS services
+- **Service Descriptions**: Intelligent, template-based resource descriptions
+- **Tag Mapping**: Advanced tag transformation and standardization
+
+#### **Configurable Processing** - Flexible Processing Options
+- **Selective Analysis**: Enable/disable specific analysis components
+- **Parallel Processing**: Multi-threaded processing for large datasets
+- **Caching System**: Result caching for improved performance
+- **Timeout Management**: Configurable processing timeouts
+- **Error Handling**: Comprehensive error tracking and recovery
+
+### 🛠️ **BOM Data Processing Framework**
+
+```python
+from inventag.reporting.bom_processor import (
+    BOMDataProcessor, 
+    BOMProcessingConfig, 
+    BOMData
+)
+
+# Configure processing options
+config = BOMProcessingConfig(
+    enable_network_analysis=True,
+    enable_security_analysis=True,
+    enable_service_enrichment=True,
+    enable_service_descriptions=True,
+    enable_tag_mapping=True,
+    enable_parallel_processing=True,
+    max_worker_threads=4,
+    processing_timeout=300,
+    service_descriptions_config='config/service_descriptions.yaml',
+    tag_mappings_config='config/tag_mappings.yaml'
+)
+
+# Initialize processor
+processor = BOMDataProcessor(config, boto3.Session())
+
+# Process inventory data
+bom_data = processor.process_inventory_data(raw_inventory_data)
+
+# Access enriched results
+print(f"Processed {len(bom_data.resources)} resources")
+print(f"Network Analysis: {bom_data.network_analysis}")
+print(f"Security Analysis: {bom_data.security_analysis}")
+print(f"Compliance Summary: {bom_data.compliance_summary}")
+```
+
+### 🎯 **Advanced Processing Configuration**
+
+#### **Selective Analysis Configuration**
+```python
+# Configure for network-focused analysis only
+network_config = BOMProcessingConfig(
+    enable_network_analysis=True,
+    enable_security_analysis=False,
+    enable_service_enrichment=False,
+    enable_service_descriptions=False,
+    enable_tag_mapping=False
+)
+
+# Configure for compliance-focused analysis
+compliance_config = BOMProcessingConfig(
+    enable_network_analysis=False,
+    enable_security_analysis=True,
+    enable_service_enrichment=True,
+    enable_service_descriptions=True,
+    enable_tag_mapping=True,
+    service_descriptions_config='config/compliance_descriptions.yaml'
+)
+```
+
+#### **Performance Optimization**
+```python
+# High-performance configuration for large datasets
+performance_config = BOMProcessingConfig(
+    enable_parallel_processing=True,
+    max_worker_threads=8,
+    cache_results=True,
+    processing_timeout=600
+)
+
+processor = BOMDataProcessor(performance_config, session)
+
+# Process with performance monitoring
+import time
+start_time = time.time()
+bom_data = processor.process_inventory_data(large_dataset)
+processing_time = time.time() - start_time
+
+stats = processor.get_processing_statistics()
+print(f"Processing completed in {processing_time:.2f} seconds")
+print(f"Resources processed: {stats.processed_resources}")
+print(f"Failed resources: {stats.failed_resources}")
+```
+
+### 🔄 **Data Processing Pipeline**
+
+The BOM Data Processor follows a comprehensive processing pipeline:
+
+1. **Data Extraction**: Intelligently extracts resources from various input formats
+2. **Resource Standardization**: Normalizes resource data structure and attributes
+3. **Service Reclassification**: Reclassifies VPC-related resources for better organization
+4. **Data Cleaning**: Fixes common data issues (missing IDs, account IDs, etc.)
+5. **Deduplication**: Removes duplicate resources while preserving complete records
+6. **Analysis Coordination**: Orchestrates multiple analysis components
+7. **Result Aggregation**: Combines analysis results into comprehensive BOM data
+8. **Metadata Generation**: Creates processing metadata and statistics
+
+### 🎯 **Integration Patterns**
+
+#### **With Resource Discovery**
+```python
+from inventag import AWSResourceInventory
+from inventag.reporting.bom_processor import BOMDataProcessor, BOMProcessingConfig
+
+# Discover resources
+inventory = AWSResourceInventory(regions=['us-east-1', 'us-west-2'])
+raw_resources = inventory.discover_resources()
+
+# Process with BOM processor
+config = BOMProcessingConfig(enable_all_analysis=True)
+processor = BOMDataProcessor(config, inventory.session)
+bom_data = processor.process_inventory_data(raw_resources)
+
+# Access comprehensive analysis
+print(f"Network Summary: {bom_data.network_analysis}")
+print(f"Security Summary: {bom_data.security_analysis}")
+print(f"Custom Attributes: {bom_data.custom_attributes}")
+```
+
+#### **With State Management**
+```python
+from inventag.state import StateManager
+
+# Process and save enriched state
+state_manager = StateManager()
+bom_data = processor.process_inventory_data(resources)
+
+state_id = state_manager.save_state(
+    resources=bom_data.resources,
+    account_id='123456789012',
+    regions=['us-east-1', 'us-west-2'],
+    network_analysis=bom_data.network_analysis,
+    security_analysis=bom_data.security_analysis,
+    compliance_data=bom_data.compliance_summary,
+    tags={'processing': 'bom_processor', 'version': '1.0'}
+)
+```
+
+#### **With Compliance Checking**
+```python
+from inventag.compliance import ComprehensiveTagComplianceChecker
+
+# Process resources and check compliance
+bom_data = processor.process_inventory_data(resources)
+
+# Enhanced compliance checking with enriched data
+checker = ComprehensiveTagComplianceChecker(
+    regions=['us-east-1', 'us-west-2'],
+    config_file='config/tag_policy.yaml'
+)
+
+compliance_results = checker.check_compliance(bom_data.resources)
+
+# Combine with BOM analysis
+enhanced_bom = BOMData(
+    resources=bom_data.resources,
+    network_analysis=bom_data.network_analysis,
+    security_analysis=bom_data.security_analysis,
+    compliance_summary=compliance_results['summary'],
+    generation_metadata=bom_data.generation_metadata
+)
+```
+
+### 📊 **Processing Statistics and Monitoring**
+
+```python
+# Get detailed processing statistics
+stats = processor.get_processing_statistics()
+
+print(f"Processing Statistics:")
+print(f"  Total Resources: {stats.total_resources}")
+print(f"  Successfully Processed: {stats.processed_resources}")
+print(f"  Failed Processing: {stats.failed_resources}")
+print(f"  Network Enriched: {stats.network_enriched}")
+print(f"  Security Enriched: {stats.security_enriched}")
+print(f"  Service Enriched: {stats.service_enriched}")
+print(f"  Description Enriched: {stats.description_enriched}")
+print(f"  Tag Mapped: {stats.tag_mapped}")
+print(f"  Processing Time: {stats.processing_time_seconds:.2f} seconds")
+
+# Handle errors and warnings
+if stats.errors:
+    print(f"Errors encountered: {len(stats.errors)}")
+    for error in stats.errors:
+        print(f"  - {error}")
+
+if stats.warnings:
+    print(f"Warnings: {len(stats.warnings)}")
+    for warning in stats.warnings:
+        print(f"  - {warning}")
+```
+
+### 🔧 **Error Handling and Recovery**
+
+```python
+# Configure error handling
+config = BOMProcessingConfig(
+    enable_network_analysis=True,
+    enable_security_analysis=True,
+    processing_timeout=300
+)
+
+processor = BOMDataProcessor(config, session)
+
+try:
+    bom_data = processor.process_inventory_data(resources)
+    
+    # Check for processing errors
+    if bom_data.error_summary.get('has_errors', False):
+        print("Processing completed with errors:")
+        for error in bom_data.error_summary.get('errors', []):
+            print(f"  - {error}")
+    
+    # Check for warnings
+    if bom_data.error_summary.get('has_warnings', False):
+        print("Processing completed with warnings:")
+        for warning in bom_data.error_summary.get('warnings', []):
+            print(f"  - {warning}")
+            
+except Exception as e:
+    print(f"Processing failed: {e}")
+    
+    # Get partial results if available
+    stats = processor.get_processing_statistics()
+    if stats.processed_resources > 0:
+        print(f"Partial processing completed: {stats.processed_resources} resources")
+```
+
 ## 🐍 Programmatic Usage (Python Package)
 
 InvenTag is now available as a unified Python package for programmatic integration into your applications and workflows.
@@ -710,22 +1142,29 @@ from inventag.state import StateManager, DeltaDetector, ChangelogGenerator
 from inventag.discovery.service_enrichment import ServiceAttributeEnricher
 from inventag.discovery.service_descriptions import ServiceDescriptionManager
 from inventag.discovery.network_analyzer import NetworkAnalyzer
+from inventag.reporting.bom_processor import BOMDataProcessor, BOMProcessingConfig
 
 # Resource Discovery with Service Enrichment
 inventory = AWSResourceInventory(regions=['us-east-1', 'us-west-2'])
 resources = inventory.discover_resources()
 
-# Deep service attribute enrichment
-enricher = ServiceAttributeEnricher()
-enriched_resources = enricher.enrich_resources_with_attributes(resources)
+# Comprehensive BOM Processing
+config = BOMProcessingConfig(
+    enable_network_analysis=True,
+    enable_security_analysis=True,
+    enable_service_enrichment=True,
+    enable_service_descriptions=True,
+    enable_tag_mapping=True
+)
 
-# Apply intelligent service descriptions
-desc_manager = ServiceDescriptionManager(config_path='config/service_descriptions.yaml')
-described_resources = desc_manager.apply_descriptions_to_resources(enriched_resources)
+processor = BOMDataProcessor(config, inventory.session)
+bom_data = processor.process_inventory_data(resources)
 
-# Network Analysis and VPC/Subnet Enrichment
-network_analyzer = NetworkAnalyzer()
-vpc_analysis = network_analyzer.analyze_vpc_resources(described_resources)
+# Access enriched and analyzed data
+enriched_resources = bom_data.resources
+network_analysis = bom_data.network_analysis
+security_analysis = bom_data.security_analysis
+compliance_summary = bom_data.compliance_summarywork_analyzer.analyze_vpc_resources(described_resources)
 network_enriched_resources = network_analyzer.map_resources_to_network(described_resources)
 
 # Tag Compliance Checking
