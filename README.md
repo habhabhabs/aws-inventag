@@ -341,7 +341,7 @@ generator.export_changelog(changelog, 'changes_report.md')
 ```
 
 ### 🎯 **Demo Scripts**
-Explore the state management capabilities with interactive demos:
+Explore the comprehensive capabilities with interactive demos:
 
 ```bash
 # State management demonstration
@@ -352,6 +352,9 @@ python examples/delta_detector_demo.py
 
 # Changelog generation demonstration
 python examples/changelog_generator_demo.py
+
+# Service enrichment demonstration
+python examples/service_enrichment_demo.py
 ```
 
 ### 🔧 **Key State Management Features**

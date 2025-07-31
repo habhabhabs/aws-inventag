@@ -578,6 +578,42 @@ for i in range(0, len(resources), batch_size):
 4. **Audit Logging**: Log enrichment activities for security auditing
 5. **Permission Validation**: Regularly validate required IAM permissions
 
+## 🎯 Interactive Demo
+
+Explore the service enrichment framework with the comprehensive interactive demo:
+
+```bash
+# Run the service enrichment demonstration
+python examples/service_enrichment_demo.py
+```
+
+The demo script provides:
+
+- **Framework Overview**: Detailed explanation of the service enrichment architecture
+- **Service Handler Capabilities**: Comprehensive breakdown of each supported service
+- **Dynamic Discovery Demonstration**: Shows how unknown services are handled
+- **Enrichment Process Simulation**: Step-by-step walkthrough with sample data
+- **Usage Patterns**: Common integration patterns and best practices
+- **Cross-Platform Compatibility**: Uses text-based indicators for universal terminal support
+
+### Demo Output Features
+
+The demonstration includes:
+- Service handler registration and capabilities overview
+- Detailed attribute extraction examples for each supported service
+- Dynamic discovery process explanation and simulation
+- Enriched data structure examples with real-world configurations
+- Performance statistics and enrichment success metrics
+- Integration examples with state management and compliance checking
+
+### Terminal Compatibility
+
+The demo script has been optimized for cross-platform compatibility:
+- Uses `[OK]` and `[DYNAMIC]` text indicators instead of emoji characters
+- Ensures proper UTF-8 encoding on Windows systems
+- Provides clear, readable output across different terminal environments
+- Maintains professional formatting while ensuring universal accessibility
+
 ---
 
 For more examples and advanced usage patterns, see the demo scripts in the `examples/` directory and the comprehensive test suite in `tests/unit/test_service_handlers.py`.

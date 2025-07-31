@@ -99,6 +99,7 @@
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
 
 - [ ] 5. Develop network analysis and VPC enrichment capabilities
+
   - [ ] 5.1 Create NetworkAnalyzer for VPC and subnet analysis
     - Extract and enhance VPC enrichment functionality from existing `bom_converter.py`
     - Implement VPC CIDR block analysis and IP utilization calculations
