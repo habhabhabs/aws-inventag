@@ -118,7 +118,8 @@
     - Write comprehensive tests for security analysis algorithms and risk assessment
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
 
-- [ ] 6. Build service description and tag mapping engines
+- [-] 6. Build service description and tag mapping engines
+
 
   - [ ] 6.1 Implement ServiceDescriptionManager
     - Create service description loading from YAML/JSON configuration files with schema validation

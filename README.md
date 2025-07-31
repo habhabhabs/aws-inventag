@@ -22,6 +22,8 @@
 - 📊 **Professional BOM Generation** - Creates detailed Excel/CSV reports with service-specific sheets
 - 🏷️ **Tag Compliance Checking** - Validates resources against organizational tagging policies
 - 🔧 **Intelligent Data Enhancement** - Enriches resources with VPC names, account IDs, and inferred tags
+- 🌐 **Network Analysis** - Comprehensive VPC/subnet analysis with IP utilization and capacity planning
+- 🔒 **Security Analysis** - Security posture assessment with vulnerability detection and compliance checks
 - 🚀 **CI/CD Ready** - Easy integration into automated compliance workflows
 - 📈 **Comprehensive Reporting** - Summary dashboards with compliance percentages and service breakdowns
 - 🔄 **State Management** - Track changes over time with persistent state storage and versioning
@@ -40,7 +42,9 @@ inventag-aws/
 │   │   ├── __init__.py
 │   │   ├── inventory.py               # AWSResourceInventory class
 │   │   ├── service_enrichment.py      # Service attribute enrichment framework
-│   │   └── service_handlers.py        # Specific AWS service handlers
+│   │   ├── service_handlers.py        # Specific AWS service handlers
+│   │   ├── network_analyzer.py        # NetworkAnalyzer for VPC/subnet analysis
+│   │   └── security_analyzer.py       # SecurityAnalyzer for security posture
 │   ├── compliance/                    # Tag compliance module
 │   │   ├── __init__.py
 │   │   └── checker.py                 # ComprehensiveTagComplianceChecker
@@ -355,6 +359,9 @@ python examples/changelog_generator_demo.py
 
 # Service enrichment demonstration
 python examples/service_enrichment_demo.py
+
+# Network analysis demonstration
+python examples/network_security_analysis_demo.py
 ```
 
 ### 🔧 **Key State Management Features**
@@ -366,6 +373,81 @@ python examples/service_enrichment_demo.py
 - **🎯 Impact Assessment**: Identify high-impact changes and cascade risks
 - **📋 Export Capabilities**: JSON, YAML, CSV export for CI/CD integration
 - **🔍 Query Interface**: List, compare, and validate states programmatically
+
+## 🌐 Network Analysis & Capacity Planning
+
+InvenTag includes a comprehensive NetworkAnalyzer that provides deep VPC and subnet analysis for network visibility, capacity planning, and optimization recommendations.
+
+### 🔧 **Network Analysis Features**
+
+#### **VPC Analysis** - Comprehensive Virtual Private Cloud Assessment
+- **CIDR Block Analysis**: Multi-CIDR support with total IP calculations
+- **Utilization Metrics**: Real-time IP utilization across all subnets
+- **Network Components**: Internet gateways, NAT gateways, VPC endpoints
+- **Connectivity Mapping**: VPC peering and Transit Gateway attachments
+- **Resource Association**: Automatic mapping of resources to VPCs
+
+#### **Subnet Analysis** - Detailed Subnet Utilization and Planning
+- **IP Utilization Tracking**: Available vs. used IP addresses with percentages
+- **Availability Zone Distribution**: Multi-AZ subnet analysis
+- **Public/Private Classification**: Route table analysis for subnet types
+- **Capacity Planning**: Utilization thresholds and growth projections
+- **Resource Mapping**: EC2, RDS, Lambda resource-to-subnet associations
+
+#### **Network Optimization** - Intelligent Recommendations
+- **Capacity Warnings**: High utilization alerts (configurable thresholds)
+- **Underutilized Resources**: Identification of unused VPCs and subnets
+- **Consolidation Opportunities**: Subnet optimization recommendations
+- **Cost Optimization**: NAT gateway and VPC endpoint suggestions
+
+### 🛠️ **Network Analysis Framework**
+
+```python
+from inventag.discovery.network_analyzer import NetworkAnalyzer
+
+# Initialize network analyzer
+analyzer = NetworkAnalyzer()
+
+# Analyze VPC resources with comprehensive metrics
+vpc_analysis = analyzer.analyze_vpc_resources(resources)
+
+# Generate network capacity summary
+network_summary = analyzer.generate_network_summary(vpc_analysis)
+
+# Map resources to network context
+enriched_resources = analyzer.map_resources_to_network(resources)
+
+print(f"Total VPCs: {network_summary.total_vpcs}")
+print(f"Total Available IPs: {network_summary.total_available_ips}")
+print(f"Highest Utilization: {network_summary.highest_utilization_percentage:.1f}%")
+```
+
+### 🎯 **Network Analysis Use Cases**
+
+#### **Capacity Planning**
+```python
+# Identify high-utilization subnets
+for vpc_id, vpc in vpc_analysis.items():
+    for subnet in vpc.subnets:
+        if subnet.utilization_percentage > 80:
+            print(f"WARNING: Subnet {subnet.subnet_name} is {subnet.utilization_percentage:.1f}% utilized")
+```
+
+#### **Cost Optimization**
+```python
+# Find unused VPCs for cost savings
+unused_vpcs = [vpc for vpc in vpc_analysis.values() if not vpc.associated_resources]
+print(f"Found {len(unused_vpcs)} unused VPCs that could be removed")
+```
+
+#### **Network Security Assessment**
+```python
+# Identify public subnets and their resources
+for vpc in vpc_analysis.values():
+    public_subnets = [s for s in vpc.subnets if s.is_public]
+    if public_subnets:
+        print(f"VPC {vpc.vpc_name} has {len(public_subnets)} public subnets")
+```
 
 ## 🎯 Service-Specific Enrichment
 
@@ -481,6 +563,7 @@ InvenTag is now available as a unified Python package for programmatic integrati
 from inventag import AWSResourceInventory, ComprehensiveTagComplianceChecker, BOMConverter
 from inventag.state import StateManager, DeltaDetector, ChangelogGenerator
 from inventag.discovery.service_enrichment import ServiceAttributeEnricher
+from inventag.discovery.network_analyzer import NetworkAnalyzer
 
 # Resource Discovery with Service Enrichment
 inventory = AWSResourceInventory(regions=['us-east-1', 'us-west-2'])
@@ -490,22 +573,27 @@ resources = inventory.discover_resources()
 enricher = ServiceAttributeEnricher()
 enriched_resources = enricher.enrich_resources_with_attributes(resources)
 
+# Network Analysis and VPC/Subnet Enrichment
+network_analyzer = NetworkAnalyzer()
+vpc_analysis = network_analyzer.analyze_vpc_resources(enriched_resources)
+network_enriched_resources = network_analyzer.map_resources_to_network(enriched_resources)
+
 # Tag Compliance Checking
 checker = ComprehensiveTagComplianceChecker(
     regions=['us-east-1', 'us-west-2'],
     config_file='config/tag_policy_example.yaml'
 )
-compliance_results = checker.check_compliance(enriched_resources)
+compliance_results = checker.check_compliance(network_enriched_resources)
 
 # Professional Reporting with enriched data
 converter = BOMConverter(enrich_vpc_info=True)
-converter.data = enriched_resources
+converter.data = network_enriched_resources
 converter.export_to_excel('comprehensive_report.xlsx')
 
 # State Management
 state_manager = StateManager(state_dir='inventory_states')
 state_id = state_manager.save_state(
-    resources=enriched_resources,
+    resources=network_enriched_resources,
     account_id='123456789012',
     regions=['us-east-1', 'us-west-2'],
     compliance_data=compliance_results
@@ -699,6 +787,7 @@ All files include timestamps for easy tracking:
 
 - **[Release Management Guide](RELEASE.md)** - Complete CI/CD and versioning documentation
 - **[Security Guide](docs/SECURITY.md)** - Detailed permissions and security info
+- **[Network Analysis Guide](docs/NETWORK_ANALYSIS.md)** - Comprehensive VPC/subnet analysis and capacity planning
 - **[Service Enrichment Guide](docs/SERVICE_ENRICHMENT.md)** - Deep service attribute extraction and custom handlers
 - **[State Management Guide](docs/STATE_MANAGEMENT.md)** - Comprehensive state tracking and change detection
 - **[Configuration Guide](config/README.md)** - Tag policies and IAM setup

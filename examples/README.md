@@ -84,6 +84,22 @@ python examples/service_enrichment_demo.py
 - Integration patterns with state management and compliance checking
 - Performance optimization and caching strategies
 
+### `network_security_analysis_demo.py`
+**Network & Security Analysis Demonstration** - Comprehensive VPC/subnet analysis and security posture assessment.
+
+**Usage:**
+```bash
+python examples/network_security_analysis_demo.py
+```
+
+**Features demonstrated:**
+- VPC and subnet utilization analysis with IP capacity planning
+- Multi-CIDR VPC support and comprehensive network mapping
+- Resource-to-network context mapping with enrichment
+- Network optimization recommendations and cost savings identification
+- Security posture assessment and vulnerability detection
+- Integration with service enrichment and state management
+
 ## Output Files
 
 After running the tools, you'll find timestamped output files here:
@@ -207,6 +223,77 @@ for resource in compliance_results['non_compliant_resources']:
             attrs = resource['service_attributes']
             if not attrs.get('storage_encrypted', False):
                 print('  - Database storage not encrypted')
+"
+```
+
+### Network Analysis Usage
+
+#### Basic Network Analysis
+```bash
+# Analyze VPC and subnet utilization
+python -c "
+from inventag import AWSResourceInventory
+from inventag.discovery.network_analyzer import NetworkAnalyzer
+
+# Discover resources
+inventory = AWSResourceInventory(regions=['us-east-1'])
+resources = inventory.discover_resources()
+
+# Analyze network infrastructure
+analyzer = NetworkAnalyzer()
+vpc_analysis = analyzer.analyze_vpc_resources(resources)
+network_summary = analyzer.generate_network_summary(vpc_analysis)
+
+print(f'Total VPCs: {network_summary.total_vpcs}')
+print(f'Total Subnets: {network_summary.total_subnets}')
+print(f'Total Available IPs: {network_summary.total_available_ips}')
+print(f'Highest Utilization: {network_summary.highest_utilization_percentage:.1f}%')
+"
+```
+
+#### Capacity Planning and Monitoring
+```bash
+# Monitor network capacity and identify high-utilization subnets
+python -c "
+from inventag import AWSResourceInventory
+from inventag.discovery.network_analyzer import NetworkAnalyzer
+
+inventory = AWSResourceInventory(regions=['us-east-1'])
+resources = inventory.discover_resources()
+
+analyzer = NetworkAnalyzer()
+vpc_analysis = analyzer.analyze_vpc_resources(resources)
+
+# Check for high utilization
+for vpc_id, vpc in vpc_analysis.items():
+    print(f'VPC: {vpc.vpc_name} ({vpc.utilization_percentage:.1f}% utilized)')
+    
+    for subnet in vpc.subnets:
+        if subnet.utilization_percentage > 80:
+            print(f'  ⚠️  HIGH: {subnet.subnet_name} - {subnet.utilization_percentage:.1f}%')
+            print(f'      {subnet.available_ips} IPs remaining')
+"
+```
+
+#### Network-Enriched Resource Analysis
+```bash
+# Enrich resources with network context
+python -c "
+from inventag import AWSResourceInventory
+from inventag.discovery.network_analyzer import NetworkAnalyzer
+
+inventory = AWSResourceInventory(regions=['us-east-1'])
+resources = inventory.discover_resources()
+
+analyzer = NetworkAnalyzer()
+enriched_resources = analyzer.map_resources_to_network(resources)
+
+# Analyze resources by network context
+for resource in enriched_resources:
+    if 'vpc_name' in resource:
+        print(f'{resource[\"service\"]} {resource[\"name\"]} in VPC {resource[\"vpc_name\"]}')
+        if 'subnet_utilization_percentage' in resource:
+            print(f'  Subnet utilization: {resource[\"subnet_utilization_percentage\"]:.1f}%')
 "
 ```
 
@@ -496,6 +583,7 @@ else:
 5. **Set up alerting** based on change thresholds and severity levels
 
 ### Documentation References
+- **Network Analysis**: [`docs/NETWORK_ANALYSIS.md`](../docs/NETWORK_ANALYSIS.md) - Comprehensive VPC/subnet analysis and capacity planning
 - **Service Enrichment**: [`docs/SERVICE_ENRICHMENT.md`](../docs/SERVICE_ENRICHMENT.md) - Deep service attribute extraction
 - **State Management**: [`docs/STATE_MANAGEMENT.md`](../docs/STATE_MANAGEMENT.md) - Comprehensive change tracking
 - **Security**: [`docs/SECURITY.md`](../docs/SECURITY.md) - Security considerations and permissions

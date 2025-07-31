@@ -17,6 +17,9 @@ from .discovery import AWSResourceInventory
 from .compliance import ComprehensiveTagComplianceChecker
 from .reporting import BOMConverter
 
+# Analysis modules
+from .discovery.network_analyzer import NetworkAnalyzer
+
 # State management modules
 from .state import StateManager, DeltaDetector, ChangelogGenerator
 
@@ -27,6 +30,7 @@ __all__ = [
     "AWSResourceInventory",
     "ComprehensiveTagComplianceChecker", 
     "BOMConverter",
+    "NetworkAnalyzer",
     "StateManager",
     "DeltaDetector",
     "ChangelogGenerator",
