@@ -13,6 +13,20 @@ from .service_enrichment import (
     DynamicServiceHandler,
     ServiceDiscoveryResult
 )
+from .network_analyzer import (
+    NetworkAnalyzer,
+    VPCAnalysis,
+    SubnetAnalysis,
+    NetworkSummary
+)
+from .security_analyzer import (
+    SecurityAnalyzer,
+    SecurityGroupAnalysis,
+    SecurityRule,
+    NACLAnalysis,
+    NACLRule,
+    SecuritySummary
+)
 
 # Import specific service handlers
 try:
@@ -32,6 +46,16 @@ try:
         "ServiceHandlerFactory",
         "DynamicServiceHandler",
         "ServiceDiscoveryResult",
+        "NetworkAnalyzer",
+        "VPCAnalysis",
+        "SubnetAnalysis", 
+        "NetworkSummary",
+        "SecurityAnalyzer",
+        "SecurityGroupAnalysis",
+        "SecurityRule",
+        "NACLAnalysis",
+        "NACLRule",
+        "SecuritySummary",
         "S3Handler",
         "RDSHandler", 
         "EC2Handler",
@@ -48,5 +72,15 @@ except ImportError:
         "ServiceHandler",
         "ServiceHandlerFactory",
         "DynamicServiceHandler",
-        "ServiceDiscoveryResult"
+        "ServiceDiscoveryResult",
+        "NetworkAnalyzer",
+        "VPCAnalysis",
+        "SubnetAnalysis", 
+        "NetworkSummary",
+        "SecurityAnalyzer",
+        "SecurityGroupAnalysis",
+        "SecurityRule",
+        "NACLAnalysis",
+        "NACLRule",
+        "SecuritySummary"
     ]

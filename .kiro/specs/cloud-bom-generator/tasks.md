@@ -68,7 +68,6 @@
     - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6_
 
 - [x] 4. Create automatic service discovery and enrichment system
-
   - [x] 4.1 Implement ServiceAttributeEnricher base framework
     - Extract and enhance service discovery patterns from existing `aws_resource_inventory.py`
     - Create ServiceHandler base class with read-only operation validation
@@ -98,9 +97,8 @@
     - Write extensive tests for various AWS service patterns and edge cases
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
 
-- [ ] 5. Develop network analysis and VPC enrichment capabilities
-
-  - [ ] 5.1 Create NetworkAnalyzer for VPC and subnet analysis
+- [x] 5. Develop network analysis and VPC enrichment capabilities
+  - [x] 5.1 Create NetworkAnalyzer for VPC and subnet analysis
     - Extract and enhance VPC enrichment functionality from existing `bom_converter.py`
     - Implement VPC CIDR block analysis and IP utilization calculations
     - Create subnet utilization tracking with available IP counting and capacity planning
@@ -110,7 +108,7 @@
     - Write unit tests for network analysis algorithms and CIDR calculations
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7_
 
-  - [ ] 5.2 Implement security group and NACL analysis
+  - [x] 5.2 Implement security group and NACL analysis
     - Create SecurityAnalyzer for comprehensive security group rule extraction and analysis
     - Implement overly permissive rule detection (0.0.0.0/0 access) with risk assessment
     - Add security group relationship mapping and dependency analysis across resources
@@ -121,6 +119,7 @@
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
 
 - [ ] 6. Build service description and tag mapping engines
+
   - [ ] 6.1 Implement ServiceDescriptionManager
     - Create service description loading from YAML/JSON configuration files with schema validation
     - Implement service-specific and resource-type-specific description lookup with fallbacks
