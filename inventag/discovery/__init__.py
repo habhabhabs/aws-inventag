@@ -27,6 +27,18 @@ from .security_analyzer import (
     NACLRule,
     SecuritySummary
 )
+from .service_descriptions import (
+    ServiceDescriptionManager,
+    ServiceDescription,
+    DescriptionTemplate,
+    DescriptionTemplateEngine
+)
+from .tag_mapping import (
+    TagMappingEngine,
+    TagMapping,
+    TagMappingResult,
+    TagNormalizer
+)
 
 # Import specific service handlers
 try:
@@ -56,6 +68,14 @@ try:
         "NACLAnalysis",
         "NACLRule",
         "SecuritySummary",
+        "ServiceDescriptionManager",
+        "ServiceDescription",
+        "DescriptionTemplate",
+        "DescriptionTemplateEngine",
+        "TagMappingEngine",
+        "TagMapping",
+        "TagMappingResult",
+        "TagNormalizer",
         "S3Handler",
         "RDSHandler", 
         "EC2Handler",
@@ -82,5 +102,13 @@ except ImportError:
         "SecurityRule",
         "NACLAnalysis",
         "NACLRule",
-        "SecuritySummary"
+        "SecuritySummary",
+        "ServiceDescriptionManager",
+        "ServiceDescription",
+        "DescriptionTemplate",
+        "DescriptionTemplateEngine",
+        "TagMappingEngine",
+        "TagMapping",
+        "TagMappingResult",
+        "TagNormalizer"
     ]

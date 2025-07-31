@@ -118,10 +118,8 @@
     - Write comprehensive tests for security analysis algorithms and risk assessment
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
 
-- [-] 6. Build service description and tag mapping engines
-
-
-  - [ ] 6.1 Implement ServiceDescriptionManager
+- [x] 6. Build service description and tag mapping engines
+  - [x] 6.1 Implement ServiceDescriptionManager
     - Create service description loading from YAML/JSON configuration files with schema validation
     - Implement service-specific and resource-type-specific description lookup with fallbacks
     - Add description application to resource data with intelligent defaults and customization
@@ -131,7 +129,7 @@
     - Write unit tests for description management and template rendering
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6_
 
-  - [ ] 6.2 Create TagMappingEngine for custom attribute extraction
+  - [x] 6.2 Create TagMappingEngine for custom attribute extraction
     - Implement custom tag attribute extraction using flexible tag object configuration format
     - Create tag mapping application with user-specified attribute names and display titles
     - Add default value handling for missing custom tags with configurable fallback strategies
