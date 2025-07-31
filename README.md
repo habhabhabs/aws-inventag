@@ -43,6 +43,8 @@ inventag-aws/
 │   │   ├── inventory.py               # AWSResourceInventory class
 │   │   ├── service_enrichment.py      # Service attribute enrichment framework
 │   │   ├── service_handlers.py        # Specific AWS service handlers
+│   │   ├── service_descriptions.py    # Service description management framework
+│   │   ├── tag_mapping.py             # Tag mapping and transformation utilities
 │   │   ├── network_analyzer.py        # NetworkAnalyzer for VPC/subnet analysis
 │   │   └── security_analyzer.py       # SecurityAnalyzer for security posture
 │   ├── compliance/                    # Tag compliance module
@@ -360,6 +362,9 @@ python examples/changelog_generator_demo.py
 # Service enrichment demonstration
 python examples/service_enrichment_demo.py
 
+# Service description management demonstration
+python examples/service_description_demo.py
+
 # Network analysis demonstration
 python examples/network_security_analysis_demo.py
 ```
@@ -447,6 +452,146 @@ for vpc in vpc_analysis.values():
     public_subnets = [s for s in vpc.subnets if s.is_public]
     if public_subnets:
         print(f"VPC {vpc.vpc_name} has {len(public_subnets)} public subnets")
+```
+
+## 📝 Service Description Management
+
+InvenTag includes a comprehensive Service Description Management Framework that provides intelligent, customizable descriptions for AWS resources with template-based dynamic generation and configuration file support.
+
+### 🔧 **Service Description Features**
+
+#### **Dynamic Description Generation** - Template-Based Resource Descriptions
+- **Template Engine**: Flexible template system with variable substitution
+- **Fallback Mechanisms**: Intelligent fallback to default descriptions when templates fail
+- **Attribute Mapping**: Automatic mapping of resource attributes to template variables
+- **Nested Attribute Support**: Access nested resource attributes using dot notation
+- **Service-Specific Templates**: Pre-built templates for major AWS services
+
+#### **Configuration Management** - YAML/JSON Configuration Support
+- **Schema Validation**: Comprehensive validation of configuration files
+- **Hot Reloading**: Runtime configuration updates without restart
+- **Template Registration**: Custom template registration and management
+- **Service Hierarchies**: Service-level and resource-type-level descriptions
+- **Metadata Tracking**: Track configuration sources and update timestamps
+
+#### **Built-in Service Support** - Pre-configured AWS Service Descriptions
+- **EC2**: Instances, volumes, security groups with detailed templates
+- **S3**: Buckets with encryption and configuration details
+- **RDS**: Database instances and clusters with engine information
+- **Lambda**: Functions with runtime and memory specifications
+- **VPC**: VPCs and subnets with network configuration details
+
+### 🛠️ **Service Description Framework**
+
+```python
+from inventag.discovery.service_descriptions import ServiceDescriptionManager
+
+# Initialize with configuration file
+manager = ServiceDescriptionManager(config_path='config/service_descriptions.yaml')
+
+# Apply descriptions to resources
+enriched_resources = manager.apply_descriptions_to_resources(resources)
+
+# Get dynamic descriptions with templates
+for resource in resources:
+    description = manager.get_dynamic_description(resource)
+    print(f"{resource['id']}: {description}")
+
+# Get configuration information
+config_info = manager.get_configuration_info()
+print(f"Loaded {config_info['total_custom_descriptions']} custom descriptions")
+```
+
+### 🎯 **Template System**
+
+Create custom templates for dynamic description generation:
+
+```yaml
+# config/service_descriptions.yaml
+service_descriptions:
+  EC2:
+    Instance:
+      description: "Virtual machine instance providing compute capacity"
+      template: "custom_ec2_instance"
+    Volume:
+      description: "Block storage volume for EC2 instances"
+      template: "custom_ec2_volume"
+
+templates:
+  custom_ec2_instance:
+    template: "EC2 Instance {resource_id} - {instance_type} in {availability_zone} ({state})"
+    required_attributes:
+      - "service_attributes.InstanceType"
+      - "service_attributes.State.Name"
+    optional_attributes:
+      - "service_attributes.Placement.AvailabilityZone"
+    fallback_template: "ec2_default"
+  
+  custom_ec2_volume:
+    template: "EBS Volume {resource_id} - {size}GB {volume_type} ({state})"
+    required_attributes:
+      - "service_attributes.Size"
+      - "service_attributes.VolumeType"
+      - "service_attributes.State"
+    fallback_template: "ec2_default"
+```
+
+### 🔄 **Advanced Template Features**
+
+#### **Variable Mapping and Transformation**
+```python
+# Template variables are automatically mapped from resource attributes
+# service_attributes.InstanceType -> instance_type
+# service_attributes.Placement.AvailabilityZone -> availability_zone
+
+# Example resource with service attributes:
+resource = {
+    'id': 'i-1234567890abcdef0',
+    'service': 'EC2',
+    'type': 'Instance',
+    'service_attributes': {
+        'InstanceType': 't3.micro',
+        'State': {'Name': 'running'},
+        'Placement': {'AvailabilityZone': 'us-east-1a'}
+    }
+}
+
+# Results in description: "EC2 Instance i-1234567890abcdef0 - t3.micro in us-east-1a (running)"
+```
+
+#### **Fallback Strategy**
+The system uses intelligent fallback mechanisms:
+1. **Exact Match**: Service + resource type specific template
+2. **Service Default**: Service-level default template
+3. **Built-in Templates**: Pre-configured AWS service templates
+4. **Generic Fallback**: Basic AWS service description
+
+#### **Configuration Export**
+```python
+# Export configuration template for customization
+manager.export_configuration_template(
+    output_path='my_service_descriptions.yaml',
+    format_type='yaml'
+)
+```
+
+### 🎯 **Integration with Resource Discovery**
+
+```python
+from inventag.discovery.service_descriptions import ServiceDescriptionManager
+from inventag.discovery.service_enrichment import ServiceAttributeEnricher
+
+# Enrich resources with service attributes first
+enricher = ServiceAttributeEnricher()
+enriched_resources = enricher.enrich_resources_with_attributes(resources)
+
+# Apply intelligent descriptions
+desc_manager = ServiceDescriptionManager(config_path='config/descriptions.yaml')
+final_resources = desc_manager.apply_descriptions_to_resources(enriched_resources)
+
+# Each resource now has:
+# - service_description: Human-readable description
+# - description_metadata: Generation metadata and source tracking
 ```
 
 ## 🎯 Service-Specific Enrichment
@@ -563,6 +708,7 @@ InvenTag is now available as a unified Python package for programmatic integrati
 from inventag import AWSResourceInventory, ComprehensiveTagComplianceChecker, BOMConverter
 from inventag.state import StateManager, DeltaDetector, ChangelogGenerator
 from inventag.discovery.service_enrichment import ServiceAttributeEnricher
+from inventag.discovery.service_descriptions import ServiceDescriptionManager
 from inventag.discovery.network_analyzer import NetworkAnalyzer
 
 # Resource Discovery with Service Enrichment
@@ -573,10 +719,14 @@ resources = inventory.discover_resources()
 enricher = ServiceAttributeEnricher()
 enriched_resources = enricher.enrich_resources_with_attributes(resources)
 
+# Apply intelligent service descriptions
+desc_manager = ServiceDescriptionManager(config_path='config/service_descriptions.yaml')
+described_resources = desc_manager.apply_descriptions_to_resources(enriched_resources)
+
 # Network Analysis and VPC/Subnet Enrichment
 network_analyzer = NetworkAnalyzer()
-vpc_analysis = network_analyzer.analyze_vpc_resources(enriched_resources)
-network_enriched_resources = network_analyzer.map_resources_to_network(enriched_resources)
+vpc_analysis = network_analyzer.analyze_vpc_resources(described_resources)
+network_enriched_resources = network_analyzer.map_resources_to_network(described_resources)
 
 # Tag Compliance Checking
 checker = ComprehensiveTagComplianceChecker(
@@ -585,7 +735,7 @@ checker = ComprehensiveTagComplianceChecker(
 )
 compliance_results = checker.check_compliance(network_enriched_resources)
 
-# Professional Reporting with enriched data
+# Professional Reporting with enriched data and descriptions
 converter = BOMConverter(enrich_vpc_info=True)
 converter.data = network_enriched_resources
 converter.export_to_excel('comprehensive_report.xlsx')

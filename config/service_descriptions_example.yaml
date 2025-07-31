@@ -1,0 +1,249 @@
+# Service Description Configuration Example
+# 
+# This file demonstrates how to configure custom service descriptions
+# and templates for AWS resources in InvenTag.
+#
+# Usage: python scripts/aws_resource_inventory.py --service-descriptions config/service_descriptions_example.yaml
+
+service_descriptions:
+  # Amazon EC2 Service Descriptions
+  EC2:
+    default:
+      description: "Amazon Elastic Compute Cloud - Scalable virtual servers in the cloud"
+      template: "ec2_default"
+    Instance:
+      description: "Virtual machine instance providing scalable compute capacity"
+      template: "ec2_instance_detailed"
+      attributes:
+        category: "compute"
+        managed: true
+        cost_center_required: true
+    Volume:
+      description: "Block storage volume for EC2 instances"
+      template: "ec2_volume_detailed"
+      attributes:
+        category: "storage"
+        backup_required: true
+    SecurityGroup:
+      description: "Virtual firewall controlling inbound and outbound traffic"
+      template: "ec2_security_group_detailed"
+      attributes:
+        category: "security"
+        audit_required: true
+
+  # Amazon S3 Service Descriptions
+  S3:
+    default:
+      description: "Amazon Simple Storage Service - Scalable object storage"
+      template: "s3_default"
+    Bucket:
+      description: "Container for objects stored in Amazon S3"
+      template: "s3_bucket_detailed"
+      attributes:
+        category: "storage"
+        encryption_required: true
+        versioning_recommended: true
+
+  # Amazon RDS Service Descriptions
+  RDS:
+    default:
+      description: "Amazon Relational Database Service - Managed relational databases"
+      template: "rds_default"
+    DBInstance:
+      description: "Managed relational database instance"
+      template: "rds_instance_detailed"
+      attributes:
+        category: "database"
+        backup_required: true
+        encryption_required: true
+    DBCluster:
+      description: "Managed database cluster for high availability"
+      template: "rds_cluster_detailed"
+      attributes:
+        category: "database"
+        high_availability: true
+
+  # AWS Lambda Service Descriptions
+  Lambda:
+    default:
+      description: "AWS Lambda - Serverless compute service"
+      template: "lambda_default"
+    Function:
+      description: "Serverless function that runs code in response to events"
+      template: "lambda_function_detailed"
+      attributes:
+        category: "compute"
+        serverless: true
+        monitoring_required: true
+
+  # Amazon VPC Service Descriptions
+  VPC:
+    default:
+      description: "Amazon Virtual Private Cloud - Isolated cloud resources"
+      template: "vpc_default"
+    VPC:
+      description: "Logically isolated section of AWS cloud"
+      template: "vpc_vpc_detailed"
+      attributes:
+        category: "network"
+        security_critical: true
+    Subnet:
+      description: "Range of IP addresses in a VPC"
+      template: "vpc_subnet_detailed"
+      attributes:
+        category: "network"
+        capacity_monitoring: true
+
+# Custom Templates for Dynamic Description Generation
+templates:
+  # Enhanced EC2 Instance Template
+  ec2_instance_detailed:
+    template: "EC2 Instance {resource_id} - {instance_type} server running in {availability_zone} (Status: {state_name}, Platform: {platform})"
+    required_attributes:
+      - "service_attributes.InstanceType"
+      - "service_attributes.State.Name"
+    optional_attributes:
+      - "service_attributes.Placement.AvailabilityZone"
+      - "service_attributes.Platform"
+      - "service_attributes.Architecture"
+    fallback_template: "ec2_default"
+
+  # Enhanced EBS Volume Template
+  ec2_volume_detailed:
+    template: "EBS Volume {resource_id} - {size}GB {volume_type} storage (State: {state}, Encrypted: {encrypted}, IOPS: {iops})"
+    required_attributes:
+      - "service_attributes.Size"
+      - "service_attributes.VolumeType"
+      - "service_attributes.State"
+    optional_attributes:
+      - "service_attributes.Encrypted"
+      - "service_attributes.Iops"
+      - "service_attributes.Throughput"
+    fallback_template: "ec2_default"
+
+  # Enhanced Security Group Template
+  ec2_security_group_detailed:
+    template: "Security Group {resource_id} ({group_name}) - {description} controlling network access for VPC {vpc_id}"
+    required_attributes:
+      - "service_attributes.GroupName"
+    optional_attributes:
+      - "service_attributes.Description"
+      - "service_attributes.VpcId"
+    fallback_template: "ec2_default"
+
+  # Enhanced S3 Bucket Template
+  s3_bucket_detailed:
+    template: "S3 Bucket {resource_id} - Secure object storage with {encryption_status} encryption, {versioning_status} versioning, and {public_access_status} public access"
+    required_attributes: []
+    optional_attributes:
+      - "service_attributes.encryption.enabled"
+      - "service_attributes.versioning_status"
+      - "service_attributes.public_access_block"
+    fallback_template: "s3_default"
+
+  # Enhanced RDS Instance Template
+  rds_instance_detailed:
+    template: "RDS Database {resource_id} - {engine} {engine_version} ({db_instance_class}) with Multi-AZ: {multi_az}, Encrypted: {storage_encrypted}, Backup: {backup_retention_period} days"
+    required_attributes:
+      - "service_attributes.Engine"
+    optional_attributes:
+      - "service_attributes.EngineVersion"
+      - "service_attributes.DBInstanceClass"
+      - "service_attributes.MultiAZ"
+      - "service_attributes.StorageEncrypted"
+      - "service_attributes.BackupRetentionPeriod"
+    fallback_template: "rds_default"
+
+  # Enhanced RDS Cluster Template
+  rds_cluster_detailed:
+    template: "RDS Cluster {resource_id} - {engine} {engine_version} cluster with {db_cluster_members} members (Multi-AZ: {multi_az}, Encrypted: {storage_encrypted})"
+    required_attributes:
+      - "service_attributes.Engine"
+    optional_attributes:
+      - "service_attributes.EngineVersion"
+      - "service_attributes.DBClusterMembers"
+      - "service_attributes.MultiAZ"
+      - "service_attributes.StorageEncrypted"
+    fallback_template: "rds_default"
+
+  # Enhanced Lambda Function Template
+  lambda_function_detailed:
+    template: "Lambda Function {resource_id} - {runtime} runtime with {memory_size}MB memory (Timeout: {timeout}s, Code Size: {code_size}MB, Handler: {handler})"
+    required_attributes:
+      - "service_attributes.Runtime"
+    optional_attributes:
+      - "service_attributes.MemorySize"
+      - "service_attributes.Timeout"
+      - "service_attributes.CodeSize"
+      - "service_attributes.Handler"
+    fallback_template: "lambda_default"
+
+  # Enhanced VPC Template
+  vpc_vpc_detailed:
+    template: "VPC {resource_id} ({vpc_name}) - {cidr_block} network in {region} (State: {state}, Tenancy: {instance_tenancy})"
+    required_attributes: []
+    optional_attributes:
+      - "service_attributes.CidrBlock"
+      - "service_attributes.State"
+      - "service_attributes.InstanceTenancy"
+      - "tags.Name"
+    fallback_template: "vpc_default"
+
+  # Enhanced Subnet Template
+  vpc_subnet_detailed:
+    template: "Subnet {resource_id} ({subnet_name}) - {cidr_block} in {availability_zone} (Available IPs: {available_ip_address_count}, Public: {map_public_ip_on_launch})"
+    required_attributes: []
+    optional_attributes:
+      - "service_attributes.CidrBlock"
+      - "service_attributes.AvailabilityZone"
+      - "service_attributes.AvailableIpAddressCount"
+      - "service_attributes.MapPublicIpOnLaunch"
+      - "tags.Name"
+    fallback_template: "vpc_default"
+
+  # Fallback Templates (Enhanced)
+  ec2_default:
+    template: "Amazon EC2 {resource_type} {resource_id} - Compute resource in {region} (Account: {account_id})"
+    required_attributes: []
+    optional_attributes: []
+
+  s3_default:
+    template: "Amazon S3 {resource_type} {resource_id} - Object storage resource (Account: {account_id})"
+    required_attributes: []
+    optional_attributes: []
+
+  rds_default:
+    template: "Amazon RDS {resource_type} {resource_id} - Database resource in {region} (Account: {account_id})"
+    required_attributes: []
+    optional_attributes: []
+
+  lambda_default:
+    template: "AWS Lambda {resource_type} {resource_id} - Serverless function in {region} (Account: {account_id})"
+    required_attributes: []
+    optional_attributes: []
+
+  vpc_default:
+    template: "Amazon VPC {resource_type} {resource_id} - Network resource in {region} (Account: {account_id})"
+    required_attributes: []
+    optional_attributes: []
+
+# Configuration Metadata
+metadata:
+  version: "1.0"
+  created_by: "InvenTag Service Description Framework"
+  description: "Example configuration demonstrating custom service descriptions and templates"
+  last_updated: "2024-01-01T00:00:00Z"
+  
+# Template Processing Options
+options:
+  # Enable strict template validation (fail if required attributes are missing)
+  strict_validation: false
+  
+  # Enable template caching for performance
+  enable_caching: true
+  
+  # Maximum template recursion depth for fallbacks
+  max_fallback_depth: 5
+  
+  # Default template timeout in seconds
+  template_timeout: 30

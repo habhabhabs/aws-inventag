@@ -84,6 +84,24 @@ python examples/service_enrichment_demo.py
 - Integration patterns with state management and compliance checking
 - Performance optimization and caching strategies
 
+### `service_description_demo.py`
+**Service Description Management Demonstration** - Intelligent, customizable descriptions for AWS resources with template-based dynamic generation.
+
+**Usage:**
+```bash
+python examples/service_description_demo.py
+```
+
+**Features demonstrated:**
+- Default service descriptions with built-in templates
+- Custom configuration loading with YAML support
+- Advanced template system with variable substitution
+- Intelligent fallback mechanisms for missing attributes
+- Dynamic template registration and management
+- Configuration export and template generation
+- Comprehensive metadata tracking and statistics
+- Integration with resource discovery and enrichment
+
 ### `network_security_analysis_demo.py`
 **Network & Security Analysis Demonstration** - Comprehensive VPC/subnet analysis and security posture assessment.
 
@@ -223,6 +241,112 @@ for resource in compliance_results['non_compliant_resources']:
             attrs = resource['service_attributes']
             if not attrs.get('storage_encrypted', False):
                 print('  - Database storage not encrypted')
+"
+```
+
+### Service Description Usage
+
+#### Basic Service Description Management
+```bash
+# Apply intelligent descriptions to resources
+python -c "
+from inventag import AWSResourceInventory
+from inventag.discovery.service_descriptions import ServiceDescriptionManager
+
+# Discover resources
+inventory = AWSResourceInventory(regions=['us-east-1'])
+resources = inventory.discover_resources()
+
+# Apply default descriptions
+manager = ServiceDescriptionManager()
+described_resources = manager.apply_descriptions_to_resources(resources)
+
+# Show descriptions
+for resource in described_resources[:5]:  # First 5 resources
+    print(f'{resource[\"service\"]} {resource[\"type\"]} ({resource[\"id\"]}):')
+    print(f'  Description: {resource[\"service_description\"]}')
+    if 'description_metadata' in resource:
+        metadata = resource['description_metadata']
+        print(f'  Template used: {metadata.get(\"template_used\", \"None\")}')
+    print()
+"
+```
+
+#### Custom Configuration with Templates
+```bash
+# Create and use custom service descriptions
+python -c "
+import yaml
+from inventag.discovery.service_descriptions import ServiceDescriptionManager
+
+# Create custom configuration
+config = {
+    'service_descriptions': {
+        'EC2': {
+            'Instance': {
+                'description': 'Virtual machine providing scalable compute capacity',
+                'template': 'custom_ec2_instance'
+            }
+        }
+    },
+    'templates': {
+        'custom_ec2_instance': {
+            'template': 'EC2 Instance {resource_id} - {instance_type} server in {availability_zone}',
+            'required_attributes': ['service_attributes.InstanceType'],
+            'optional_attributes': ['service_attributes.Placement.AvailabilityZone'],
+            'fallback_template': 'ec2_default'
+        }
+    }
+}
+
+# Save configuration
+with open('custom_descriptions.yaml', 'w') as f:
+    yaml.dump(config, f)
+
+# Use custom configuration
+manager = ServiceDescriptionManager(config_path='custom_descriptions.yaml')
+print('Custom configuration loaded successfully')
+
+# Get configuration info
+info = manager.get_configuration_info()
+print(f'Custom services: {info[\"custom_services\"]}')
+print(f'Registered templates: {len(info[\"registered_templates\"])}')
+"
+```
+
+#### Integration with Service Enrichment
+```bash
+# Combine service enrichment with intelligent descriptions
+python -c "
+from inventag import AWSResourceInventory
+from inventag.discovery.service_enrichment import ServiceAttributeEnricher
+from inventag.discovery.service_descriptions import ServiceDescriptionManager
+
+# Discover and enrich resources first
+inventory = AWSResourceInventory(regions=['us-east-1'])
+resources = inventory.discover_resources()
+
+enricher = ServiceAttributeEnricher()
+enriched_resources = enricher.enrich_resources_with_attributes(resources)
+
+# Apply intelligent descriptions using enriched attributes
+desc_manager = ServiceDescriptionManager()
+final_resources = desc_manager.apply_descriptions_to_resources(enriched_resources)
+
+# Show enhanced descriptions
+for resource in final_resources:
+    if resource.get('service') == 'EC2' and 'service_attributes' in resource:
+        print(f'Resource: {resource[\"id\"]}')
+        print(f'Description: {resource[\"service_description\"]}')
+        
+        # Show how service attributes enhanced the description
+        attrs = resource['service_attributes']
+        if 'InstanceType' in attrs:
+            print(f'  Instance Type: {attrs[\"InstanceType\"]}')
+        if 'State' in attrs:
+            print(f'  State: {attrs[\"State\"].get(\"Name\", \"Unknown\")}')
+        print()
+        break
 "
 ```
 
