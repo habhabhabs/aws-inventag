@@ -68,6 +68,22 @@ python examples/changelog_generator_demo.py
 - Customizable formatting and templates
 - Export capabilities for documentation systems
 
+### `service_enrichment_demo.py`
+**Service Enrichment Demonstration** - Deep service attribute extraction and analysis.
+
+**Usage:**
+```bash
+python examples/service_enrichment_demo.py
+```
+
+**Features demonstrated:**
+- Service-specific attribute enrichment for S3, RDS, EC2, Lambda, ECS, EKS
+- Dynamic service discovery for unknown services
+- Custom service handler development
+- Enriched data structure examples
+- Integration patterns with state management and compliance checking
+- Performance optimization and caching strategies
+
 ## Output Files
 
 After running the tools, you'll find timestamped output files here:
@@ -107,6 +123,91 @@ python scripts/aws_resource_inventory.py --regions us-east-1 eu-west-1 --output 
 #### S3 Upload
 ```bash
 python scripts/aws_resource_inventory.py --s3-bucket my-reports-bucket --s3-key monthly/$(date +%Y-%m)/inventory.json
+```
+
+### Service Enrichment Usage
+
+#### Basic Service Enrichment
+```bash
+# Enrich resources with service-specific attributes
+python -c "
+from inventag import AWSResourceInventory
+from inventag.discovery.service_enrichment import ServiceAttributeEnricher
+
+# Discover resources
+inventory = AWSResourceInventory(regions=['us-east-1'])
+resources = inventory.discover_resources()
+
+# Enrich with service-specific attributes
+enricher = ServiceAttributeEnricher()
+enriched_resources = enricher.enrich_resources_with_attributes(resources)
+
+# Get enrichment statistics
+stats = enricher.get_enrichment_statistics()
+print(f'Total resources: {stats[\"statistics\"][\"total_resources\"]}')
+print(f'Successfully enriched: {stats[\"statistics\"][\"enriched_resources\"]}')
+print(f'Discovered services: {stats[\"discovered_services\"]}')
+"
+```
+
+#### Service-Specific Analysis
+```bash
+# Analyze S3 buckets with detailed configuration
+python -c "
+from inventag import AWSResourceInventory
+from inventag.discovery.service_enrichment import ServiceAttributeEnricher
+
+inventory = AWSResourceInventory(regions=['us-east-1'])
+resources = inventory.discover_resources()
+
+enricher = ServiceAttributeEnricher()
+s3_resources = [r for r in resources if r.get('service') == 'S3']
+enriched_s3 = enricher.enrich_resources_with_attributes(s3_resources)
+
+for bucket in enriched_s3:
+    if 'service_attributes' in bucket:
+        attrs = bucket['service_attributes']
+        print(f'Bucket: {bucket[\"name\"]}')
+        print(f'  Encryption: {attrs.get(\"encryption\", {})}')
+        print(f'  Versioning: {attrs.get(\"versioning_status\", \"Unknown\")}')
+        print(f'  Public Access Block: {bool(attrs.get(\"public_access_block\"))}')
+"
+```
+
+#### Integration with Compliance Checking
+```bash
+# Enhanced compliance analysis with enriched attributes
+python -c "
+from inventag import AWSResourceInventory, ComprehensiveTagComplianceChecker
+from inventag.discovery.service_enrichment import ServiceAttributeEnricher
+
+# Discover and enrich resources
+inventory = AWSResourceInventory(regions=['us-east-1'])
+resources = inventory.discover_resources()
+
+enricher = ServiceAttributeEnricher()
+enriched_resources = enricher.enrich_resources_with_attributes(resources)
+
+# Run compliance check on enriched data
+checker = ComprehensiveTagComplianceChecker(
+    regions=['us-east-1'],
+    config_file='config/tag_policy_example.yaml'
+)
+compliance_results = checker.check_compliance(enriched_resources)
+
+# Enhanced analysis with service-specific insights
+for resource in compliance_results['non_compliant_resources']:
+    if 'service_attributes' in resource:
+        print(f'Non-compliant {resource[\"service\"]}: {resource[\"name\"]}')
+        if resource['service'] == 'S3':
+            attrs = resource['service_attributes']
+            if not attrs.get('encryption'):
+                print('  - Missing encryption configuration')
+        elif resource['service'] == 'RDS':
+            attrs = resource['service_attributes']
+            if not attrs.get('storage_encrypted', False):
+                print('  - Database storage not encrypted')
+"
 ```
 
 ### State Management Usage
@@ -208,6 +309,14 @@ if week_ago_states:
 - **Excel reports**: Use the BOM converter for professional Excel reports with service sheets
 - **VPC enrichment**: Excel reports automatically include VPC and subnet names
 - **Compliance tracking**: Tag compliance reports show exactly which resources need attention
+
+### Service Enrichment
+- **Selective enrichment**: Only enrich resources that need detailed analysis to improve performance
+- **Batch processing**: Process resources in batches for large environments
+- **Cache management**: Monitor and clear caches periodically to prevent memory issues
+- **Custom handlers**: Develop custom handlers for proprietary or specialized services
+- **Integration benefits**: Use enriched data for enhanced compliance analysis and change detection
+- **Performance monitoring**: Track enrichment success rates and adjust strategies accordingly
 
 ### State Management
 - **Regular snapshots**: Take daily snapshots to build comprehensive change history
@@ -317,13 +426,65 @@ else:
 "
 ```
 
-## Getting Started with State Management
+## Getting Started
 
-1. **Run the demos** to understand capabilities:
+### Quick Start - All Features
+1. **Run the comprehensive demo** to see all capabilities:
    ```bash
-   python examples/state_manager_demo.py
-   python examples/delta_detector_demo.py
-   python examples/changelog_generator_demo.py
+   ./examples/quick_start.sh
+   ```
+
+2. **Explore individual features** with dedicated demos:
+   ```bash
+   python examples/service_enrichment_demo.py    # Service attribute enrichment
+   python examples/state_manager_demo.py         # State persistence and tracking
+   python examples/delta_detector_demo.py        # Change detection and analysis
+   python examples/changelog_generator_demo.py   # Professional change reports
+   ```
+
+### Service Enrichment Setup
+1. **Basic enrichment** for enhanced resource analysis:
+   ```bash
+   # Test service enrichment with your AWS resources
+   python -c "
+   from inventag import AWSResourceInventory
+   from inventag.discovery.service_enrichment import ServiceAttributeEnricher
+   
+   inventory = AWSResourceInventory(regions=['us-east-1'])
+   resources = inventory.discover_resources()
+   
+   enricher = ServiceAttributeEnricher()
+   enriched = enricher.enrich_resources_with_attributes(resources)
+   
+   stats = enricher.get_enrichment_statistics()
+   print(f'Enriched {stats[\"statistics\"][\"enriched_resources\"]} resources')
+   "
+   ```
+
+2. **Integrate with existing workflows** by adding enrichment to your current scripts
+
+3. **Develop custom handlers** for specialized services using the framework
+
+### State Management Setup
+1. **Initialize state tracking** for your environment:
+   ```bash
+   # Create baseline state
+   python -c "
+   from inventag import AWSResourceInventory
+   from inventag.state import StateManager
+   
+   inventory = AWSResourceInventory()
+   resources = inventory.discover_resources()
+   
+   state_manager = StateManager(state_dir='production_states')
+   state_id = state_manager.save_state(
+       resources=resources,
+       account_id='YOUR_ACCOUNT_ID',
+       regions=['us-east-1', 'us-west-2'],
+       tags={'purpose': 'baseline', 'environment': 'production'}
+   )
+   print(f'Baseline state saved: {state_id}')
+   "
    ```
 
 2. **Set up daily monitoring** using the integration examples above
@@ -334,4 +495,7 @@ else:
 
 5. **Set up alerting** based on change thresholds and severity levels
 
-For comprehensive documentation on state management features, see [`docs/STATE_MANAGEMENT.md`](../docs/STATE_MANAGEMENT.md).
+### Documentation References
+- **Service Enrichment**: [`docs/SERVICE_ENRICHMENT.md`](../docs/SERVICE_ENRICHMENT.md) - Deep service attribute extraction
+- **State Management**: [`docs/STATE_MANAGEMENT.md`](../docs/STATE_MANAGEMENT.md) - Comprehensive change tracking
+- **Security**: [`docs/SECURITY.md`](../docs/SECURITY.md) - Security considerations and permissions

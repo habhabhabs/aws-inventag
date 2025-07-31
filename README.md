@@ -18,6 +18,7 @@
 ### ✨ Key Features
 
 - 🔍 **Multi-Method Discovery** - Leverages ResourceGroupsTaggingAPI, AWSConfig, and service-specific APIs
+- 🎯 **Service-Specific Enrichment** - Deep attribute extraction for S3, RDS, EC2, Lambda, ECS, EKS and more
 - 📊 **Professional BOM Generation** - Creates detailed Excel/CSV reports with service-specific sheets
 - 🏷️ **Tag Compliance Checking** - Validates resources against organizational tagging policies
 - 🔧 **Intelligent Data Enhancement** - Enriches resources with VPC names, account IDs, and inferred tags
@@ -37,7 +38,9 @@ inventag-aws/
 │   ├── __init__.py                    # Package initialization
 │   ├── discovery/                     # Resource discovery module
 │   │   ├── __init__.py
-│   │   └── inventory.py               # AWSResourceInventory class
+│   │   ├── inventory.py               # AWSResourceInventory class
+│   │   ├── service_enrichment.py      # Service attribute enrichment framework
+│   │   └── service_handlers.py        # Specific AWS service handlers
 │   ├── compliance/                    # Tag compliance module
 │   │   ├── __init__.py
 │   │   └── checker.py                 # ComprehensiveTagComplianceChecker
@@ -361,6 +364,110 @@ python examples/changelog_generator_demo.py
 - **📋 Export Capabilities**: JSON, YAML, CSV export for CI/CD integration
 - **🔍 Query Interface**: List, compare, and validate states programmatically
 
+## 🎯 Service-Specific Enrichment
+
+InvenTag includes a powerful service enrichment framework that provides deep attribute extraction for major AWS services, going beyond basic resource discovery to capture detailed configuration and operational data.
+
+### 🔧 **Supported Services with Deep Enrichment**
+
+#### **Amazon S3** - Comprehensive Bucket Analysis
+- **Encryption Configuration**: Server-side encryption settings, KMS key details
+- **Versioning Status**: Bucket versioning configuration
+- **Lifecycle Management**: Lifecycle rules and policies
+- **Public Access Controls**: Public access block configuration
+- **Object Lock**: Object lock configuration and retention policies
+- **Location Constraints**: Bucket region and location details
+
+#### **Amazon RDS** - Database Configuration Deep Dive
+- **Engine Details**: Database engine, version, and class information
+- **Storage Configuration**: Allocated storage, type, and encryption settings
+- **High Availability**: Multi-AZ deployment and backup configuration
+- **Security Settings**: VPC security groups, subnet groups, and parameter groups
+- **Performance Insights**: Monitoring and performance configuration
+- **Maintenance Windows**: Backup and maintenance scheduling
+
+#### **Amazon EC2** - Instance and Volume Analysis
+- **Instance Configuration**: Type, state, platform, and architecture details
+- **Network Configuration**: VPC, subnet, security groups, and IP addresses
+- **Storage Details**: EBS optimization, block device mappings, and root device info
+- **Security Features**: IAM instance profiles, key pairs, and monitoring state
+- **Advanced Features**: CPU options, hibernation, metadata options, and enclave settings
+- **Volume Attributes**: Size, type, IOPS, throughput, encryption, and attachment details
+
+#### **AWS Lambda** - Function Configuration Analysis
+- **Runtime Environment**: Runtime version, handler, and execution role
+- **Resource Configuration**: Memory size, timeout, and ephemeral storage
+- **Network Configuration**: VPC settings and security groups
+- **Code Configuration**: Code size, SHA256, deployment package details
+- **Advanced Features**: Layers, environment variables, dead letter queues
+- **Monitoring**: Tracing configuration and logging settings
+
+#### **Amazon ECS** - Container Service Details
+- **Cluster Configuration**: Status, capacity providers, and service counts
+- **Service Configuration**: Task definitions, desired count, and deployment settings
+- **Network Configuration**: Load balancers, service registries, and VPC settings
+- **Scaling Configuration**: Auto scaling and capacity provider strategies
+
+#### **Amazon EKS** - Kubernetes Cluster Analysis
+- **Cluster Configuration**: Version, endpoint, and platform details
+- **Network Configuration**: VPC settings and Kubernetes network config
+- **Security Configuration**: Encryption, identity providers, and access controls
+- **Node Group Details**: Instance types, scaling configuration, and launch templates
+- **Add-on Configuration**: Installed add-ons and their versions
+
+### 🔄 **Dynamic Service Discovery**
+
+For services not explicitly supported, InvenTag includes an intelligent dynamic discovery system:
+
+- **Pattern-Based API Discovery**: Automatically discovers and tests read-only API operations
+- **Intelligent Parameter Mapping**: Maps resource identifiers to appropriate API parameters
+- **Response Analysis**: Extracts meaningful attributes from API responses
+- **Caching System**: Optimizes performance by caching successful patterns
+- **Comprehensive Coverage**: Attempts multiple API patterns for maximum data extraction
+
+### 🛠️ **Service Enrichment Framework**
+
+The enrichment system is built on a flexible, extensible framework:
+
+```python
+from inventag.discovery.service_enrichment import ServiceAttributeEnricher
+
+# Initialize enricher
+enricher = ServiceAttributeEnricher()
+
+# Enrich all resources with service-specific attributes
+enriched_resources = enricher.enrich_resources_with_attributes(resources)
+
+# Get enrichment statistics
+stats = enricher.get_enrichment_statistics()
+print(f"Enriched: {stats['statistics']['enriched_resources']}")
+print(f"Discovered services: {stats['discovered_services']}")
+```
+
+### 🎯 **Custom Service Handlers**
+
+Extend InvenTag with custom service handlers for proprietary or specialized services:
+
+```python
+from inventag.discovery.service_enrichment import ServiceHandler
+
+class CustomServiceHandler(ServiceHandler):
+    def can_handle(self, service: str, resource_type: str) -> bool:
+        return service.upper() == 'CUSTOM_SERVICE'
+    
+    def _define_read_only_operations(self) -> List[str]:
+        return ['describe_custom_resource', 'get_custom_configuration']
+    
+    def enrich_resource(self, resource: Dict[str, Any]) -> Dict[str, Any]:
+        # Custom enrichment logic
+        attributes = {}
+        # ... implementation details
+        return {**resource, 'service_attributes': attributes}
+
+# Register custom handler
+enricher.register_custom_handler('CUSTOM_SERVICE', CustomServiceHandler)
+```
+
 ## 🐍 Programmatic Usage (Python Package)
 
 InvenTag is now available as a unified Python package for programmatic integration into your applications and workflows.
@@ -370,36 +477,69 @@ InvenTag is now available as a unified Python package for programmatic integrati
 ```python
 from inventag import AWSResourceInventory, ComprehensiveTagComplianceChecker, BOMConverter
 from inventag.state import StateManager, DeltaDetector, ChangelogGenerator
+from inventag.discovery.service_enrichment import ServiceAttributeEnricher
 
-# Resource Discovery
+# Resource Discovery with Service Enrichment
 inventory = AWSResourceInventory(regions=['us-east-1', 'us-west-2'])
 resources = inventory.discover_resources()
+
+# Deep service attribute enrichment
+enricher = ServiceAttributeEnricher()
+enriched_resources = enricher.enrich_resources_with_attributes(resources)
 
 # Tag Compliance Checking
 checker = ComprehensiveTagComplianceChecker(
     regions=['us-east-1', 'us-west-2'],
     config_file='config/tag_policy_example.yaml'
 )
-compliance_results = checker.check_compliance(resources)
+compliance_results = checker.check_compliance(enriched_resources)
 
-# Professional Reporting
+# Professional Reporting with enriched data
 converter = BOMConverter(enrich_vpc_info=True)
-converter.data = resources
+converter.data = enriched_resources
 converter.export_to_excel('comprehensive_report.xlsx')
 
 # State Management
 state_manager = StateManager(state_dir='inventory_states')
 state_id = state_manager.save_state(
-    resources=resources,
+    resources=enriched_resources,
     account_id='123456789012',
     regions=['us-east-1', 'us-west-2'],
     compliance_data=compliance_results
 )
 ```
 
-### Advanced Workflows
+### Advanced Workflows with Service Enrichment
 
 ```python
+# Service-specific analysis
+enricher = ServiceAttributeEnricher()
+
+# Get detailed S3 bucket configurations
+s3_resources = [r for r in resources if r.get('service') == 'S3']
+enriched_s3 = enricher.enrich_resources_with_attributes(s3_resources)
+
+for bucket in enriched_s3:
+    if 'service_attributes' in bucket:
+        attrs = bucket['service_attributes']
+        print(f"Bucket: {bucket['name']}")
+        print(f"  Encryption: {attrs.get('encryption', {}).get('enabled', 'Unknown')}")
+        print(f"  Versioning: {attrs.get('versioning_status', 'Unknown')}")
+        print(f"  Public Access Block: {bool(attrs.get('public_access_block'))}")
+
+# RDS database analysis
+rds_resources = [r for r in resources if r.get('service') == 'RDS']
+enriched_rds = enricher.enrich_resources_with_attributes(rds_resources)
+
+for db in enriched_rds:
+    if 'service_attributes' in db:
+        attrs = db['service_attributes']
+        print(f"Database: {db['name']}")
+        print(f"  Engine: {attrs.get('engine')} {attrs.get('engine_version')}")
+        print(f"  Multi-AZ: {attrs.get('multi_az', False)}")
+        print(f"  Encrypted: {attrs.get('storage_encrypted', False)}")
+        print(f"  Backup Retention: {attrs.get('backup_retention_period', 0)} days")
+
 # Change Detection and Analysis
 detector = DeltaDetector()
 delta_report = detector.detect_changes(
@@ -417,6 +557,13 @@ changelog = changelog_gen.generate_changelog(
     include_details=True
 )
 changelog_gen.export_changelog(changelog, 'infrastructure_changes.md')
+
+# Get enrichment statistics
+stats = enricher.get_enrichment_statistics()
+print(f"Total resources processed: {stats['statistics']['total_resources']}")
+print(f"Successfully enriched: {stats['statistics']['enriched_resources']}")
+print(f"Services discovered: {', '.join(stats['discovered_services'])}")
+print(f"Unknown services: {', '.join(stats['unknown_services'])}")
 ```
 
 ## 🏷️ Tag Policy Configuration
@@ -549,6 +696,7 @@ All files include timestamps for easy tracking:
 
 - **[Release Management Guide](RELEASE.md)** - Complete CI/CD and versioning documentation
 - **[Security Guide](docs/SECURITY.md)** - Detailed permissions and security info
+- **[Service Enrichment Guide](docs/SERVICE_ENRICHMENT.md)** - Deep service attribute extraction and custom handlers
 - **[State Management Guide](docs/STATE_MANAGEMENT.md)** - Comprehensive state tracking and change detection
 - **[Configuration Guide](config/README.md)** - Tag policies and IAM setup
 - **[Script Documentation](scripts/README.md)** - Detailed script usage
