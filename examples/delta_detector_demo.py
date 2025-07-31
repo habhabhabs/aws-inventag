@@ -9,7 +9,12 @@ comprehensive change tracking between AWS resource inventory states.
 
 import json
 import sys
+import os
 from datetime import datetime, timezone
+
+# Add the parent directory to the path to import inventag
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
 from inventag.state.delta_detector import DeltaDetector, ChangeType, ChangeSeverity, ChangeCategory
 
 # Ensure proper encoding for Windows console
