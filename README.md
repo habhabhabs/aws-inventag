@@ -23,6 +23,9 @@
 - 🔧 **Intelligent Data Enhancement** - Enriches resources with VPC names, account IDs, and inferred tags
 - 🚀 **CI/CD Ready** - Easy integration into automated compliance workflows
 - 📈 **Comprehensive Reporting** - Summary dashboards with compliance percentages and service breakdowns
+- 🔄 **State Management** - Track changes over time with persistent state storage and versioning
+- 🎯 **Delta Detection** - Advanced change analysis with impact assessment and categorization
+- 📝 **Changelog Generation** - Professional change reports for audit trails and documentation
 
 ## 📁 Project Structure
 
@@ -30,10 +33,26 @@
 inventag-aws/
 ├── README.md                    # This file - main documentation
 ├── requirements.txt             # Python dependencies
-├── scripts/                     # Main tools
-│   ├── aws_resource_inventory.py      # Resource discovery
-│   ├── tag_compliance_checker.py      # Tag validation  
-│   ├── bom_converter.py               # Excel/CSV generator
+├── inventag/                    # Unified Python package
+│   ├── __init__.py                    # Package initialization
+│   ├── discovery/                     # Resource discovery module
+│   │   ├── __init__.py
+│   │   └── inventory.py               # AWSResourceInventory class
+│   ├── compliance/                    # Tag compliance module
+│   │   ├── __init__.py
+│   │   └── checker.py                 # ComprehensiveTagComplianceChecker
+│   ├── reporting/                     # BOM generation module
+│   │   ├── __init__.py
+│   │   └── converter.py               # BOMConverter class
+│   └── state/                         # State management module
+│       ├── __init__.py
+│       ├── state_manager.py           # StateManager for persistence
+│       ├── delta_detector.py          # DeltaDetector for change tracking
+│       └── changelog_generator.py     # ChangelogGenerator for reports
+├── scripts/                     # CLI wrapper scripts
+│   ├── aws_resource_inventory.py      # Resource discovery CLI
+│   ├── tag_compliance_checker.py      # Tag validation CLI
+│   ├── bom_converter.py               # Excel/CSV generator CLI
 │   └── README.md                      # Script documentation
 ├── config/                      # Configuration files
 │   ├── iam-policy-read-only.json      # Required IAM permissions
@@ -42,9 +61,17 @@ inventag-aws/
 │   └── README.md                      # Config documentation
 ├── docs/                        # Detailed documentation
 │   └── SECURITY.md                    # Security guide & permissions
-└── examples/                    # Examples and outputs
-    ├── quick_start.sh                 # Automated demo script
-    └── README.md                      # Usage examples
+├── examples/                    # Examples and demo scripts
+│   ├── quick_start.sh                 # Automated demo script
+│   ├── state_manager_demo.py          # State management demo
+│   ├── delta_detector_demo.py         # Change tracking demo
+│   ├── changelog_generator_demo.py    # Changelog generation demo
+│   └── README.md                      # Usage examples
+└── tests/                       # Comprehensive test suite
+    ├── unit/                          # Unit tests for all modules
+    ├── integration/                   # End-to-end workflow tests
+    ├── backward_compatibility/        # Legacy compatibility tests
+    └── README.md                      # Testing documentation
 ```
 
 ## 🚀 Quick Start
@@ -239,6 +266,159 @@ python scripts/bom_converter.py --input inventory.json --output report.xlsx
 python scripts/bom_converter.py --input inventory.json --output report.csv --format csv
 ```
 
+## 🔄 State Management & Change Tracking
+
+InvenTag now includes powerful state management capabilities for tracking changes over time and generating comprehensive change reports.
+
+### 📈 **State Manager**
+Persistent storage and versioning of inventory states with comprehensive metadata tracking.
+
+```python
+from inventag.state import StateManager
+
+# Initialize state manager
+state_manager = StateManager(
+    state_dir="inventory_states",
+    retention_days=30,
+    max_snapshots=10
+)
+
+# Save current state
+state_id = state_manager.save_state(
+    resources=discovered_resources,
+    account_id="123456789012",
+    regions=["us-east-1", "us-west-2"],
+    discovery_method="comprehensive",
+    compliance_data=compliance_results
+)
+
+# Load previous state for comparison
+previous_state = state_manager.load_state(state_id)
+```
+
+### 🔍 **Delta Detection**
+Advanced change detection with comprehensive analysis of resource modifications.
+
+```python
+from inventag.state import DeltaDetector
+
+# Initialize delta detector
+detector = DeltaDetector()
+
+# Detect changes between states
+delta_report = detector.detect_changes(
+    old_resources=previous_resources,
+    new_resources=current_resources,
+    state1_id='20231201_120000',
+    state2_id='20231201_130000'
+)
+
+# Analyze results
+print(f"Added: {len(delta_report.added_resources)}")
+print(f"Removed: {len(delta_report.removed_resources)}")
+print(f"Modified: {len(delta_report.modified_resources)}")
+```
+
+### 📝 **Changelog Generation**
+Professional change reports with detailed analysis and impact assessment.
+
+```python
+from inventag.state import ChangelogGenerator
+
+# Generate comprehensive changelog
+generator = ChangelogGenerator()
+changelog = generator.generate_changelog(
+    delta_report=delta_report,
+    format='markdown',
+    include_details=True
+)
+
+# Export changelog
+generator.export_changelog(changelog, 'changes_report.md')
+```
+
+### 🎯 **Demo Scripts**
+Explore the state management capabilities with interactive demos:
+
+```bash
+# State management demonstration
+python examples/state_manager_demo.py
+
+# Change detection demonstration  
+python examples/delta_detector_demo.py
+
+# Changelog generation demonstration
+python examples/changelog_generator_demo.py
+```
+
+### 🔧 **Key State Management Features**
+
+- **📊 Comprehensive Metadata**: Track discovery method, regions, compliance status, and custom tags
+- **🔒 Data Integrity**: Checksum validation and state integrity verification
+- **⏰ Retention Policies**: Configurable retention by age and count limits
+- **📈 Change Analytics**: Detailed analysis of compliance, security, and network changes
+- **🎯 Impact Assessment**: Identify high-impact changes and cascade risks
+- **📋 Export Capabilities**: JSON, YAML, CSV export for CI/CD integration
+- **🔍 Query Interface**: List, compare, and validate states programmatically
+
+## 🐍 Programmatic Usage (Python Package)
+
+InvenTag is now available as a unified Python package for programmatic integration into your applications and workflows.
+
+### Basic Usage
+
+```python
+from inventag import AWSResourceInventory, ComprehensiveTagComplianceChecker, BOMConverter
+from inventag.state import StateManager, DeltaDetector, ChangelogGenerator
+
+# Resource Discovery
+inventory = AWSResourceInventory(regions=['us-east-1', 'us-west-2'])
+resources = inventory.discover_resources()
+
+# Tag Compliance Checking
+checker = ComprehensiveTagComplianceChecker(
+    regions=['us-east-1', 'us-west-2'],
+    config_file='config/tag_policy_example.yaml'
+)
+compliance_results = checker.check_compliance(resources)
+
+# Professional Reporting
+converter = BOMConverter(enrich_vpc_info=True)
+converter.data = resources
+converter.export_to_excel('comprehensive_report.xlsx')
+
+# State Management
+state_manager = StateManager(state_dir='inventory_states')
+state_id = state_manager.save_state(
+    resources=resources,
+    account_id='123456789012',
+    regions=['us-east-1', 'us-west-2'],
+    compliance_data=compliance_results
+)
+```
+
+### Advanced Workflows
+
+```python
+# Change Detection and Analysis
+detector = DeltaDetector()
+delta_report = detector.detect_changes(
+    old_resources=previous_resources,
+    new_resources=current_resources,
+    state1_id='previous_state',
+    state2_id='current_state'
+)
+
+# Generate Professional Changelogs
+changelog_gen = ChangelogGenerator()
+changelog = changelog_gen.generate_changelog(
+    delta_report=delta_report,
+    format='markdown',
+    include_details=True
+)
+changelog_gen.export_changelog(changelog, 'infrastructure_changes.md')
+```
+
 ## 🏷️ Tag Policy Configuration
 
 Create your own tag policy by copying and editing the example:
@@ -369,9 +549,11 @@ All files include timestamps for easy tracking:
 
 - **[Release Management Guide](RELEASE.md)** - Complete CI/CD and versioning documentation
 - **[Security Guide](docs/SECURITY.md)** - Detailed permissions and security info
+- **[State Management Guide](docs/STATE_MANAGEMENT.md)** - Comprehensive state tracking and change detection
 - **[Configuration Guide](config/README.md)** - Tag policies and IAM setup
 - **[Script Documentation](scripts/README.md)** - Detailed script usage
 - **[Examples](examples/README.md)** - Usage patterns and outputs
+- **[Testing Guide](tests/README.md)** - Comprehensive test suite documentation
 
 ## 🚀 DevOps & Production Integration
 
