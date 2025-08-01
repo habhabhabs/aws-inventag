@@ -1,0 +1,383 @@
+# GitHub Actions workflow for automated multi-account BOM generation
+# This workflow demonstrates comprehensive CI/CD integration with InvenTag
+
+name: Multi-Account BOM Generation
+
+on:
+  # Scheduled execution - daily at 6 AM UTC
+  schedule:
+    - cron: '0 6 * * *'
+  
+  # Manual trigger with customizable parameters
+  workflow_dispatch:
+    inputs:
+      accounts_file:
+        description: 'Path to accounts configuration file'
+        required: false
+        default: 'examples/cicd_accounts_example.yaml'
+      output_formats:
+        description: 'Output formats (comma-separated: excel,word,json,csv)'
+        required: false
+        default: 'excel,word,json'
+      compliance_threshold:
+        description: 'Minimum compliance percentage'
+        required: false
+        default: '80'
+      upload_to_s3:
+        description: 'Upload documents to S3'
+        required: false
+        default: 'true'
+        type: boolean
+      send_notifications:
+        description: 'Send notifications'
+        required: false
+        default: 'true'
+        type: boolean
+
+  # Trigger on pull requests for compliance checking
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'inventag/**'
+      - 'scripts/**'
+      - 'examples/**'
+
+env:
+  # Default configuration
+  PYTHON_VERSION: '3.11'
+  AWS_DEFAULT_REGION: 'us-east-1'
+  
+  # Prometheus configuration
+  PROMETHEUS_JOB_NAME: 'inventag-github-actions'
+  PROMETHEUS_INSTANCE_NAME: 'github-runner'
+
+jobs:
+  # Job 1: Compliance Gate Check (for PRs)
+  compliance-gate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    
+    - name: Run compliance gate check
+      env:
+        INVENTAG_SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+      run: |
+        python scripts/cicd_bom_generation.py \
+          --accounts-file examples/cicd_accounts_example.yaml \
+          --formats json \
+          --compliance-threshold 85 \
+          --fail-on-security-issues \
+          --verbose \
+          --dry-run
+    
+    - name: Comment PR with compliance status
+      if: always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = '/tmp/compliance_gate.json';
+          
+          if (fs.existsSync(path)) {
+            const compliance = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const status = compliance.passed ? '✅ PASSED' : '❌ FAILED';
+            const percentage = compliance.results.compliance_percentage || 0;
+            
+            const comment = `## Compliance Gate Check ${status}
+            
+            **Compliance Percentage:** ${percentage.toFixed(1)}%
+            **Critical Violations:** ${compliance.results.critical_violations || 0}
+            **Security Issues:** ${compliance.results.security_issues || 0}
+            **Network Issues:** ${compliance.results.network_issues || 0}
+            
+            ${compliance.passed ? 
+              '✅ This PR meets compliance requirements and can be merged.' : 
+              '❌ This PR does not meet compliance requirements. Please review and fix issues before merging.'
+            }`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+
+  # Job 2: Full BOM Generation (for scheduled runs and manual triggers)
+  bom-generation:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    
+    outputs:
+      success: ${{ steps.bom-generation.outputs.success }}
+      compliance_gate_passed: ${{ steps.bom-generation.outputs.compliance_gate_passed }}
+      generated_documents: ${{ steps.bom-generation.outputs.generated_documents }}
+      s3_urls: ${{ steps.bom-generation.outputs.s3_urls }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+    
+    - name: Validate AWS credentials
+      run: |
+        aws sts get-caller-identity
+        echo "AWS credentials validated successfully"
+    
+    - name: Generate multi-account BOM
+      id: bom-generation
+      env:
+        # S3 configuration
+        INVENTAG_S3_BUCKET: ${{ secrets.INVENTAG_S3_BUCKET }}
+        INVENTAG_S3_KEY_PREFIX: ${{ secrets.INVENTAG_S3_KEY_PREFIX || 'github-actions-bom' }}
+        
+        # Notification configuration
+        INVENTAG_SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        INVENTAG_TEAMS_WEBHOOK: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        
+        # Prometheus configuration
+        PROMETHEUS_PUSH_GATEWAY_URL: ${{ secrets.PROMETHEUS_PUSH_GATEWAY_URL }}
+        
+        # Input parameters
+        ACCOUNTS_FILE: ${{ github.event.inputs.accounts_file || 'examples/cicd_accounts_example.yaml' }}
+        OUTPUT_FORMATS: ${{ github.event.inputs.output_formats || 'excel,word,json' }}
+        COMPLIANCE_THRESHOLD: ${{ github.event.inputs.compliance_threshold || '80' }}
+        UPLOAD_TO_S3: ${{ github.event.inputs.upload_to_s3 || 'true' }}
+        SEND_NOTIFICATIONS: ${{ github.event.inputs.send_notifications || 'true' }}
+      run: |
+        # Parse comma-separated formats
+        IFS=',' read -ra FORMATS <<< "$OUTPUT_FORMATS"
+        
+        # Build command arguments
+        ARGS=(
+          --accounts-file "$ACCOUNTS_FILE"
+          --formats "${FORMATS[@]}"
+          --compliance-threshold "$COMPLIANCE_THRESHOLD"
+          --fail-on-security-issues
+          --verbose
+        )
+        
+        # Add S3 configuration if enabled
+        if [[ "$UPLOAD_TO_S3" == "true" && -n "$INVENTAG_S3_BUCKET" ]]; then
+          ARGS+=(--s3-bucket "$INVENTAG_S3_BUCKET")
+          if [[ -n "$INVENTAG_S3_KEY_PREFIX" ]]; then
+            ARGS+=(--s3-key-prefix "$INVENTAG_S3_KEY_PREFIX")
+          fi
+        fi
+        
+        # Add notification configuration
+        if [[ "$SEND_NOTIFICATIONS" == "true" ]]; then
+          if [[ -n "$INVENTAG_SLACK_WEBHOOK" ]]; then
+            ARGS+=(--slack-webhook "$INVENTAG_SLACK_WEBHOOK")
+          fi
+          if [[ -n "$INVENTAG_TEAMS_WEBHOOK" ]]; then
+            ARGS+=(--teams-webhook "$INVENTAG_TEAMS_WEBHOOK")
+          fi
+        fi
+        
+        # Add Prometheus configuration
+        if [[ -n "$PROMETHEUS_PUSH_GATEWAY_URL" ]]; then
+          ARGS+=(--prometheus-gateway "$PROMETHEUS_PUSH_GATEWAY_URL")
+        fi
+        
+        # Execute BOM generation
+        echo "Executing: python scripts/cicd_bom_generation.py ${ARGS[*]}"
+        python scripts/cicd_bom_generation.py "${ARGS[@]}"
+        
+        # Set outputs for downstream jobs
+        if [[ -f "/tmp/pipeline_summary.json" ]]; then
+          SUMMARY=$(cat /tmp/pipeline_summary.json)
+          echo "success=$(echo "$SUMMARY" | jq -r '.success')" >> $GITHUB_OUTPUT
+          echo "compliance_gate_passed=$(echo "$SUMMARY" | jq -r '.compliance_gate_passed')" >> $GITHUB_OUTPUT
+          echo "generated_documents=$(echo "$SUMMARY" | jq -r '.generated_documents')" >> $GITHUB_OUTPUT
+        fi
+        
+        if [[ -f "/tmp/s3_links.json" ]]; then
+          S3_LINKS=$(cat /tmp/s3_links.json | jq -c '.documents')
+          echo "s3_urls=$S3_LINKS" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: inventag-bom-artifacts-${{ github.run_number }}
+        path: |
+          /tmp/pipeline_summary.json
+          /tmp/compliance_gate.json
+          /tmp/account_summary.json
+          /tmp/s3_links.json
+          /tmp/inventag_metrics.prom
+          ./bom_output/
+        retention-days: 30
+    
+    - name: Create release on success
+      if: steps.bom-generation.outputs.success == 'true' && github.event_name == 'schedule'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: bom-${{ github.run_number }}-${{ github.run_attempt }}
+        release_name: BOM Report ${{ github.run_number }}
+        body: |
+          Automated multi-account BOM generation completed successfully.
+          
+          **Execution Summary:**
+          - Compliance Gate: ${{ steps.bom-generation.outputs.compliance_gate_passed == 'true' && '✅ PASSED' || '❌ FAILED' }}
+          - Generated Documents: ${{ steps.bom-generation.outputs.generated_documents }}
+          - Timestamp: ${{ github.run_started_at }}
+          
+          **Generated Documents:**
+          ${{ steps.bom-generation.outputs.s3_urls && 'Available in S3 (see artifacts for links)' || 'Available in artifacts' }}
+        draft: false
+        prerelease: false
+
+  # Job 3: Notification and Monitoring
+  post-processing:
+    needs: [bom-generation]
+    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: inventag-bom-artifacts-${{ github.run_number }}
+        path: ./artifacts
+    
+    - name: Send custom notification
+      if: needs.bom-generation.outputs.success == 'false'
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+      run: |
+        if [[ -n "$SLACK_WEBHOOK" ]]; then
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{
+              "text": "🚨 InvenTag BOM Generation Failed",
+              "attachments": [
+                {
+                  "color": "danger",
+                  "fields": [
+                    {
+                      "title": "Repository",
+                      "value": "${{ github.repository }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Workflow Run",
+                      "value": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|#${{ github.run_number }}>",
+                      "short": true
+                    },
+                    {
+                      "title": "Triggered By",
+                      "value": "${{ github.event_name }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Branch",
+                      "value": "${{ github.ref_name }}",
+                      "short": true
+                    }
+                  ]
+                }
+              ]
+            }' \
+            "$SLACK_WEBHOOK"
+        fi
+    
+    - name: Update monitoring dashboard
+      if: always()
+      env:
+        PROMETHEUS_PUSH_GATEWAY: ${{ secrets.PROMETHEUS_PUSH_GATEWAY_URL }}
+      run: |
+        if [[ -n "$PROMETHEUS_PUSH_GATEWAY" && -f "./artifacts/inventag_metrics.prom" ]]; then
+          # Push additional GitHub Actions specific metrics
+          cat << EOF | curl -X POST --data-binary @- \
+            "$PROMETHEUS_PUSH_GATEWAY/metrics/job/inventag-github-actions/instance/runner-${{ github.run_number }}"
+        # HELP github_actions_workflow_success GitHub Actions workflow success
+        # TYPE github_actions_workflow_success gauge
+        github_actions_workflow_success{repository="${{ github.repository }}",workflow="${{ github.workflow }}",run_number="${{ github.run_number }}"} ${{ needs.bom-generation.outputs.success == 'true' && '1' || '0' }}
+        
+        # HELP github_actions_compliance_gate_passed GitHub Actions compliance gate status
+        # TYPE github_actions_compliance_gate_passed gauge
+        github_actions_compliance_gate_passed{repository="${{ github.repository }}",workflow="${{ github.workflow }}",run_number="${{ github.run_number }}"} ${{ needs.bom-generation.outputs.compliance_gate_passed == 'true' && '1' || '0' }}
+        EOF
+        fi
+
+  # Job 4: Security Scan (optional)
+  security-scan:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Run Bandit security scan
+      uses: securecodewarrior/github-action-bandit@v1
+      with:
+        path: "inventag/"
+        level: "medium"
+        confidence: "medium"
+        exit_zero: true
+    
+    - name: Run Safety check
+      run: |
+        pip install safety
+        safety check --json --output safety-report.json || true
+    
+    - name: Upload security scan results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-scan-results
+        path: |
+          bandit-report.json
+          safety-report.json
+        retention-days: 30

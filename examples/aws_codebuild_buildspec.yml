@@ -1,0 +1,188 @@
+# AWS CodeBuild buildspec for InvenTag Multi-Account BOM Generation
+version: 0.2
+
+env:
+  variables:
+    # Default configuration
+    PYTHON_VERSION: "3.11"
+    OUTPUT_FORMATS: "excel,word,json"
+    COMPLIANCE_THRESHOLD: "80"
+    
+    # Prometheus configuration
+    PROMETHEUS_JOB_NAME: "inventag-codebuild"
+    
+  parameter-store:
+    # Store sensitive configuration in Parameter Store
+    INVENTAG_S3_BUCKET: "/inventag/s3/bucket-name"
+    INVENTAG_SLACK_WEBHOOK: "/inventag/notifications/slack-webhook"
+    INVENTAG_TEAMS_WEBHOOK: "/inventag/notifications/teams-webhook"
+    PROMETHEUS_PUSH_GATEWAY_URL: "/inventag/prometheus/push-gateway-url"
+    
+  secrets-manager:
+    # Alternative: Store secrets in AWS Secrets Manager
+    # SLACK_WEBHOOK: "inventag/notifications:slack_webhook"
+    # TEAMS_WEBHOOK: "inventag/notifications:teams_webhook"
+
+phases:
+  install:
+    runtime-versions:
+      python: $PYTHON_VERSION
+    commands:
+      - echo "Installing dependencies..."
+      - python -m pip install --upgrade pip
+      - pip install -r requirements.txt
+      
+      # Install additional tools if needed
+      - pip install awscli boto3
+      
+  pre_build:
+    commands:
+      - echo "Pre-build phase started on `date`"
+      - echo "Validating AWS credentials..."
+      - aws sts get-caller-identity
+      
+      # Set dynamic environment variables
+      - export PROMETHEUS_INSTANCE_NAME="codebuild-${CODEBUILD_BUILD_ID}"
+      - export INVENTAG_S3_KEY_PREFIX="codebuild-reports/${CODEBUILD_BUILD_ID}"
+      
+      # Select accounts file based on environment
+      - |
+        if [ "$ENVIRONMENT" = "production" ]; then
+          export ACCOUNTS_FILE="examples/accounts_cross_account_roles.json"
+        elif [ "$ENVIRONMENT" = "staging" ]; then
+          export ACCOUNTS_FILE="examples/accounts_with_profiles.json"
+        else
+          export ACCOUNTS_FILE="examples/accounts_cicd_environment.json"
+        fi
+      
+      - echo "Using accounts file: $ACCOUNTS_FILE"
+      - echo "Build ID: $CODEBUILD_BUILD_ID"
+      - echo "Environment: ${ENVIRONMENT:-development}"
+      
+      # Validate configuration with dry run
+      - echo "Validating configuration..."
+      - |
+        python scripts/cicd_bom_generation.py \
+          --accounts-file $ACCOUNTS_FILE \
+          --formats $OUTPUT_FORMATS \
+          --compliance-threshold $COMPLIANCE_THRESHOLD \
+          --dry-run \
+          --verbose
+          
+  build:
+    commands:
+      - echo "Build phase started on `date`"
+      - echo "Starting InvenTag BOM generation..."
+      
+      # Build command arguments
+      - |
+        ARGS=(
+          --accounts-file "$ACCOUNTS_FILE"
+          --formats $(echo $OUTPUT_FORMATS | tr ',' ' ')
+          --compliance-threshold "$COMPLIANCE_THRESHOLD"
+          --output-dir "./bom_output"
+          --verbose
+        )
+        
+        # Add S3 configuration if bucket is specified
+        if [ -n "$INVENTAG_S3_BUCKET" ]; then
+          ARGS+=(--s3-bucket "$INVENTAG_S3_BUCKET")
+          ARGS+=(--s3-key-prefix "$INVENTAG_S3_KEY_PREFIX")
+        fi
+        
+        # Add notification configuration
+        if [ -n "$INVENTAG_SLACK_WEBHOOK" ]; then
+          ARGS+=(--slack-webhook "$INVENTAG_SLACK_WEBHOOK")
+        fi
+        
+        if [ -n "$INVENTAG_TEAMS_WEBHOOK" ]; then
+          ARGS+=(--teams-webhook "$INVENTAG_TEAMS_WEBHOOK")
+        fi
+        
+        # Add Prometheus configuration
+        if [ -n "$PROMETHEUS_PUSH_GATEWAY_URL" ]; then
+          ARGS+=(--prometheus-gateway "$PROMETHEUS_PUSH_GATEWAY_URL")
+          ARGS+=(--prometheus-job "$PROMETHEUS_JOB_NAME")
+          ARGS+=(--prometheus-instance "$PROMETHEUS_INSTANCE_NAME")
+        fi
+        
+        # Add compliance gate configuration
+        if [ "$FAIL_ON_SECURITY_ISSUES" = "true" ]; then
+          ARGS+=(--fail-on-security-issues)
+        fi
+        
+        if [ "$FAIL_ON_NETWORK_ISSUES" = "true" ]; then
+          ARGS+=(--fail-on-network-issues)
+        fi
+        
+        # Execute BOM generation
+        echo "Executing: python scripts/cicd_bom_generation.py ${ARGS[*]}"
+        python scripts/cicd_bom_generation.py "${ARGS[@]}"
+        
+      - echo "BOM generation completed"
+      
+  post_build:
+    commands:
+      - echo "Post-build phase started on `date`"
+      
+      # Process results
+      - |
+        if [ -f "/tmp/pipeline_summary.json" ]; then
+          echo "Processing pipeline results..."
+          
+          # Extract key metrics
+          SUCCESS=$(cat /tmp/pipeline_summary.json | python -c "import sys, json; print(json.load(sys.stdin)['success'])")
+          COMPLIANCE_PASSED=$(cat /tmp/pipeline_summary.json | python -c "import sys, json; print(json.load(sys.stdin)['compliance_gate_passed'])")
+          TOTAL_RESOURCES=$(cat /tmp/pipeline_summary.json | python -c "import sys, json; print(json.load(sys.stdin).get('total_resources', 0))")
+          EXECUTION_TIME=$(cat /tmp/pipeline_summary.json | python -c "import sys, json; print(json.load(sys.stdin)['execution_time_seconds'])")
+          
+          echo "Success: $SUCCESS"
+          echo "Compliance Gate Passed: $COMPLIANCE_PASSED"
+          echo "Total Resources: $TOTAL_RESOURCES"
+          echo "Execution Time: ${EXECUTION_TIME}s"
+          
+          # Set CodeBuild environment variables for downstream use
+          echo "INVENTAG_SUCCESS=$SUCCESS" >> $CODEBUILD_SRC_DIR/build_results.env
+          echo "INVENTAG_COMPLIANCE_PASSED=$COMPLIANCE_PASSED" >> $CODEBUILD_SRC_DIR/build_results.env
+          echo "INVENTAG_TOTAL_RESOURCES=$TOTAL_RESOURCES" >> $CODEBUILD_SRC_DIR/build_results.env
+          echo "INVENTAG_EXECUTION_TIME=$EXECUTION_TIME" >> $CODEBUILD_SRC_DIR/build_results.env
+          
+          # Fail build if compliance gate failed
+          if [ "$COMPLIANCE_PASSED" = "False" ]; then
+            echo "❌ Compliance gate failed - failing build"
+            exit 1
+          fi
+          
+          if [ "$SUCCESS" = "False" ]; then
+            echo "❌ BOM generation failed - failing build"
+            exit 1
+          fi
+          
+          echo "✅ BOM generation completed successfully"
+        else
+          echo "⚠️ Pipeline summary not found - build may have failed"
+          exit 1
+        fi
+        
+      - echo "Build completed on `date`"
+
+artifacts:
+  files:
+    # Generated documents
+    - 'bom_output/**/*'
+    
+    # CI/CD artifacts
+    - '/tmp/pipeline_summary.json'
+    - '/tmp/compliance_gate.json'
+    - '/tmp/account_summary.json'
+    - '/tmp/s3_links.json'
+    - '/tmp/inventag_metrics.prom'
+    
+    # Build results for downstream processes
+    - 'build_results.env'
+    
+  name: inventag-bom-artifacts-$CODEBUILD_BUILD_ID
+  
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'

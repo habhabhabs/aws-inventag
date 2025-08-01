@@ -39,6 +39,11 @@ inventag-aws/
 ├── requirements.txt             # Python dependencies
 ├── inventag/                    # Unified Python package
 │   ├── __init__.py                    # Package initialization
+│   ├── core/                          # Core orchestration module
+│   │   ├── __init__.py
+│   │   ├── cloud_bom_generator.py     # CloudBOMGenerator - multi-account orchestrator
+│   │   ├── credential_manager.py      # CredentialManager - multi-account credential management
+│   │   └── cicd_integration.py        # CICDIntegration - CI/CD pipeline integration
 │   ├── discovery/                     # Resource discovery module
 │   │   ├── __init__.py
 │   │   ├── inventory.py               # AWSResourceInventory class
@@ -77,6 +82,7 @@ inventag-aws/
 │   └── README.md                      # Config documentation
 ├── docs/                        # Detailed documentation
 │   ├── BOM_DATA_PROCESSOR.md          # BOM Data Processor comprehensive guide
+│   ├── CICD_INTEGRATION.md            # CI/CD integration and pipeline automation
 │   ├── COST_ANALYSIS.md               # Cost analysis and optimization guide
 │   ├── NETWORK_ANALYSIS.md            # Network analysis and capacity planning
 │   ├── SERVICE_ENRICHMENT.md          # Service enrichment framework
@@ -130,6 +136,9 @@ python scripts/tag_compliance_checker.py --config config/tag_policy_example.yaml
 
 # Convert to Excel with service sheets
 python scripts/bom_converter.py --input examples/basic_inventory_*.json --output examples/report.xlsx
+
+# CI/CD BOM generation with compliance gates
+python scripts/cicd_bom_generation.py --accounts-file examples/accounts_basic.json --formats excel word
 ```
 
 ## 🔄 CI/CD Integration & Automated Releases
@@ -145,6 +154,118 @@ This repository uses **automated semantic versioning** with every merge to main:
 - 🚀 **Automatic releases** created on every merge to main
 - 📦 **Release assets** include source archives and comprehensive changelog
 - ✅ **Quality gates** ensure tests pass before release
+
+### CI/CD Integration Components
+
+InvenTag now includes comprehensive CI/CD integration capabilities for automated BOM generation and compliance checking in your deployment pipelines.
+
+#### **🚀 CICDIntegration Class**
+Central orchestrator for pipeline integration with automated document generation, compliance gates, and notification systems.
+
+```python
+from inventag.core.cicd_integration import CICDIntegration, S3UploadConfig, ComplianceGateConfig
+
+# Configure CI/CD integration
+s3_config = S3UploadConfig(
+    bucket_name="compliance-reports",
+    key_prefix="inventag-bom",
+    region="us-east-1",
+    encryption="AES256",
+    lifecycle_days=90
+)
+
+compliance_config = ComplianceGateConfig(
+    minimum_compliance_percentage=80.0,
+    critical_violations_threshold=0,
+    required_tags=["Environment", "Owner"],
+    fail_on_security_issues=True
+)
+
+# Initialize CI/CD integration
+cicd = CICDIntegration(
+    s3_config=s3_config,
+    compliance_gate_config=compliance_config
+)
+
+# Execute pipeline integration
+result = cicd.execute_pipeline_integration(
+    bom_generator=generator,
+    output_formats=["excel", "word", "json"],
+    upload_to_s3=True,
+    send_notifications=True,
+    export_metrics=True
+)
+
+print(f"Pipeline success: {result.success}")
+print(f"Compliance gate: {'PASSED' if result.compliance_gate_passed else 'FAILED'}")
+print(f"Documents uploaded: {len(result.s3_uploads)}")
+```
+
+#### **📊 S3 Document Upload**
+Automated upload of generated BOM documents to S3 with configurable storage options.
+
+```python
+from inventag.core.cicd_integration import S3UploadConfig
+
+s3_config = S3UploadConfig(
+    bucket_name="my-compliance-bucket",
+    key_prefix="bom-reports",
+    region="us-west-2",
+    encryption="aws:kms",
+    kms_key_id="arn:aws:kms:us-west-2:123456789012:key/12345678-1234-1234-1234-123456789012",
+    public_read=False,
+    lifecycle_days=30,
+    storage_class="STANDARD_IA"
+)
+```
+
+#### **🛡️ Compliance Gate Checking**
+Automated compliance validation with configurable thresholds for pipeline control.
+
+```python
+from inventag.core.cicd_integration import ComplianceGateConfig
+
+compliance_config = ComplianceGateConfig(
+    minimum_compliance_percentage=85.0,
+    critical_violations_threshold=0,
+    required_tags=["Environment", "Owner", "CostCenter"],
+    allowed_non_compliant_services=["CloudTrail"],
+    fail_on_security_issues=True,
+    fail_on_network_issues=False
+)
+```
+
+#### **📢 Notification Integration**
+Multi-channel notifications with Slack, Teams, and email support.
+
+```python
+from inventag.core.cicd_integration import NotificationConfig
+
+notification_config = NotificationConfig(
+    slack_webhook_url="https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
+    teams_webhook_url="https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK",
+    email_recipients=["compliance@company.com", "devops@company.com"],
+    include_summary=True,
+    include_document_links=True,
+    notify_on_success=True,
+    notify_on_failure=True
+)
+```
+
+#### **📈 Prometheus Metrics Export**
+Comprehensive metrics export for monitoring and alerting systems.
+
+```python
+# Metrics automatically exported include:
+# - inventag_total_resources
+# - inventag_compliant_resources  
+# - inventag_compliance_percentage
+# - inventag_processing_time_seconds
+# - inventag_successful_accounts
+# - inventag_security_issues
+# - inventag_document_generation_time
+# - inventag_s3_upload_time
+```
 
 ### Contributing with Automated Releases
 
@@ -191,15 +312,23 @@ gh workflow run "Automated Release" --field version_bump=major
 - 📝 **Conventional Commits**: Enhanced release notes from commit messages
 - 🏷️ **Breaking Change Detection**: Requires proper labeling for major releases
 - 📊 **Release Analytics**: Track version history and change patterns
+- 🚀 **CI/CD Integration**: Automated BOM generation with compliance gates
+- 📊 **S3 Document Storage**: Automated upload with lifecycle management
+- 📢 **Multi-Channel Notifications**: Slack, Teams, and email integration
+- 📈 **Prometheus Metrics**: Comprehensive monitoring and alerting
 
 ### Integration Examples
 
-**GitHub Actions Workflow:**
+**GitHub Actions Workflow with CI/CD Integration:**
 ```yaml
-name: Compliance Check
-on: [push, pull_request]
+name: Multi-Account BOM Generation
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+  workflow_dispatch:
+
 jobs:
-  compliance:
+  generate-bom:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -209,30 +338,104 @@ jobs:
         python-version: '3.10'
     - name: Install dependencies
       run: pip install -r requirements.txt
-    - name: Check tag compliance
-      run: python scripts/tag_compliance_checker.py --config config/production_tags.yaml
+    
+    - name: Generate Multi-Account BOM
+      run: |
+        python -c "
+        from inventag.core.cloud_bom_generator import CloudBOMGenerator
+        from inventag.core.cicd_integration import CICDIntegration, S3UploadConfig, ComplianceGateConfig, NotificationConfig
+        
+        # Configure CI/CD integration
+        s3_config = S3UploadConfig(
+            bucket_name='${{ secrets.S3_BUCKET }}',
+            key_prefix='daily-bom-reports',
+            region='us-east-1'
+        )
+        
+        compliance_config = ComplianceGateConfig(
+            minimum_compliance_percentage=80.0,
+            fail_on_security_issues=True
+        )
+        
+        notification_config = NotificationConfig(
+            slack_webhook_url='${{ secrets.SLACK_WEBHOOK }}',
+            notify_on_success=True,
+            notify_on_failure=True
+        )
+        
+        # Initialize and execute
+        cicd = CICDIntegration(s3_config, compliance_config, notification_config)
+        generator = CloudBOMGenerator.from_credentials_file('accounts.json')
+        
+        result = cicd.execute_pipeline_integration(
+            bom_generator=generator,
+            output_formats=['excel', 'word', 'json'],
+            upload_to_s3=True,
+            send_notifications=True,
+            export_metrics=True
+        )
+        
+        # Fail pipeline if compliance gate fails
+        if not result.compliance_gate_passed:
+            exit(1)
+        "
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 ```
 
-**Scheduled Compliance Monitoring:**
+**Compliance Gate Integration:**
 ```yaml
-name: Daily Compliance Report
-on:
-  schedule:
-    - cron: '0 9 * * *'  # Daily at 9 AM UTC
+name: Compliance Gate Check
+on: [push, pull_request]
 jobs:
-  compliance:
+  compliance-gate:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Generate compliance report
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+    
+    - name: Run Compliance Gate
       run: |
-        python scripts/tag_compliance_checker.py \
-          --config config/production_tags.yaml \
-          --s3-bucket compliance-reports \
-          --s3-key daily-reports/compliance-$(date +%Y%m%d).json
+        python -c "
+        from inventag.core.cicd_integration import CICDIntegration, ComplianceGateConfig
+        from inventag.core.cloud_bom_generator import CloudBOMGenerator
+        
+        # Configure strict compliance gate
+        compliance_config = ComplianceGateConfig(
+            minimum_compliance_percentage=90.0,
+            critical_violations_threshold=0,
+            required_tags=['Environment', 'Owner', 'CostCenter'],
+            fail_on_security_issues=True,
+            fail_on_network_issues=True
+        )
+        
+        cicd = CICDIntegration(compliance_gate_config=compliance_config)
+        generator = CloudBOMGenerator.from_credentials_file('accounts.json')
+        
+        result = cicd.execute_pipeline_integration(
+            bom_generator=generator,
+            upload_to_s3=False,
+            send_notifications=False
+        )
+        
+        print(f'Compliance Gate: {\"PASSED\" if result.compliance_gate_passed else \"FAILED\"}')
+        
+        # Fail build if compliance gate fails
+        if not result.compliance_gate_passed:
+            print('❌ Compliance gate failed - blocking deployment')
+            exit(1)
+        else:
+            print('✅ Compliance gate passed - deployment approved')
+        "
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 ```
 
 ### Version Management
@@ -246,6 +449,12 @@ jobs:
 - 📖 See [`RELEASE.md`](RELEASE.md) for complete release management guide
 - 🔗 [Latest Release](https://github.com/habhabhabs/inventag-aws/releases/latest)
 - 📊 [All Releases](https://github.com/habhabhabs/inventag-aws/releases)
+
+**CI/CD Integration Documentation:**
+- 🚀 See [`docs/CICD_INTEGRATION.md`](docs/CICD_INTEGRATION.md) for comprehensive CI/CD integration guide
+- 📊 Includes S3 upload configuration, compliance gates, notifications, and monitoring
+- 🔧 GitHub Actions and AWS CodeBuild integration examples
+- 📈 Prometheus metrics and Grafana dashboard configurations
 
 ## 📋 Main Tools
 
@@ -326,6 +535,106 @@ print(f"Generated {summary.successful_formats} documents in {summary.total_gener
 - 🔧 **Template System**: Customizable document templates and layouts
 - 📈 **Progress Tracking**: Detailed generation statistics and error reporting
 - 🛡️ **Error Recovery**: Graceful handling of generation failures with partial results
+
+### 🚀 **CI/CD Integration**
+Complete pipeline integration for automated compliance monitoring and BOM generation with comprehensive CLI script.
+
+#### **Command-Line Interface**
+The `scripts/cicd_bom_generation.py` script provides a complete command-line interface for CI/CD integration:
+
+```bash
+# Basic multi-account BOM generation
+python scripts/cicd_bom_generation.py \
+  --accounts-file examples/accounts_basic.json \
+  --formats excel word
+
+# Full CI/CD integration with S3, notifications, and monitoring
+python scripts/cicd_bom_generation.py \
+  --accounts-file examples/accounts_cicd_environment.json \
+  --formats excel word json \
+  --s3-bucket my-compliance-bucket \
+  --s3-key-prefix bom-reports \
+  --compliance-threshold 80 \
+  --fail-on-security-issues \
+  --slack-webhook https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
+  --prometheus-gateway http://prometheus-pushgateway:9091 \
+  --verbose
+
+# Dry run for configuration validation
+python scripts/cicd_bom_generation.py \
+  --accounts-file examples/accounts_basic.json \
+  --formats excel \
+  --dry-run \
+  --verbose
+```
+
+#### **Programmatic Integration**
+```python
+from inventag.core.cicd_integration import CICDIntegration, S3UploadConfig, ComplianceGateConfig
+
+# Configure CI/CD integration
+s3_config = S3UploadConfig(
+    bucket_name="compliance-reports",
+    key_prefix="bom-reports",
+    encryption="AES256",
+    lifecycle_days=90
+)
+
+compliance_config = ComplianceGateConfig(
+    minimum_compliance_percentage=80.0,
+    fail_on_security_issues=True,
+    required_tags=["Environment", "Owner"]
+)
+
+# Execute pipeline integration
+cicd = CICDIntegration(s3_config=s3_config, compliance_gate_config=compliance_config)
+result = cicd.execute_pipeline_integration(
+    bom_generator=generator,
+    output_formats=["excel", "word", "json"],
+    upload_to_s3=True,
+    send_notifications=True,
+    export_metrics=True
+)
+
+# Check compliance gate
+if not result.compliance_gate_passed:
+    print("❌ Compliance gate failed - blocking deployment")
+    exit(1)
+```
+
+**Key Features:**
+- 🛡️ **Compliance Gates**: Configurable thresholds that can fail builds
+- 📊 **S3 Document Storage**: Automated upload with lifecycle management
+- 📢 **Multi-Channel Notifications**: Slack, Teams, and email integration
+- 📈 **Prometheus Metrics**: Comprehensive monitoring and alerting
+- 🔄 **Pipeline Artifacts**: JSON artifacts for downstream consumption
+- 🏢 **Multi-Account Support**: Parallel processing across AWS accounts
+- 🔧 **Environment Detection**: Automatic credential handling for GitHub Actions, AWS CodeBuild, Jenkins
+- 🎯 **Flexible Configuration**: Support for environment variables and configuration files
+
+#### **Environment Detection & Credential Management**
+The CI/CD script automatically detects the execution environment and applies appropriate credential strategies:
+
+- **GitHub Actions**: Uses GitHub Secrets with environment-specific variables (`AWS_ACCESS_KEY_ID_PROD`, `AWS_SECRET_ACCESS_KEY_STAGING`, etc.)
+- **AWS CodeBuild**: Retrieves credentials from AWS Secrets Manager with configurable secret names
+- **Jenkins**: Uses environment variables or Jenkins credential store
+- **Local Development**: Falls back to AWS CLI profiles or global environment variables
+
+```bash
+# Environment-specific credential examples:
+
+# GitHub Actions environment variables
+AWS_ACCESS_KEY_ID_PROD=AKIAIOSFODNN7EXAMPLE
+AWS_SECRET_ACCESS_KEY_PROD=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
+# AWS Secrets Manager secret names (CodeBuild)
+INVENTAG_SECRET_PRODUCTION=inventag/credentials/production
+INVENTAG_SECRET_STAGING=inventag/credentials/staging
+
+# Global environment variables (local/generic CI)
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+```
 
 ## 🔄 State Management & Change Tracking
 
@@ -647,6 +956,121 @@ final_resources = desc_manager.apply_descriptions_to_resources(enriched_resource
 # Each resource now has:
 # - service_description: Human-readable description
 # - description_metadata: Generation metadata and source tracking
+```
+
+## 🏢 Multi-Account Support & Credential Management
+
+InvenTag provides comprehensive multi-account support for enterprise environments with centralized credential management and cross-account role assumption.
+
+### 🔐 **Multi-Account Credential Management**
+
+Secure credential management system for multiple AWS accounts with flexible authentication methods.
+
+```python
+from inventag.core.credential_manager import CredentialManager, AccountCredentials
+
+# Create account credentials
+accounts = [
+    AccountCredentials(
+        account_id="123456789012",
+        account_name="Production Account",
+        profile_name="prod-profile"
+    ),
+    AccountCredentials(
+        account_id="123456789013", 
+        account_name="Development Account",
+        access_key_id="AKIATEST",
+        secret_access_key="secret"
+    ),
+    AccountCredentials(
+        account_id="123456789014",
+        account_name="Staging Account",
+        role_arn="arn:aws:iam::123456789014:role/InvenTagCrossAccountRole"
+    )
+]
+
+# Initialize credential manager
+credential_manager = CredentialManager()
+
+# Create secure credential file
+credential_manager.create_secure_credential_file(
+    accounts=accounts,
+    output_file="accounts.json",
+    encrypt=True
+)
+
+# Interactive credential setup
+accounts = credential_manager.interactive_credential_setup(
+    save_to_file="accounts.yaml",
+    encrypt_file=True
+)
+```
+
+### 🌐 **Multi-Account BOM Generation**
+
+Generate comprehensive BOMs across multiple AWS accounts with parallel processing.
+
+```python
+from inventag.core.cloud_bom_generator import CloudBOMGenerator, MultiAccountConfig
+
+# Load from credential file
+generator = CloudBOMGenerator.from_credentials_file("accounts.json")
+
+# Generate multi-account BOM
+result = generator.generate_multi_account_bom(
+    output_formats=["excel", "word", "json"],
+    compliance_policies=compliance_policies
+)
+
+print(f"Processed {result['processing_statistics']['total_accounts']} accounts")
+print(f"Found {result['processing_statistics']['total_resources']} resources")
+print(f"Success rate: {result['processing_statistics']['successful_accounts']}/{result['processing_statistics']['total_accounts']}")
+```
+
+### 🔄 **Cross-Account Role Setup**
+
+Automated setup of cross-account roles for centralized scanning.
+
+```python
+from inventag.core.credential_manager import CredentialManager
+
+credential_manager = CredentialManager()
+
+# Setup cross-account roles across all accounts
+setup_results = credential_manager.setup_cross_account_roles(
+    accounts=accounts,
+    role_name="InvenTagCrossAccountRole",
+    trusted_account_id="123456789012",  # Central scanning account
+    external_id="unique-external-id"
+)
+
+for account_id, result in setup_results.items():
+    if result["success"]:
+        print(f"✅ {account_id}: Role created successfully")
+        print(f"   Role ARN: {result['role_arn']}")
+    else:
+        print(f"❌ {account_id}: {result['error']}")
+```
+
+### 🎯 **Multi-Account Configuration**
+
+Flexible configuration for different account types and environments.
+
+```python
+from inventag.core.cloud_bom_generator import MultiAccountConfig
+
+config = MultiAccountConfig(
+    accounts=accounts,
+    parallel_account_processing=True,
+    max_concurrent_accounts=4,
+    account_processing_timeout=1800,  # 30 minutes per account
+    consolidate_accounts=True,
+    generate_per_account_reports=False,
+    enable_state_management=True,
+    enable_delta_detection=True
+)
+
+generator = CloudBOMGenerator(config)
 ```
 
 ## 🎯 Service-Specific Enrichment

@@ -23,8 +23,22 @@ from .discovery.network_analyzer import NetworkAnalyzer
 # State management modules
 from .state import StateManager, DeltaDetector, ChangelogGenerator
 
-# Main orchestrator (will be implemented in later tasks)
-# from .core import CloudBOMGenerator
+# Main orchestrator
+from .core import (
+    CloudBOMGenerator, 
+    MultiAccountConfig, 
+    AccountContext, 
+    AccountCredentials,
+    CredentialManager,
+    CredentialValidationResult,
+    CICDIntegration,
+    S3UploadConfig,
+    ComplianceGateConfig,
+    NotificationConfig,
+    PrometheusConfig,
+    PrometheusMetrics,
+    CICDResult
+)
 
 __all__ = [
     "AWSResourceInventory",
@@ -34,5 +48,17 @@ __all__ = [
     "StateManager",
     "DeltaDetector",
     "ChangelogGenerator",
-    # "CloudBOMGenerator",
+    "CloudBOMGenerator",
+    "MultiAccountConfig",
+    "AccountContext",
+    "AccountCredentials",
+    "CredentialManager",
+    "CredentialValidationResult",
+    "CICDIntegration",
+    "S3UploadConfig",
+    "ComplianceGateConfig",
+    "NotificationConfig",
+    "PrometheusConfig",
+    "PrometheusMetrics",
+    "CICDResult",
 ]
