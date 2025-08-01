@@ -55,7 +55,11 @@ inventag-aws/
 │   ├── reporting/                     # BOM generation module
 │   │   ├── __init__.py
 │   │   ├── converter.py               # BOMConverter class
-│   │   └── bom_processor.py           # BOMDataProcessor - central orchestrator
+│   │   ├── bom_processor.py           # BOMDataProcessor - central orchestrator
+│   │   ├── document_generator.py      # DocumentGenerator - multi-format document orchestration
+│   │   ├── excel_builder.py           # ExcelWorkbookBuilder - Excel document generation
+│   │   ├── word_builder.py            # WordDocumentBuilder - Word document generation
+│   │   └── csv_builder.py             # CSVBuilder - CSV document generation
 │   └── state/                         # State management module
 │       ├── __init__.py
 │       ├── state_manager.py           # StateManager for persistence
@@ -283,6 +287,45 @@ python scripts/bom_converter.py --input inventory.json --output report.xlsx
 # Create CSV with service column
 python scripts/bom_converter.py --input inventory.json --output report.csv --format csv
 ```
+
+### 📄 **Document Generation Framework**
+Advanced multi-format document generation with professional templates and branding.
+
+```python
+from inventag.reporting.document_generator import DocumentGenerator, DocumentConfig, BrandingConfig
+
+# Configure document generation
+branding = BrandingConfig(
+    company_name="Your Organization",
+    logo_path="assets/company_logo.png",
+    color_scheme={
+        "primary": "#366092",
+        "secondary": "#4472C4",
+        "accent": "#70AD47"
+    }
+)
+
+config = DocumentConfig(
+    output_formats=["excel", "word", "csv"],
+    branding=branding,
+    enable_parallel_generation=True,
+    output_directory="reports"
+)
+
+# Generate professional documents
+generator = DocumentGenerator(config)
+summary = generator.generate_bom_documents(bom_data, ["excel", "word"])
+
+print(f"Generated {summary.successful_formats} documents in {summary.total_generation_time:.2f}s")
+```
+
+**Key Features:**
+- 🎨 **Professional Branding**: Company logos, color schemes, and custom styling
+- 📊 **Multi-Format Support**: Excel, Word, CSV with format-specific optimizations
+- ⚡ **Parallel Generation**: Concurrent document creation for better performance
+- 🔧 **Template System**: Customizable document templates and layouts
+- 📈 **Progress Tracking**: Detailed generation statistics and error reporting
+- 🛡️ **Error Recovery**: Graceful handling of generation failures with partial results
 
 ## 🔄 State Management & Change Tracking
 
