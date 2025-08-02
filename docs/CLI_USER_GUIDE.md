@@ -340,6 +340,45 @@ python -m inventag.cli.main \
   --validate-config
 ```
 
+### Compliance-BOM Integration
+
+The CLI integrates tag compliance checking with BOM generation for comprehensive governance reporting:
+
+```bash
+# Generate BOM with integrated compliance checking
+python -m inventag.cli.main \
+  --create-excel --create-word \
+  --tag-mappings config/tag_policy.yaml \
+  --service-descriptions config/service_descriptions.yaml \
+  --enable-compliance-analysis \
+  --output-directory compliance_reports
+
+# Multi-account compliance BOM generation
+python -m inventag.cli.main \
+  --accounts-file accounts.json \
+  --create-excel \
+  --tag-mappings config/tag_policy.yaml \
+  --enable-compliance-analysis \
+  --s3-bucket compliance-reports \
+  --s3-key-prefix daily-compliance/$(date +%Y-%m-%d)/
+
+# Compliance-focused reporting with thresholds
+python -m inventag.cli.main \
+  --create-excel \
+  --tag-mappings config/tag_policy.yaml \
+  --enable-compliance-analysis \
+  --compliance-threshold 80 \
+  --fail-on-low-compliance \
+  --verbose
+```
+
+**Key Features:**
+- **Integrated Workflow**: Seamless transition from compliance checking to BOM generation
+- **Professional Reports**: Excel and Word documents with compliance status and metrics
+- **Threshold Enforcement**: Configurable compliance thresholds for CI/CD gates
+- **Multi-Format Output**: Compliance data included in all BOM formats
+- **Detailed Analysis**: Resource-level compliance status with missing tag information
+
 ## Error Handling and Troubleshooting
 
 ### Common Issues
@@ -444,7 +483,7 @@ The unified CLI interface replaces the legacy script-based approach. Here's how 
 | Legacy Script | New CLI Command | Notes |
 |---------------|-----------------|-------|
 | `python scripts/aws_resource_inventory.py --export-excel` | `python -m inventag.cli.main --create-excel` | Unified interface with multi-account support |
-| `python scripts/tag_compliance_checker.py --config tags.yaml` | `python -m inventag.cli.main --create-excel --tag-mappings tags.yaml` | Integrated compliance checking |
+| `python scripts/tag_compliance_checker.py --config tags.yaml` | `python -m inventag.cli.main --create-excel --tag-mappings tags.yaml --enable-compliance-analysis` | Integrated compliance checking with BOM generation |
 | `python scripts/bom_converter.py --input data.json --output report.xlsx` | `python -m inventag.cli.main --create-excel` | Direct Excel generation |
 | `python scripts/cicd_bom_generation.py --accounts-file accounts.json` | `python -m inventag.cli.main --accounts-file accounts.json --create-excel` | Enhanced CI/CD integration |
 

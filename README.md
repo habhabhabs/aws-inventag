@@ -19,11 +19,12 @@
 
 - 🔍 **Multi-Method Discovery** - Leverages ResourceGroupsTaggingAPI, AWSConfig, and service-specific APIs
 - 🎯 **Service-Specific Enrichment** - Deep attribute extraction for S3, RDS, EC2, Lambda, ECS, EKS and more
-- 📊 **Professional BOM Generation** - Creates detailed Excel/CSV reports with service-specific sheets
-- 🏷️ **Tag Compliance Checking** - Validates resources against organizational tagging policies
+- 📊 **Professional BOM Generation** - Creates detailed Excel/Word/CSV reports with service-specific sheets
+- 🏷️ **Tag Compliance Checking** - Validates resources against organizational tagging policies with integrated BOM generation
 - 🔧 **Intelligent Data Enhancement** - Enriches resources with VPC names, account IDs, and inferred tags
 - 🌐 **Network Analysis** - Comprehensive VPC/subnet analysis with IP utilization and capacity planning
 - 🔒 **Security Analysis** - Security posture assessment with vulnerability detection and compliance checks
+- 📋 **Template Framework** - Advanced document template system with variable substitution and professional branding
 - 🛡️ **Production Safety** - Enterprise-grade error handling, monitoring, and graceful degradation
 - 🔐 **Security Validation** - Read-only access validation with comprehensive audit logging for compliance
 - 💰 **Cost Analysis** - Resource cost estimation, forgotten resource detection, and optimization recommendations
@@ -32,6 +33,7 @@
 - 🔄 **State Management** - Track changes over time with persistent state storage and versioning
 - 🎯 **Delta Detection** - Advanced change analysis with impact assessment and categorization
 - 📝 **Changelog Generation** - Professional change reports for audit trails and documentation
+- 🔗 **Integrated Compliance-BOM Workflow** - Seamless transition from compliance checking to professional BOM document generation
 - 📋 **Template Framework** - Advanced document template system with variable substitution and professional branding
 - 🧪 **Comprehensive Testing** - Full test coverage including dynamic service discovery, production safety, and template framework testing
 
@@ -93,7 +95,7 @@ inventag-aws/
 │   │   └── cost_analyzer.py           # CostAnalyzer for cost estimation and optimization
 │   ├── compliance/                    # Tag compliance and security module
 │   │   ├── __init__.py
-│   │   ├── checker.py                 # ComprehensiveTagComplianceChecker
+│   │   ├── checker.py                 # ComprehensiveTagComplianceChecker with integrated BOM generation
 │   │   ├── security_validator.py      # ReadOnlyAccessValidator - security validation and audit logging
 │   │   ├── production_monitor.py      # ProductionSafetyMonitor - error handling and monitoring
 │   │   └── compliance_manager.py      # ComplianceManager - unified compliance orchestration
@@ -144,6 +146,7 @@ inventag-aws/
 │   ├── SERVICE_ENRICHMENT.md          # Service enrichment framework and dynamic discovery
 │   ├── SERVICE_DESCRIPTIONS.md        # Service description management
 │   ├── STATE_MANAGEMENT.md            # State management and change tracking
+│   ├── TAG_COMPLIANCE.md              # Tag compliance checking with integrated BOM generation
 │   ├── TEMPLATE_FRAMEWORK.md          # Document template framework and customization
 │   ├── SECURITY.md                    # Security guide & permissions
 │   └── CREDENTIAL_SECURITY_GUIDE.md   # Comprehensive credential security guide
@@ -639,9 +642,43 @@ print(f"Cached results: {stats['cached_results']}, Failed patterns: {stats['fail
 - 🛡️ **Read-Only Enforcement**: Only attempts operations validated as read-only
 - 📊 **Response Data Extraction**: Intelligently extracts resource data from API responses
 
-### 🏷️ **Tag Compliance** (`scripts/tag_compliance_checker.py`)
-Validates ALL resources against your tagging policies.
+### 🏷️ **Tag Compliance** (`inventag.compliance.checker.ComprehensiveTagComplianceChecker`)
+Validates ALL resources against your tagging policies with integrated BOM generation.
 
+**Unified Package Usage:**
+```python
+from inventag.compliance import ComprehensiveTagComplianceChecker
+
+# Initialize checker with configuration
+checker = ComprehensiveTagComplianceChecker(
+    regions=['us-east-1', 'us-west-2'],
+    config_file='config/tag_policy_example.yaml'
+)
+
+# Discover and check compliance
+results = checker.check_compliance()
+print(f"Compliance: {results['summary']['compliance_percentage']:.1f}%")
+
+# Generate BOM documents directly from compliance results
+bom_results = checker.generate_bom_documents(
+    output_formats=['excel', 'word'],
+    output_directory='compliance_reports',
+    enable_security_analysis=True,
+    enable_network_analysis=True
+)
+
+print(f"Generated {len(bom_results['generated_files'])} BOM documents:")
+for file_path in bom_results['generated_files']:
+    print(f"  - {file_path}")
+
+# Save compliance results
+checker.save_results('compliance_results.json')
+
+# Upload to S3
+checker.upload_to_s3('my-bucket', 'compliance/results.json')
+```
+
+**Legacy Script Usage (deprecated):**
 ```bash
 # Check for untagged resources only
 python scripts/tag_compliance_checker.py
@@ -2219,6 +2256,7 @@ All files include timestamps for easy tracking:
 
 - **[Release Management Guide](RELEASE.md)** - Complete CI/CD and versioning documentation
 - **[Security Guide](docs/SECURITY.md)** - Detailed permissions and security info
+- **[Tag Compliance Guide](docs/TAG_COMPLIANCE.md)** - Comprehensive tag compliance checking with integrated BOM generation
 - **[Network Analysis Guide](docs/NETWORK_ANALYSIS.md)** - Comprehensive VPC/subnet analysis and capacity planning
 - **[Service Enrichment Guide](docs/SERVICE_ENRICHMENT.md)** - Deep service attribute extraction and custom handlers
 - **[CLI User Guide](docs/CLI_USER_GUIDE.md)** - Comprehensive CLI interface documentation

@@ -88,6 +88,54 @@ python inventag_cli.py \
 |------|-------------|
 | `docker_compose_cicd.yml` | Docker Compose for CI/CD environments |
 
+## Compliance-BOM Integration Examples
+
+### Tag Compliance with BOM Generation
+
+```bash
+# Generate compliance BOM with tag policy validation
+python -m inventag.cli.main \
+  --create-excel --create-word \
+  --tag-mappings config/tag_policy_example.yaml \
+  --service-descriptions config/service_descriptions_example.yaml \
+  --enable-compliance-analysis \
+  --output-directory compliance_reports
+
+# Multi-account compliance BOM
+python -m inventag.cli.main \
+  --accounts-file examples/accounts_cli_example.json \
+  --create-excel \
+  --tag-mappings config/tag_policy_example.yaml \
+  --enable-compliance-analysis \
+  --s3-bucket compliance-reports
+```
+
+### Programmatic Compliance-BOM Integration
+
+```python
+from inventag.compliance import ComprehensiveTagComplianceChecker
+
+# Initialize checker with configuration
+checker = ComprehensiveTagComplianceChecker(
+    regions=['us-east-1', 'us-west-2'],
+    config_file='config/tag_policy_example.yaml'
+)
+
+# Run compliance check
+results = checker.check_compliance()
+print(f"Compliance: {results['summary']['compliance_percentage']:.1f}%")
+
+# Generate professional BOM documents
+bom_results = checker.generate_bom_documents(
+    output_formats=['excel', 'word'],
+    output_directory='compliance_reports',
+    enable_security_analysis=True,
+    enable_network_analysis=True
+)
+
+print(f"Generated {len(bom_results['generated_files'])} BOM documents")
+```
+
 ## Demo Scripts
 
 ### Basic Demos
