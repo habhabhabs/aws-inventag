@@ -11,10 +11,12 @@ from .document_generator import (
     DocumentGenerator, DocumentConfig, BrandingConfig, DocumentTemplate,
     DocumentGenerationResult, DocumentGenerationSummary, create_document_generator
 )
+from .template_framework import TemplateManager, TemplateVariableResolver, TemplateLoader
 
 __all__ = [
     "BOMConverter", 
     "BOMDataProcessor", "BOMProcessingConfig", "BOMData", "ProcessingStatistics",
     "DocumentGenerator", "DocumentConfig", "BrandingConfig", "DocumentTemplate",
-    "DocumentGenerationResult", "DocumentGenerationSummary", "create_document_generator"
+    "DocumentGenerationResult", "DocumentGenerationSummary", "create_document_generator",
+    "TemplateManager", "TemplateVariableResolver", "TemplateLoader"
 ]

@@ -13,7 +13,7 @@ The InvenTag CLI provides a comprehensive command-line interface for AWS cloud g
 - **🔧 Advanced Configuration**: Support for service descriptions, tag mappings, and BOM processing configs
 - **📝 Comprehensive Logging**: Account-specific logging with debug capabilities and file output
 - **✅ Validation Framework**: Built-in validation for credentials, configurations, and CLI arguments
-- **🔄 State Management**: Optional state tracking and delta detection for change analysis
+- **🔄 State Management**: Integrated state tracking, delta detection, and change analysis with professional changelog generation
 
 ### CLI Architecture
 
@@ -83,6 +83,22 @@ python -m inventag.cli.main --accounts-prompt --create-excel --verbose
 python -m inventag.cli.main --cross-account-role InvenTagRole --create-excel
 ```
 
+### State Management and Change Tracking
+
+```bash
+# Enable state tracking for change detection
+python -m inventag.cli.main --accounts-file accounts.json --create-excel \
+  --enable-state-tracking --state-dir inventory_states
+
+# Generate changelog from state changes
+python -m inventag.cli.main --accounts-file accounts.json --create-excel \
+  --enable-state-tracking --generate-changelog --changelog-format markdown
+
+# State management with custom retention
+python -m inventag.cli.main --create-excel --enable-state-tracking \
+  --state-retention-days 90 --max-state-snapshots 50
+```
+
 ## Command Line Options
 
 ### Account Configuration
@@ -98,6 +114,18 @@ python -m inventag.cli.main --cross-account-role InvenTagRole --create-excel
 | Option | Description | Example |
 |--------|-------------|---------|
 | `--create-word` | Generate professional Word document BOM | `--create-word` |
+| `--create-excel` | Generate professional Excel workbook BOM | `--create-excel` |
+
+### State Management Options
+
+| Option | Description | Example |
+|--------|-------------|---------|
+| `--enable-state-tracking` | Enable state management and change tracking | `--enable-state-tracking` |
+| `--state-dir` | Directory for storing state snapshots | `--state-dir inventory_states` |
+| `--generate-changelog` | Generate changelog from state changes | `--generate-changelog` |
+| `--changelog-format` | Changelog format (markdown, html, json) | `--changelog-format markdown` |
+| `--state-retention-days` | Days to retain state snapshots | `--state-retention-days 90` |
+| `--max-state-snapshots` | Maximum number of state snapshots to keep | `--max-state-snapshots 50` |
 | `--create-excel` | Generate comprehensive Excel workbook BOM | `--create-excel` |
 | `--create-google-docs` | Generate Google Docs/Sheets BOM | `--create-google-docs` |
 

@@ -17,6 +17,9 @@ from .cicd_integration import (
     CICDResult
 )
 
+# Import state management components
+from ..state import StateManager, DeltaDetector, ChangelogGenerator
+
 __all__ = [
     "CloudBOMGenerator",
     "MultiAccountConfig", 
@@ -31,5 +34,8 @@ __all__ = [
     "NotificationConfig",
     "PrometheusConfig",
     "PrometheusMetrics",
-    "CICDResult"
+    "CICDResult",
+    "StateManager",
+    "DeltaDetector",
+    "ChangelogGenerator"
 ]

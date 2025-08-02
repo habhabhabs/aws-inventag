@@ -79,7 +79,7 @@ inventag-aws/
 ├── inventag/                    # Unified Python package
 │   ├── __init__.py                    # Package initialization
 │   ├── core/                          # Core orchestration module
-│   │   ├── __init__.py
+│   │   ├── __init__.py                # Core module with state management integration
 │   │   ├── cloud_bom_generator.py     # CloudBOMGenerator - multi-account orchestrator
 │   │   ├── credential_manager.py      # CredentialManager - multi-account credential management
 │   │   └── cicd_integration.py        # CICDIntegration - CI/CD pipeline integration
@@ -140,6 +140,7 @@ inventag-aws/
 ├── docs/                        # Detailed documentation
 │   ├── BOM_DATA_PROCESSOR.md          # BOM Data Processor comprehensive guide
 │   ├── CICD_INTEGRATION.md            # CI/CD integration and pipeline automation
+│   ├── CORE_MODULE_INTEGRATION.md     # Core module integration with state management
 │   ├── COST_ANALYSIS.md               # Cost analysis and optimization guide
 │   ├── NETWORK_ANALYSIS.md            # Network analysis and capacity planning
 │   ├── PRODUCTION_SAFETY.md           # Production safety and security validation guide
@@ -536,6 +537,12 @@ jobs:
 - 🔗 [Latest Release](https://github.com/habhabhabs/inventag-aws/releases/latest)
 - 📊 [All Releases](https://github.com/habhabhabs/inventag-aws/releases)
 
+**Core Module Integration Documentation:**
+- 🏗️ See [`docs/CORE_MODULE_INTEGRATION.md`](docs/CORE_MODULE_INTEGRATION.md) for unified core module usage
+- 🔄 Includes state management integration, change detection, and changelog generation
+- 🚀 Enterprise CI/CD patterns with comprehensive state tracking
+- 📊 Advanced credential management and multi-account orchestration
+
 **CI/CD Integration Documentation:**
 - 🚀 See [`docs/CICD_INTEGRATION.md`](docs/CICD_INTEGRATION.md) for comprehensive CI/CD integration guide
 - 📊 Includes S3 upload configuration, compliance gates, notifications, and monitoring
@@ -561,7 +568,7 @@ Comprehensive command-line interface for multi-account AWS cloud governance with
 - 🔧 **Advanced Configuration**: Support for service descriptions, tag mappings, and BOM processing configs
 - 📝 **Comprehensive Logging**: Account-specific logging with debug capabilities and file output
 - ✅ **Validation Framework**: Built-in validation for credentials, configurations, and CLI arguments
-- 🔄 **State Management**: Optional state tracking and delta detection for change analysis
+- 🔄 **State Management**: Integrated state tracking, delta detection, and change analysis with professional changelog generation
 
 **Usage Examples:**
 ```bash
@@ -581,6 +588,11 @@ python -m inventag.cli.main --cross-account-role InvenTagRole --create-excel --a
 python -m inventag.cli.main --accounts-file accounts.json --create-excel --create-word \
   --s3-bucket reports-bucket --s3-key-prefix bom-reports/ \
   --max-concurrent-accounts 8 --verbose
+
+# State management and change tracking
+python -m inventag.cli.main --accounts-file accounts.json --create-excel \
+  --enable-state-tracking --state-dir inventory_states \
+  --generate-changelog --changelog-format markdown
 ```
 
 **CLI Architecture:**
@@ -588,6 +600,12 @@ The CLI is built on three core components:
 - **`main.py`**: Primary CLI interface with argument parsing and orchestration
 - **`config_validator.py`**: Comprehensive validation framework for all configuration types  
 - **`logging_setup.py`**: Advanced logging system with account-specific context
+
+**State Management Integration:**
+The core module now includes direct access to state management components:
+- **`StateManager`**: Persistent storage and versioning of inventory states
+- **`DeltaDetector`**: Advanced change detection and analysis
+- **`ChangelogGenerator`**: Professional change documentation and reporting
 
 ### 🔍 **Resource Inventory** (`scripts/aws_resource_inventory.py`) - *Legacy*
 Discovers ALL AWS resources across your account with intelligent service enrichment.
@@ -644,6 +662,59 @@ print(f"Cached results: {stats['cached_results']}, Failed patterns: {stats['fail
 
 ### 🏷️ **Tag Compliance** (`inventag.compliance.checker.ComprehensiveTagComplianceChecker`)
 Validates ALL resources against your tagging policies with integrated BOM generation.
+
+**State Management Integration:**
+```python
+from inventag.core import CloudBOMGenerator, StateManager, DeltaDetector, ChangelogGenerator
+
+# Initialize BOM generator with state management
+generator = CloudBOMGenerator.from_credentials_file('accounts.json')
+
+# Initialize state management components
+state_manager = StateManager(state_dir="inventory_states")
+delta_detector = DeltaDetector()
+changelog_generator = ChangelogGenerator()
+
+# Generate BOM and save state
+result = generator.generate_comprehensive_bom(
+    output_formats=['excel', 'word'],
+    enable_state_tracking=True
+)
+
+# Save current state for change tracking
+state_id = state_manager.save_state(
+    resources=result.all_resources,
+    account_id="123456789012",
+    regions=result.regions_processed,
+    tags={"purpose": "monthly_audit", "environment": "production"}
+)
+
+# Compare with previous state for change detection
+states = state_manager.list_states(limit=2)
+if len(states) >= 2:
+    comparison = state_manager.get_state_comparison_data(
+        states[1]['state_id'], states[0]['state_id']
+    )
+    
+    # Detect changes
+    delta_report = delta_detector.detect_changes(
+        old_resources=comparison['state1']['resources'],
+        new_resources=comparison['state2']['resources'],
+        state1_id=states[1]['state_id'],
+        state2_id=states[0]['state_id']
+    )
+    
+    # Generate professional changelog
+    if delta_report.summary['total_changes'] > 0:
+        changelog = changelog_generator.generate_changelog(
+            delta_report=delta_report,
+            format='markdown',
+            include_details=True,
+            include_executive_summary=True
+        )
+        changelog_generator.export_changelog(changelog, 'infrastructure_changes.md')
+        print(f"Generated changelog with {delta_report.summary['total_changes']} changes")
+```
 
 **Unified Package Usage:**
 ```python
