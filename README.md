@@ -32,6 +32,41 @@
 - 🔄 **State Management** - Track changes over time with persistent state storage and versioning
 - 🎯 **Delta Detection** - Advanced change analysis with impact assessment and categorization
 - 📝 **Changelog Generation** - Professional change reports for audit trails and documentation
+- 📋 **Template Framework** - Advanced document template system with variable substitution and professional branding
+- 🧪 **Comprehensive Testing** - Full test coverage including dynamic service discovery, production safety, and template framework testing
+
+## 🧪 Testing Framework
+
+InvenTag includes a comprehensive test suite with full coverage of all major components:
+
+### **Dynamic Service Discovery Testing**
+- Pattern-based discovery validation for unknown AWS services
+- Mock API response handling and error scenarios
+- Caching system performance and optimization testing
+- Read-only operation validation and security testing
+
+### **Production Safety Testing**
+- Enterprise-grade error handling and graceful degradation
+- Circuit breaker pattern implementation testing
+- Performance monitoring and metrics collection validation
+- CloudTrail integration and audit trail testing
+
+### **Template Framework Testing**
+- Document template system with variable substitution
+- Multi-format generation (Excel, Word, CSV) validation
+- Professional branding and styling application testing
+- Template loading and management system testing
+
+### **Run Tests**
+```bash
+# Run all tests with coverage
+python -m pytest tests/ -v --cov=inventag --cov-report=html
+
+# Run specific test categories
+python -m pytest tests/unit/test_dynamic_service_handler.py -v
+python -m pytest tests/unit/test_production_monitor.py -v
+python -m pytest tests/unit/test_template_framework_comprehensive.py -v
+```
 
 ## 📁 Project Structure
 
@@ -69,7 +104,12 @@ inventag-aws/
 │   │   ├── document_generator.py      # DocumentGenerator - multi-format document orchestration
 │   │   ├── excel_builder.py           # ExcelWorkbookBuilder - Excel document generation
 │   │   ├── word_builder.py            # WordDocumentBuilder - Word document generation
-│   │   └── csv_builder.py             # CSVBuilder - CSV document generation
+│   │   ├── csv_builder.py             # CSVBuilder - CSV document generation
+│   │   ├── template_framework.py      # DocumentTemplate framework with variable substitution
+│   │   ├── branding_system.py         # Advanced branding system with themes
+│   │   ├── configuration_manager.py   # Configuration management framework
+│   │   ├── excel_branding_applicator.py  # Excel-specific branding application
+│   │   └── word_branding_applicator.py   # Word-specific branding application
 │   └── state/                         # State management module
 │       ├── __init__.py
 │       ├── state_manager.py           # StateManager for persistence
@@ -85,15 +125,19 @@ inventag-aws/
 │   ├── tag_policy_example.yaml        # Example tag policy
 │   ├── tag_policy_example.json        # Example tag policy (JSON)
 │   └── README.md                      # Config documentation
+├── templates/                   # Document templates
+│   ├── default_excel_template.json    # Professional Excel template with dashboards
+│   └── default_word_template.yaml     # Professional Word template with branding
 ├── docs/                        # Detailed documentation
 │   ├── BOM_DATA_PROCESSOR.md          # BOM Data Processor comprehensive guide
 │   ├── CICD_INTEGRATION.md            # CI/CD integration and pipeline automation
 │   ├── COST_ANALYSIS.md               # Cost analysis and optimization guide
 │   ├── NETWORK_ANALYSIS.md            # Network analysis and capacity planning
 │   ├── PRODUCTION_SAFETY.md           # Production safety and security validation guide
-│   ├── SERVICE_ENRICHMENT.md          # Service enrichment framework
+│   ├── SERVICE_ENRICHMENT.md          # Service enrichment framework and dynamic discovery
 │   ├── SERVICE_DESCRIPTIONS.md        # Service description management
 │   ├── STATE_MANAGEMENT.md            # State management and change tracking
+│   ├── TEMPLATE_FRAMEWORK.md          # Document template framework and customization
 │   ├── SECURITY.md                    # Security guide & permissions
 │   └── CREDENTIAL_SECURITY_GUIDE.md   # Comprehensive credential security guide
 ├── examples/                    # Examples and demo scripts
@@ -105,6 +149,12 @@ inventag-aws/
 │   └── README.md                      # Usage examples
 └── tests/                       # Comprehensive test suite
     ├── unit/                          # Unit tests for all modules
+    │   ├── test_dynamic_service_handler.py    # Dynamic service discovery tests
+    │   ├── test_template_framework_comprehensive.py  # Template system tests
+    │   ├── test_document_generator_comprehensive.py  # Document generation tests
+    │   ├── test_compliance_manager.py         # Compliance management tests
+    │   ├── test_production_monitor.py         # Production safety tests
+    │   └── test_security_validator.py         # Security validation tests
     ├── integration/                   # End-to-end workflow tests
     ├── backward_compatibility/        # Legacy compatibility tests
     └── README.md                      # Testing documentation
@@ -476,7 +526,7 @@ jobs:
 ## 📋 Main Tools
 
 ### 🔍 **Resource Inventory** (`scripts/aws_resource_inventory.py`)
-Discovers ALL AWS resources across your account.
+Discovers ALL AWS resources across your account with intelligent service enrichment.
 
 ```bash
 # Discover all resources in all regions
@@ -488,6 +538,45 @@ python scripts/aws_resource_inventory.py --export-excel
 # Upload to S3
 python scripts/aws_resource_inventory.py --s3-bucket my-reports-bucket
 ```
+
+**Key Features:**
+- 🎯 **Dynamic Service Discovery**: Automatically handles unknown AWS services using pattern-based API discovery
+- 🔧 **Service-Specific Enrichment**: Deep attribute extraction for S3, RDS, EC2, Lambda, ECS, EKS and more
+- 🧠 **Intelligent Pattern Matching**: Uses comprehensive operation and parameter patterns for unknown services
+- 📊 **Caching System**: Optimized performance with pattern caching and failed operation tracking
+- 🛡️ **Read-Only Validation**: All operations are validated as read-only before execution
+
+**Dynamic Service Discovery:**
+The `DynamicServiceHandler` provides intelligent pattern-based discovery for unknown AWS services:
+
+```python
+from inventag.discovery.service_enrichment import DynamicServiceHandler
+
+# Initialize handler with AWS session
+handler = DynamicServiceHandler(boto3.Session())
+
+# Automatically discover and enrich unknown service resources
+resource = {
+    'service': 'TEXTRACT',
+    'type': 'Document', 
+    'id': 'document-123',
+    'arn': 'arn:aws:textract:us-east-1:123456789012:document/document-123'
+}
+
+enriched_resource = handler.enrich_resource(resource)
+print(f"Discovered attributes: {enriched_resource['service_attributes']}")
+
+# Get cache statistics for performance monitoring
+stats = handler.get_cache_statistics()
+print(f"Cached results: {stats['cached_results']}, Failed patterns: {stats['failed_patterns']}")
+```
+
+**Pattern-Based Discovery Features:**
+- 🔍 **Operation Pattern Generation**: Automatically generates `describe_*`, `get_*`, `list_*` patterns
+- 📋 **Parameter Pattern Matching**: Tries multiple parameter combinations (`Name`, `Id`, `Arn`, etc.)
+- 🚀 **Intelligent Caching**: Caches successful patterns and failed attempts to optimize performance
+- 🛡️ **Read-Only Enforcement**: Only attempts operations validated as read-only
+- 📊 **Response Data Extraction**: Intelligently extracts resource data from API responses
 
 ### 🏷️ **Tag Compliance** (`scripts/tag_compliance_checker.py`)
 Validates ALL resources against your tagging policies.
@@ -557,6 +646,54 @@ print(f"Generated {summary.successful_formats} documents in {summary.total_gener
 - 🛡️ **Error Recovery**: Graceful handling of generation failures with partial results
 - 🎯 **Template Variables**: Dynamic content with {{variable}} syntax and formatting
 - 🏢 **Enterprise Themes**: Professional, corporate, modern, and high-contrast themes
+
+### 📋 **Template Framework**
+Comprehensive document template system with variable substitution and professional customization.
+
+```python
+from inventag.reporting.template_framework import create_template_manager
+
+# Create template manager
+template_manager = create_template_manager("templates")
+
+# Load professional template
+template = template_manager.load_template("professional_word")
+
+# Create custom template with variables
+template.variables = {
+    "company_name": TemplateVariable(
+        name="company_name",
+        value="Acme Corporation",
+        description="Company name",
+        default_value="Organization"
+    ),
+    "document_title": TemplateVariable(
+        name="document_title",
+        value="Cloud Infrastructure BOM",
+        description="Document title"
+    )
+}
+
+# Resolve variables with formatting
+resolver = TemplateVariableResolver()
+variables = resolver.resolve_variables(template, {
+    "classification": "CONFIDENTIAL"
+})
+
+# Apply variable substitution
+formatted_text = resolver.substitute_text(
+    "{{company_name}} - {{document_title}} ({{current_date|date:%B %Y}})",
+    variables
+)
+```
+
+**Template Features:**
+- 📄 **Document Structure**: Hierarchical sections with table of contents
+- 🔤 **Variable System**: Built-in and custom variables with type validation
+- 🎨 **Header/Footer Templates**: Custom branding with logo placement
+- 📊 **Multi-Format Templates**: YAML/JSON template definitions
+- 🔧 **Template Management**: Caching, validation, and hot-reload
+- 🎯 **Variable Formatting**: Date, number, and text formatting options
 
 ### 🚀 **CI/CD Integration**
 Complete pipeline integration for automated compliance monitoring and BOM generation with comprehensive CLI script.
