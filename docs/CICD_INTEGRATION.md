@@ -1,295 +1,220 @@
-# CI/CD Integration Guide
-
-This guide covers the comprehensive CI/CD integration capabilities of InvenTag, including automated BOM generation, compliance gates, S3 document storage, notifications, and monitoring.
+# InvenTag CI/CD Integration Guide
 
 ## Overview
 
-The `CICDIntegration` class provides a complete solution for integrating InvenTag into your CI/CD pipelines with:
+InvenTag provides comprehensive CI/CD integration capabilities for automated cloud governance and BOM generation. This guide covers integration with popular CI/CD platforms including GitHub Actions, AWS CodeBuild, Jenkins, and GitLab CI.
 
-- **Automated BOM Generation**: Multi-account resource discovery and document generation
-- **Compliance Gates**: Configurable compliance thresholds that can fail builds
-- **S3 Document Storage**: Automated upload of generated documents with lifecycle management
-- **Multi-Channel Notifications**: Slack, Teams, and email notifications with document links
-- **Prometheus Metrics**: Comprehensive metrics export for monitoring and alerting
-- **Pipeline Artifacts**: JSON artifacts for downstream pipeline consumption
+## Key Features
 
-## Quick Start
+- **Automated BOM Generation**: Generate compliance reports on schedule or trigger
+- **Multi-Account Support**: Process multiple AWS accounts in parallel
+- **S3 Integration**: Automatically upload reports to S3 buckets
+- **Compliance Gates**: Fail builds based on compliance thresholds
+- **Notification Integration**: Send alerts to Slack, Teams, or email
+- **Artifact Management**: Store and version BOM documents
+- **Metrics Export**: Export metrics to monitoring systems
 
-### CLI Script (Recommended)
+## GitHub Actions Integration
 
-The easiest way to use InvenTag CI/CD integration is through the provided CLI script:
+### Basic Workflow
 
-```bash
-# Basic multi-account BOM generation
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_basic.json \
-  --formats excel word
-
-# Full CI/CD integration with S3, notifications, and monitoring
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_cicd_environment.json \
-  --formats excel word json \
-  --s3-bucket my-compliance-bucket \
-  --compliance-threshold 80 \
-  --fail-on-security-issues \
-  --slack-webhook https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
-  --prometheus-gateway http://prometheus-pushgateway:9091 \
-  --verbose
-```
-
-**📁 Complete configuration examples are available in:**
-- `examples/accounts_basic.json` - Basic multi-account setup
-- `examples/accounts_cicd_environment.json` - CI/CD environment setup
-- `examples/accounts_cross_account_roles.json` - Enterprise cross-account roles
-- `examples/cicd_config_complete.json` - All CI/CD configuration options
-- `docs/CONFIGURATION_EXAMPLES.md` - Comprehensive documentation
-
-### Programmatic Integration
-
-```python
-from inventag.core.cicd_integration import CICDIntegration, S3UploadConfig, ComplianceGateConfig
-from inventag.core.cloud_bom_generator import CloudBOMGenerator
-
-# Configure S3 upload
-s3_config = S3UploadConfig(
-    bucket_name="my-compliance-bucket",
-    key_prefix="bom-reports",
-    region="us-east-1"
-)
-
-# Configure compliance gate
-compliance_config = ComplianceGateConfig(
-    minimum_compliance_percentage=80.0,
-    fail_on_security_issues=True
-)
-
-# Initialize CI/CD integration
-cicd = CICDIntegration(
-    s3_config=s3_config,
-    compliance_gate_config=compliance_config
-)
-
-# Create BOM generator
-generator = CloudBOMGenerator.from_credentials_file("examples/accounts_basic.json")
-
-# Execute pipeline integration
-result = cicd.execute_pipeline_integration(
-    bom_generator=generator,
-    output_formats=["excel", "word", "json"],
-    upload_to_s3=True,
-    send_notifications=True,
-    export_metrics=True
-)
-
-# Check results
-if result.success and result.compliance_gate_passed:
-    print("✅ Pipeline completed successfully")
-    print(f"Documents uploaded: {list(result.s3_uploads.keys())}")
-else:
-    print("❌ Pipeline failed")
-    if not result.compliance_gate_passed:
-        print("Compliance gate failed")
-    exit(1)
-```
-
-## Configuration Components
-
-### S3UploadConfig
-
-Configures automated document upload to S3 with comprehensive storage options.
-
-```python
-from inventag.core.cicd_integration import S3UploadConfig
-
-s3_config = S3UploadConfig(
-    bucket_name="compliance-reports",           # Required: S3 bucket name
-    key_prefix="inventag-bom",                  # S3 key prefix for organization
-    region="us-east-1",                         # AWS region
-    encryption="AES256",                        # Encryption: AES256 or aws:kms
-    kms_key_id=None,                           # KMS key ID for aws:kms encryption
-    public_read=False,                         # Whether to make objects public
-    lifecycle_days=90,                         # Lifecycle policy (days)
-    storage_class="STANDARD"                   # Storage class: STANDARD, STANDARD_IA, GLACIER
-)
-```
-
-**Advanced S3 Configuration:**
-
-```python
-# KMS encryption with custom key
-s3_config = S3UploadConfig(
-    bucket_name="secure-compliance-bucket",
-    key_prefix="bom-reports",
-    region="us-west-2",
-    encryption="aws:kms",
-    kms_key_id="arn:aws:kms:us-west-2:123456789012:key/12345678-1234-1234-1234-123456789012",
-    lifecycle_days=30,
-    storage_class="STANDARD_IA"
-)
-
-# Public read access for shared reports
-s3_config = S3UploadConfig(
-    bucket_name="public-compliance-reports",
-    key_prefix="public-bom",
-    public_read=True,
-    lifecycle_days=7  # Short retention for public access
-)
-```
-
-### ComplianceGateConfig
-
-Configures compliance validation thresholds that can control pipeline execution.
-
-```python
-from inventag.core.cicd_integration import ComplianceGateConfig
-
-compliance_config = ComplianceGateConfig(
-    minimum_compliance_percentage=80.0,        # Minimum compliance % to pass
-    critical_violations_threshold=0,           # Max critical violations allowed
-    required_tags=["Environment", "Owner"],    # Tags that must be present
-    allowed_non_compliant_services=[],         # Services exempt from compliance
-    fail_on_security_issues=True,             # Fail on security violations
-    fail_on_network_issues=False              # Fail on network issues
-)
-```
-
-**Compliance Gate Examples:**
-
-```python
-# Strict compliance for production
-strict_compliance = ComplianceGateConfig(
-    minimum_compliance_percentage=95.0,
-    critical_violations_threshold=0,
-    required_tags=["Environment", "Owner", "CostCenter", "Project"],
-    fail_on_security_issues=True,
-    fail_on_network_issues=True
-)
-
-# Lenient compliance for development
-dev_compliance = ComplianceGateConfig(
-    minimum_compliance_percentage=60.0,
-    critical_violations_threshold=5,
-    required_tags=["Environment"],
-    allowed_non_compliant_services=["CloudTrail", "Config"],
-    fail_on_security_issues=False,
-    fail_on_network_issues=False
-)
-```
-
-### NotificationConfig
-
-Configures multi-channel notifications with rich content and document links.
-
-```python
-from inventag.core.cicd_integration import NotificationConfig
-
-notification_config = NotificationConfig(
-    slack_webhook_url="https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
-    teams_webhook_url="https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK",
-    email_recipients=["compliance@company.com", "devops@company.com"],
-    include_summary=True,                      # Include execution summary
-    include_document_links=True,               # Include S3 document links
-    notify_on_success=True,                    # Send success notifications
-    notify_on_failure=True                     # Send failure notifications
-)
-```
-
-## Pipeline Integration Patterns
-
-### GitHub Actions Integration
-
-**Daily Compliance Report:**
+Create `.github/workflows/inventag-bom.yml`:
 
 ```yaml
-name: Daily Multi-Account BOM Generation
+name: InvenTag BOM Generation
+
 on:
   schedule:
-    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
   workflow_dispatch:
+    inputs:
+      accounts_config:
+        description: 'Accounts configuration file'
+        required: false
+        default: 'config/accounts.json'
+      output_formats:
+        description: 'Output formats (comma-separated)'
+        required: false
+        default: 'excel,word'
 
 jobs:
   generate-bom:
     runs-on: ubuntu-latest
+    
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup Python
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.9'
     
     - name: Install dependencies
-      run: pip install -r requirements.txt
-    
-    - name: Generate Multi-Account BOM
       run: |
-        python scripts/cicd_bom_generation.py \
-          --accounts-file accounts.json \
-          --s3-bucket ${{ secrets.S3_BUCKET }} \
-          --s3-key-prefix daily-reports \
-          --slack-webhook ${{ secrets.SLACK_WEBHOOK }} \
-          --compliance-threshold 80 \
-          --formats excel word json
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        pip install -r requirements.txt
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    
+    - name: Generate BOM Reports
+      run: |
+        python inventag_cli.py \
+          --accounts-file ${{ github.event.inputs.accounts_config || 'config/accounts.json' }} \
+          --create-excel \
+          --create-word \
+          --s3-bucket ${{ secrets.BOM_REPORTS_BUCKET }} \
+          --s3-key-prefix "bom-reports/${{ github.run_number }}/" \
+          --verbose \
+          --log-file inventag-github.log
+    
+    - name: Upload logs as artifact
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: inventag-logs
+        path: inventag-github.log
+    
+    - name: Upload local reports as artifact
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: bom-reports
+        path: bom_output/
 ```
 
-**Compliance Gate for Pull Requests:**
+### Advanced Workflow with Compliance Gates
 
 ```yaml
-name: Compliance Gate Check
-on: [pull_request]
+name: InvenTag Compliance Check
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
-  compliance-gate:
+  compliance-check:
     runs-on: ubuntu-latest
+    
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup Python
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: us-east-1
+    
+    - name: Validate configuration
+      run: |
+        python inventag_cli.py \
+          --accounts-file config/accounts.json \
+          --service-descriptions config/service_descriptions.yaml \
+          --tag-mappings config/tag_mappings.yaml \
+          --validate-config
+    
+    - name: Validate credentials
+      run: |
+        python inventag_cli.py \
+          --accounts-file config/accounts.json \
+          --validate-credentials
+    
+    - name: Generate compliance report
+      run: |
+        python inventag_cli.py \
+          --accounts-file config/accounts.json \
+          --create-excel \
+          --enable-state-management \
+          --enable-delta-detection \
+          --generate-changelog \
+          --s3-bucket ${{ secrets.COMPLIANCE_BUCKET }} \
+          --s3-key-prefix "compliance-reports/pr-${{ github.event.number }}/" \
+          --verbose
+    
+    - name: Check compliance threshold
+      run: |
+        # Custom script to check compliance percentage
+        python scripts/check_compliance_threshold.py --threshold 85
+    
+    - name: Notify Slack on failure
+      if: failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        channel: '#compliance-alerts'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+```
+
+### Multi-Environment Workflow
+
+```yaml
+name: Multi-Environment BOM Generation
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM
+
+jobs:
+  generate-bom:
+    strategy:
+      matrix:
+        environment: [dev, staging, prod]
+    
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.environment }}
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
     
     - name: Install dependencies
       run: pip install -r requirements.txt
     
-    - name: Run Compliance Gate
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets[format('AWS_ROLE_ARN_{0}', upper(matrix.environment))] }}
+        aws-region: us-east-1
+    
+    - name: Generate BOM for ${{ matrix.environment }}
       run: |
-        python -c "
-        from inventag.core.cicd_integration import CICDIntegration, ComplianceGateConfig
-        from inventag.core.cloud_bom_generator import CloudBOMGenerator
-        
-        # Configure strict compliance gate for PR checks
-        compliance_config = ComplianceGateConfig(
-            minimum_compliance_percentage=85.0,
-            critical_violations_threshold=0,
-            required_tags=['Environment', 'Owner'],
-            fail_on_security_issues=True
-        )
-        
-        cicd = CICDIntegration(compliance_gate_config=compliance_config)
-        generator = CloudBOMGenerator.from_credentials_file('accounts.json')
-        
-        result = cicd.execute_pipeline_integration(
-            bom_generator=generator,
-            upload_to_s3=False,  # Don't upload for PR checks
-            send_notifications=False
-        )
-        
-        if not result.compliance_gate_passed:
-            print('❌ Compliance gate failed - PR blocked')
-            exit(1)
-        else:
-            print('✅ Compliance gate passed - PR approved')
-        "
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        python inventag_cli.py \
+          --accounts-file config/accounts-${{ matrix.environment }}.json \
+          --create-excel \
+          --create-word \
+          --s3-bucket ${{ secrets[format('BOM_BUCKET_{0}', upper(matrix.environment))] }} \
+          --s3-key-prefix "bom-reports/${{ matrix.environment }}/$(date +%Y-%m-%d)/" \
+          --max-concurrent-accounts 6 \
+          --verbose
 ```
 
-### AWS CodeBuild Integration
+## AWS CodeBuild Integration
 
-**buildspec.yml for CodeBuild:**
+### Basic BuildSpec
+
+Create `buildspec.yml`:
 
 ```yaml
 version: 0.2
@@ -297,534 +222,556 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      python: 3.10
+      python: 3.9
     commands:
       - pip install -r requirements.txt
   
+  pre_build:
+    commands:
+      - echo "Validating InvenTag configuration..."
+      - python inventag_cli.py --accounts-file $ACCOUNTS_CONFIG --validate-config
+      - python inventag_cli.py --accounts-file $ACCOUNTS_CONFIG --validate-credentials
+  
   build:
     commands:
-      - echo "Starting multi-account BOM generation"
-      - |
-        python -c "
-        import os
-        from inventag.core.cicd_integration import CICDIntegration, S3UploadConfig, ComplianceGateConfig, NotificationConfig
-        from inventag.core.cloud_bom_generator import CloudBOMGenerator
-        
-        # Configure from environment variables
-        s3_config = S3UploadConfig(
-            bucket_name=os.environ['S3_BUCKET'],
-            key_prefix=f'codebuild-reports/{os.environ['CODEBUILD_BUILD_ID']}',
-            region=os.environ['AWS_DEFAULT_REGION']
-        )
-        
-        compliance_config = ComplianceGateConfig(
-            minimum_compliance_percentage=float(os.environ.get('COMPLIANCE_THRESHOLD', '80')),
-            fail_on_security_issues=True
-        )
-        
-        notification_config = NotificationConfig(
-            slack_webhook_url=os.environ.get('SLACK_WEBHOOK'),
-            notify_on_success=True,
-            notify_on_failure=True
-        )
-        
-        # Execute pipeline
-        cicd = CICDIntegration(s3_config, compliance_config, notification_config)
-        generator = CloudBOMGenerator.from_credentials_file('accounts.json')
-        
-        result = cicd.execute_pipeline_integration(
-            bom_generator=generator,
-            output_formats=['excel', 'word', 'json'],
-            upload_to_s3=True,
-            send_notifications=True,
-            export_metrics=True
-        )
-        
-        # Export results for CodeBuild
-        with open('pipeline_result.json', 'w') as f:
-            import json
-            json.dump({
-                'success': result.success,
-                'compliance_gate_passed': result.compliance_gate_passed,
-                'documents_generated': len(result.generated_documents),
-                's3_uploads': result.s3_uploads,
-                'execution_time': result.execution_time_seconds
-            }, f, indent=2)
-        
-        if not result.success or not result.compliance_gate_passed:
-            exit(1)
-        "
+      - echo "Generating BOM reports..."
+      - python inventag_cli.py 
+          --accounts-file $ACCOUNTS_CONFIG 
+          --create-excel 
+          --create-word 
+          --s3-bucket $BOM_REPORTS_BUCKET 
+          --s3-key-prefix "bom-reports/$CODEBUILD_BUILD_NUMBER/" 
+          --max-concurrent-accounts 8 
+          --account-processing-timeout 3600 
+          --verbose 
+          --log-file inventag-codebuild.log
+  
+  post_build:
+    commands:
+      - echo "BOM generation completed"
+      - aws s3 cp inventag-codebuild.log s3://$BOM_REPORTS_BUCKET/logs/
 
 artifacts:
   files:
-    - pipeline_result.json
-    - artifacts/*.json
-  name: bom-generation-artifacts
+    - bom_output/**/*
+    - inventag-codebuild.log
+  name: inventag-bom-$CODEBUILD_BUILD_NUMBER
+
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'
 ```
 
-## Prometheus Metrics
+### Advanced BuildSpec with Secrets Manager
 
-The CI/CD integration automatically exports comprehensive metrics for monitoring:
+```yaml
+version: 0.2
 
-### Core Metrics
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - pip install -r requirements.txt
+      - pip install boto3
+  
+  pre_build:
+    commands:
+      - echo "Retrieving accounts configuration from Secrets Manager..."
+      - aws secretsmanager get-secret-value --secret-id inventag/accounts --query SecretString --output text > accounts.json
+      - echo "Validating configuration..."
+      - python inventag_cli.py --accounts-file accounts.json --validate-config
+  
+  build:
+    commands:
+      - echo "Starting multi-account BOM generation..."
+      - python inventag_cli.py 
+          --accounts-file accounts.json 
+          --service-descriptions config/service_descriptions.yaml 
+          --tag-mappings config/tag_mappings.yaml 
+          --create-excel 
+          --create-word 
+          --s3-bucket $BOM_REPORTS_BUCKET 
+          --s3-key-prefix "automated-reports/$(date +%Y/%m/%d)/" 
+          --enable-state-management 
+          --enable-delta-detection 
+          --generate-changelog 
+          --max-concurrent-accounts 10 
+          --verbose
+  
+  post_build:
+    commands:
+      - echo "Cleaning up sensitive files..."
+      - rm -f accounts.json
+      - echo "BOM generation completed successfully"
 
-```prometheus
-# Resource metrics
-inventag_total_resources{account_id="123456789012"} 1250
-inventag_compliant_resources{account_id="123456789012"} 1000
-inventag_non_compliant_resources{account_id="123456789012"} 250
-inventag_compliance_percentage{account_id="123456789012"} 80.0
-
-# Processing metrics
-inventag_processing_time_seconds{account_id="123456789012"} 45.2
-inventag_successful_accounts 3
-inventag_failed_accounts 0
-inventag_total_accounts 3
-
-# Security and network metrics
-inventag_security_issues{account_id="123456789012"} 5
-inventag_network_issues{account_id="123456789012"} 2
-
-# Document generation metrics
-inventag_document_generation_time_seconds{format="excel"} 12.3
-inventag_document_generation_time_seconds{format="word"} 8.7
-inventag_s3_upload_time_seconds 3.2
+artifacts:
+  files:
+    - bom_output/**/*
+  name: inventag-bom-$(date +%Y%m%d-%H%M%S)
 ```
 
-### Grafana Dashboard Example
+## Jenkins Integration
 
-```json
-{
-  "dashboard": {
-    "title": "InvenTag Compliance Monitoring",
-    "panels": [
-      {
-        "title": "Compliance Percentage by Account",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "inventag_compliance_percentage",
-            "legendFormat": "{{account_id}}"
-          }
-        ]
-      },
-      {
-        "title": "Security Issues Trend",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "sum(inventag_security_issues)",
-            "legendFormat": "Total Security Issues"
-          }
-        ]
-      },
-      {
-        "title": "Processing Time by Account",
-        "type": "heatmap",
-        "targets": [
-          {
-            "expr": "inventag_processing_time_seconds",
-            "legendFormat": "{{account_id}}"
-          }
-        ]
-      }
-    ]
-  }
+### Declarative Pipeline
+
+Create `Jenkinsfile`:
+
+```groovy
+pipeline {
+    agent any
+    
+    parameters {
+        choice(
+            name: 'ENVIRONMENT',
+            choices: ['dev', 'staging', 'prod', 'all'],
+            description: 'Environment to generate BOM for'
+        )
+        booleanParam(
+            name: 'UPLOAD_TO_S3',
+            defaultValue: true,
+            description: 'Upload reports to S3'
+        )
+        string(
+            name: 'COMPLIANCE_THRESHOLD',
+            defaultValue: '85',
+            description: 'Minimum compliance percentage'
+        )
+    }
+    
+    environment {
+        AWS_DEFAULT_REGION = 'us-east-1'
+        BOM_REPORTS_BUCKET = credentials('bom-reports-bucket')
+        ACCOUNTS_CONFIG = credentials('inventag-accounts-config')
+    }
+    
+    stages {
+        stage('Setup') {
+            steps {
+                sh '''
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install -r requirements.txt
+                '''
+            }
+        }
+        
+        stage('Validate Configuration') {
+            steps {
+                sh '''
+                    . venv/bin/activate
+                    python inventag_cli.py --accounts-file $ACCOUNTS_CONFIG --validate-config
+                    python inventag_cli.py --accounts-file $ACCOUNTS_CONFIG --validate-credentials
+                '''
+            }
+        }
+        
+        stage('Generate BOM') {
+            steps {
+                script {
+                    def s3Options = params.UPLOAD_TO_S3 ? 
+                        "--s3-bucket ${env.BOM_REPORTS_BUCKET} --s3-key-prefix bom-reports/${env.BUILD_NUMBER}/" : ""
+                    
+                    sh """
+                        . venv/bin/activate
+                        python inventag_cli.py \\
+                            --accounts-file \$ACCOUNTS_CONFIG \\
+                            --create-excel \\
+                            --create-word \\
+                            ${s3Options} \\
+                            --max-concurrent-accounts 6 \\
+                            --verbose \\
+                            --log-file inventag-jenkins.log
+                    """
+                }
+            }
+        }
+        
+        stage('Compliance Check') {
+            steps {
+                sh '''
+                    . venv/bin/activate
+                    python scripts/check_compliance.py --threshold ${COMPLIANCE_THRESHOLD}
+                '''
+            }
+        }
+    }
+    
+    post {
+        always {
+            archiveArtifacts artifacts: 'bom_output/**/*,inventag-jenkins.log', allowEmptyArchive: true
+            publishHTML([
+                allowMissing: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
+                reportDir: 'bom_output',
+                reportFiles: '*.html',
+                reportName: 'BOM Report'
+            ])
+        }
+        
+        failure {
+            emailext (
+                subject: "InvenTag BOM Generation Failed - Build ${env.BUILD_NUMBER}",
+                body: "The InvenTag BOM generation failed. Check the build logs for details.",
+                to: "${env.CHANGE_AUTHOR_EMAIL}"
+            )
+        }
+        
+        success {
+            slackSend (
+                channel: '#compliance',
+                color: 'good',
+                message: "InvenTag BOM generation completed successfully for build ${env.BUILD_NUMBER}"
+            )
+        }
+    }
 }
 ```
 
-## Notification Examples
+## GitLab CI Integration
 
-### Slack Notification Format
+Create `.gitlab-ci.yml`:
+
+```yaml
+stages:
+  - validate
+  - generate
+  - deploy
+
+variables:
+  PYTHON_VERSION: "3.9"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip/
+    - venv/
+
+before_script:
+  - python -m venv venv
+  - source venv/bin/activate
+  - pip install -r requirements.txt
+
+validate_config:
+  stage: validate
+  script:
+    - python inventag_cli.py --accounts-file $ACCOUNTS_CONFIG --validate-config
+    - python inventag_cli.py --accounts-file $ACCOUNTS_CONFIG --validate-credentials
+  only:
+    - merge_requests
+    - main
+
+generate_bom:
+  stage: generate
+  script:
+    - python inventag_cli.py 
+        --accounts-file $ACCOUNTS_CONFIG 
+        --create-excel 
+        --create-word 
+        --s3-bucket $BOM_REPORTS_BUCKET 
+        --s3-key-prefix "bom-reports/$CI_PIPELINE_ID/" 
+        --verbose 
+        --log-file inventag-gitlab.log
+  artifacts:
+    paths:
+      - bom_output/
+      - inventag-gitlab.log
+    expire_in: 30 days
+  only:
+    - main
+    - schedules
+
+deploy_reports:
+  stage: deploy
+  script:
+    - aws s3 sync bom_output/ s3://$REPORTS_ARCHIVE_BUCKET/reports/$CI_PIPELINE_ID/
+  dependencies:
+    - generate_bom
+  only:
+    - main
+
+# Scheduled job for regular BOM generation
+scheduled_bom:
+  extends: generate_bom
+  script:
+    - python inventag_cli.py 
+        --accounts-file $ACCOUNTS_CONFIG 
+        --create-excel 
+        --create-word 
+        --enable-state-management 
+        --enable-delta-detection 
+        --generate-changelog 
+        --s3-bucket $BOM_REPORTS_BUCKET 
+        --s3-key-prefix "scheduled-reports/$(date +%Y-%m-%d)/" 
+        --max-concurrent-accounts 8 
+        --verbose
+  only:
+    - schedules
+```
+
+## Docker Integration
+
+### Dockerfile
+
+```dockerfile
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create non-root user
+RUN useradd -m -u 1000 inventag
+USER inventag
+
+# Set entrypoint
+ENTRYPOINT ["python", "inventag_cli.py"]
+```
+
+### Docker Compose for CI/CD
+
+```yaml
+version: '3.8'
+
+services:
+  inventag:
+    build: .
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=us-east-1
+    volumes:
+      - ./config:/app/config:ro
+      - ./output:/app/bom_output
+    command: >
+      --accounts-file config/accounts.json
+      --create-excel
+      --create-word
+      --verbose
+      --log-file bom_output/inventag-docker.log
+```
+
+## Environment Variables
+
+### Required Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `AWS_ACCESS_KEY_ID` | AWS access key ID | `AKIAIOSFODNN7EXAMPLE` |
+| `AWS_SECRET_ACCESS_KEY` | AWS secret access key | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` |
+| `AWS_DEFAULT_REGION` | Default AWS region | `us-east-1` |
+
+### Optional Variables
+
+| Variable | Description | Default | Example |
+|----------|-------------|---------|---------|
+| `ACCOUNTS_CONFIG` | Path to accounts config | None | `config/accounts.json` |
+| `BOM_REPORTS_BUCKET` | S3 bucket for reports | None | `my-bom-reports` |
+| `SERVICE_DESCRIPTIONS_CONFIG` | Service descriptions file | None | `config/services.yaml` |
+| `TAG_MAPPINGS_CONFIG` | Tag mappings file | None | `config/tags.yaml` |
+| `MAX_CONCURRENT_ACCOUNTS` | Max parallel accounts | `4` | `8` |
+| `ACCOUNT_PROCESSING_TIMEOUT` | Timeout per account | `1800` | `3600` |
+| `COMPLIANCE_THRESHOLD` | Min compliance % | `80` | `90` |
+
+## Security Best Practices
+
+### Credential Management
+
+1. **Use IAM Roles**: Prefer IAM roles over access keys
+2. **Least Privilege**: Grant minimal required permissions
+3. **Secrets Management**: Store credentials in secure vaults
+4. **Rotation**: Regularly rotate access keys
+5. **Audit**: Monitor credential usage
+
+### Example IAM Policy
 
 ```json
 {
-  "text": "InvenTag Multi-Account BOM Generation Complete",
-  "attachments": [
+  "Version": "2012-10-17",
+  "Statement": [
     {
-      "color": "good",
-      "fields": [
-        {
-          "title": "Status",
-          "value": "SUCCESS",
-          "short": true
-        },
-        {
-          "title": "Compliance Gate",
-          "value": "PASSED",
-          "short": true
-        },
-        {
-          "title": "Accounts",
-          "value": "3/3 successful",
-          "short": true
-        },
-        {
-          "title": "Resources",
-          "value": "1,250 (80.0% compliant)",
-          "short": true
-        },
-        {
-          "title": "Execution Time",
-          "value": "45.2s",
-          "short": true
-        },
-        {
-          "title": "Documents Generated",
-          "value": "3",
-          "short": true
-        }
+      "Effect": "Allow",
+      "Action": [
+        "sts:GetCallerIdentity",
+        "sts:AssumeRole"
       ],
-      "footer": "InvenTag CI/CD Integration"
+      "Resource": "*"
     },
     {
-      "color": "good",
-      "title": "Generated Documents",
-      "text": "• EXCEL: <https://bucket.s3.amazonaws.com/reports/report.xlsx|Download>\n• WORD: <https://bucket.s3.amazonaws.com/reports/report.docx|Download>\n• JSON: <https://bucket.s3.amazonaws.com/reports/report.json|Download>"
+      "Effect": "Allow",
+      "Action": [
+        "config:DescribeConfigurationRecorders",
+        "config:DescribeDeliveryChannels",
+        "config:GetResourceConfigHistory",
+        "config:ListDiscoveredResources",
+        "resource-groups:GetGroupQuery",
+        "resource-groups:GetResources",
+        "resource-groups:ListGroups",
+        "tag:GetResources",
+        "tag:GetTagKeys",
+        "tag:GetTagValues"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:PutObjectAcl"
+      ],
+      "Resource": "arn:aws:s3:::your-bom-bucket/*"
     }
   ]
 }
 ```
 
-### Teams Notification Format
+## Monitoring and Alerting
 
-```json
-{
-  "@type": "MessageCard",
-  "@context": "http://schema.org/extensions",
-  "themeColor": "00FF00",
-  "summary": "InvenTag Multi-Account BOM Generation Complete",
-  "sections": [
-    {
-      "activityTitle": "InvenTag Multi-Account BOM Generation Complete",
-      "activitySubtitle": "Status: SUCCESS | Compliance Gate: PASSED",
-      "facts": [
-        {
-          "name": "Total Accounts",
-          "value": "3"
-        },
-        {
-          "name": "Successful Accounts",
-          "value": "3"
-        },
-        {
-          "name": "Total Resources",
-          "value": "1,250"
-        },
-        {
-          "name": "Compliance Percentage",
-          "value": "80.0%"
-        },
-        {
-          "name": "Execution Time",
-          "value": "45.2s"
-        },
-        {
-          "name": "Documents Generated",
-          "value": "3"
-        }
-      ]
-    }
-  ],
-  "potentialAction": [
-    {
-      "@type": "OpenUri",
-      "name": "Download Excel Report",
-      "targets": [
-        {
-          "os": "default",
-          "uri": "https://bucket.s3.amazonaws.com/reports/report.xlsx"
-        }
-      ]
-    }
-  ]
-}
+### CloudWatch Integration
+
+```bash
+# Export metrics to CloudWatch
+python inventag_cli.py \
+  --accounts-file accounts.json \
+  --create-excel \
+  --enable-cloudwatch-metrics \
+  --cloudwatch-namespace "InvenTag/BOM"
 ```
 
-## Pipeline Artifacts
+### Prometheus Integration
 
-The CI/CD integration generates JSON artifacts for downstream pipeline consumption:
-
-### pipeline_summary.json
-
-```json
-{
-  "execution_timestamp": "2024-01-15T10:30:00Z",
-  "success": true,
-  "compliance_gate_passed": true,
-  "execution_time_seconds": 45.2,
-  "generated_documents": 3,
-  "s3_uploads": 3,
-  "notifications_sent": 2,
-  "total_accounts": 3,
-  "successful_accounts": 3,
-  "failed_accounts": 0,
-  "total_resources": 1250
-}
+```bash
+# Export metrics to Prometheus
+python inventag_cli.py \
+  --accounts-file accounts.json \
+  --create-excel \
+  --enable-prometheus-metrics \
+  --prometheus-pushgateway http://prometheus:9091
 ```
 
-### compliance_gate.json
+### Custom Alerting Script
 
-```json
-{
-  "passed": true,
-  "configuration": {
-    "minimum_compliance_percentage": 80.0,
-    "critical_violations_threshold": 0,
-    "required_tags": ["Environment", "Owner"],
-    "fail_on_security_issues": true,
-    "fail_on_network_issues": false
-  },
-  "results": {
-    "total_resources": 1250,
-    "compliant_resources": 1000,
-    "non_compliant_resources": 250,
-    "compliance_percentage": 80.0,
-    "critical_violations": 0,
-    "security_issues": 5,
-    "network_issues": 2
-  }
-}
+```python
+#!/usr/bin/env python3
+"""
+Custom alerting script for InvenTag CI/CD integration
+"""
+
+import json
+import sys
+import requests
+from pathlib import Path
+
+def check_compliance_threshold(report_path, threshold=85):
+    """Check if compliance meets threshold"""
+    try:
+        with open(report_path) as f:
+            report = json.load(f)
+        
+        compliance_pct = report.get('compliance_percentage', 0)
+        
+        if compliance_pct < threshold:
+            send_alert(f"Compliance below threshold: {compliance_pct}% < {threshold}%")
+            return False
+        
+        return True
+    
+    except Exception as e:
+        send_alert(f"Error checking compliance: {e}")
+        return False
+
+def send_alert(message):
+    """Send alert to Slack/Teams"""
+    webhook_url = os.environ.get('SLACK_WEBHOOK_URL')
+    if webhook_url:
+        requests.post(webhook_url, json={'text': message})
+
+if __name__ == '__main__':
+    report_path = sys.argv[1] if len(sys.argv) > 1 else 'bom_output/compliance_summary.json'
+    threshold = int(sys.argv[2]) if len(sys.argv) > 2 else 85
+    
+    if not check_compliance_threshold(report_path, threshold):
+        sys.exit(1)
 ```
 
-### s3_links.json
-
-```json
-{
-  "bucket": "compliance-reports",
-  "region": "us-east-1",
-  "documents": {
-    "excel": "https://compliance-reports.s3.us-east-1.amazonaws.com/bom-reports/20240115_103000/report.xlsx",
-    "word": "https://compliance-reports.s3.us-east-1.amazonaws.com/bom-reports/20240115_103000/report.docx",
-    "json": "https://compliance-reports.s3.us-east-1.amazonaws.com/bom-reports/20240115_103000/report.json"
-  },
-  "upload_timestamp": "2024-01-15T10:30:45Z"
-}
-```
-
-### account_summary.json
-
-```json
-{
-  "total_accounts": 3,
-  "accounts": [
-    {
-      "account_id": "123456789012",
-      "account_name": "Production Account",
-      "resource_count": 850,
-      "processing_time_seconds": 32.1,
-      "error_count": 0,
-      "accessible_regions": ["us-east-1", "us-west-2"],
-      "discovered_services": ["EC2", "S3", "RDS", "Lambda"]
-    },
-    {
-      "account_id": "123456789013",
-      "account_name": "Development Account",
-      "resource_count": 250,
-      "processing_time_seconds": 8.3,
-      "error_count": 0,
-      "accessible_regions": ["us-east-1"],
-      "discovered_services": ["EC2", "S3", "Lambda"]
-    },
-    {
-      "account_id": "123456789014",
-      "account_name": "Staging Account",
-      "resource_count": 150,
-      "processing_time_seconds": 4.8,
-      "error_count": 0,
-      "accessible_regions": ["us-east-1"],
-      "discovered_services": ["EC2", "S3"]
-    }
-  ]
-}
-```
-
-## Error Handling and Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
-**1. S3 Upload Failures**
-```python
-# Check S3 permissions and bucket configuration
-try:
-    result = cicd.execute_pipeline_integration(...)
-    if not result.s3_uploads:
-        print("S3 upload failed - check bucket permissions")
-except Exception as e:
-    if "AccessDenied" in str(e):
-        print("S3 bucket access denied - verify IAM permissions")
-    elif "NoSuchBucket" in str(e):
-        print("S3 bucket does not exist - create bucket first")
+1. **Credential Errors**
+   - Validate credentials before processing
+   - Check IAM permissions
+   - Verify role trust relationships
+
+2. **Timeout Issues**
+   - Increase `account_processing_timeout`
+   - Reduce `max_concurrent_accounts`
+   - Filter regions and services
+
+3. **S3 Upload Failures**
+   - Check S3 bucket permissions
+   - Verify bucket exists and is accessible
+   - Check network connectivity
+
+4. **Memory Issues**
+   - Increase container/runner memory
+   - Process accounts sequentially
+   - Filter services to reduce data volume
+
+### Debug Commands
+
+```bash
+# Validate configuration
+python inventag_cli.py --validate-config --debug
+
+# Test credentials
+python inventag_cli.py --validate-credentials --debug
+
+# Dry run with debug logging
+python inventag_cli.py --create-excel --debug --log-file debug.log
 ```
 
-**2. Compliance Gate Failures**
-```python
-# Debug compliance gate failures
-result = cicd.execute_pipeline_integration(...)
-if not result.compliance_gate_passed:
-    print("Compliance gate failed:")
-    print(f"- Compliance percentage: {result.metrics.compliance_percentage}%")
-    print(f"- Security issues: {result.metrics.security_issues}")
-    print(f"- Network issues: {result.metrics.network_issues}")
+## Performance Optimization
+
+### Parallel Processing
+
+```bash
+# Optimize for large environments
+python inventag_cli.py \
+  --max-concurrent-accounts 10 \
+  --account-processing-timeout 7200 \
+  --disable-delta-detection \
+  --account-services EC2,S3,RDS
 ```
 
-**3. Notification Failures**
-```python
-# Check notification configuration
-if not result.notifications_sent:
-    print("No notifications sent - check webhook URLs and configuration")
-    # Test webhook connectivity
-    import requests
-    response = requests.post(notification_config.slack_webhook_url, 
-                           json={"text": "Test message"})
-    print(f"Webhook test status: {response.status_code}")
+### Resource Filtering
+
+```bash
+# Filter by regions and services
+python inventag_cli.py \
+  --account-regions us-east-1,us-west-2 \
+  --account-services EC2,S3,RDS,Lambda \
+  --account-tags '{"Environment":"production"}'
 ```
 
-### Debugging Tips
+### Caching
 
-1. **Enable Debug Logging**:
-   ```python
-   import logging
-   logging.basicConfig(level=logging.DEBUG)
-   ```
-
-2. **Check AWS Permissions**:
-   ```bash
-   aws sts get-caller-identity
-   aws s3 ls s3://your-bucket-name
-   ```
-
-3. **Validate Configuration**:
-   ```python
-   # Test S3 configuration
-   s3_client = boto3.client('s3', region_name=s3_config.region)
-   s3_client.head_bucket(Bucket=s3_config.bucket_name)
-   ```
-
-4. **Monitor Execution Time**:
-   ```python
-   # Set reasonable timeouts for large accounts
-   result = cicd.execute_pipeline_integration(
-       bom_generator=generator,
-       # ... other parameters
-   )
-   print(f"Execution time: {result.execution_time_seconds}s")
-   ```
-
-## Best Practices
-
-### Security
-
-1. **Use IAM Roles**: Prefer IAM roles over access keys in CI/CD environments
-2. **Encrypt S3 Objects**: Always use encryption for sensitive compliance data
-3. **Secure Webhooks**: Use HTTPS webhooks and validate webhook signatures
-4. **Limit Permissions**: Use least-privilege IAM policies
-
-### Performance
-
-1. **Parallel Processing**: Enable parallel account processing for large environments
-2. **Regional Optimization**: Limit regions to reduce processing time
-3. **Service Filtering**: Filter services to focus on compliance-critical resources
-4. **Caching**: Use state management to avoid redundant processing
-
-### Reliability
-
-1. **Error Handling**: Implement comprehensive error handling and retries
-2. **Monitoring**: Set up alerts on compliance gate failures
-3. **Backup Storage**: Use multiple S3 regions for document storage
-4. **Graceful Degradation**: Continue processing even if some accounts fail
-
-### Cost Optimization
-
-1. **Lifecycle Policies**: Configure S3 lifecycle policies for cost management
-2. **Storage Classes**: Use appropriate S3 storage classes for retention requirements
-3. **Regional Placement**: Store documents in cost-effective regions
-4. **Cleanup**: Implement automated cleanup of old reports and artifacts
-
-## Advanced Configuration
-
-### Custom Metrics Export
-
-```python
-from inventag.core.cicd_integration import PrometheusMetrics
-
-# Create custom metrics
-custom_metrics = PrometheusMetrics(
-    total_resources=1500,
-    compliant_resources=1200,
-    compliance_percentage=80.0,
-    processing_time_seconds=60.0,
-    # ... other metrics
-)
-
-# Export to custom endpoint
-cicd._export_prometheus_metrics(custom_metrics, endpoint="http://pushgateway:9091")
+```bash
+# Enable state management for caching
+python inventag_cli.py \
+  --enable-state-management \
+  --enable-delta-detection
 ```
 
-### Multi-Environment Configuration
-
-```python
-# Environment-specific configurations
-environments = {
-    "production": {
-        "compliance_threshold": 95.0,
-        "s3_bucket": "prod-compliance-reports",
-        "notification_channels": ["slack", "email"],
-        "required_tags": ["Environment", "Owner", "CostCenter", "Project"]
-    },
-    "staging": {
-        "compliance_threshold": 85.0,
-        "s3_bucket": "staging-compliance-reports", 
-        "notification_channels": ["slack"],
-        "required_tags": ["Environment", "Owner"]
-    },
-    "development": {
-        "compliance_threshold": 70.0,
-        "s3_bucket": "dev-compliance-reports",
-        "notification_channels": [],
-        "required_tags": ["Environment"]
-    }
-}
-
-# Select configuration based on environment
-env = os.environ.get("ENVIRONMENT", "development")
-config = environments[env]
-
-compliance_config = ComplianceGateConfig(
-    minimum_compliance_percentage=config["compliance_threshold"],
-    required_tags=config["required_tags"]
-)
-```
-
-This comprehensive CI/CD integration system enables seamless automation of compliance monitoring and BOM generation across your entire AWS infrastructure.
-
-## Complete Configuration Reference
-
-For comprehensive configuration examples and documentation, see:
-
-### 📁 Configuration Files
-- **`examples/accounts_basic.json`** - Basic multi-account configuration
-- **`examples/accounts_cicd_environment.json`** - CI/CD environment setup
-- **`examples/accounts_with_profiles.json`** - AWS CLI profiles configuration
-- **`examples/accounts_cross_account_roles.json`** - Enterprise cross-account roles
-- **`examples/cicd_config_complete.json`** - Complete CI/CD configuration options
-
-### 🚀 CI/CD Platform Examples
-- **`examples/github_actions_cicd_example.yml`** - Complete GitHub Actions workflow
-- **`examples/jenkins_pipeline.groovy`** - Jenkins pipeline configuration
-- **`examples/aws_codebuild_buildspec.yml`** - AWS CodeBuild buildspec
-- **`examples/docker_compose_cicd.yml`** - Docker Compose setup
-
-### 📊 Monitoring and Alerting
-- **`examples/prometheus.yml`** - Prometheus configuration
-- **`examples/inventag_alerts.yml`** - Alerting rules
-- **`examples/docker_compose_cicd.yml`** - Complete monitoring stack
-
-### 📖 Documentation
-- **`docs/CONFIGURATION_EXAMPLES.md`** - Comprehensive configuration guide with all examples
-- **`scripts/cicd_bom_generation.py --help`** - CLI help with all options
-
-### 🔧 CLI Script
-The `scripts/cicd_bom_generation.py` script provides a complete command-line interface for all CI/CD integration features. Use `--help` to see all available options, or `--dry-run` to validate your configuration without execution.
-
-**Never reverse engineer configuration formats** - all examples are provided and documented!
+This comprehensive CI/CD integration guide provides everything needed to implement automated InvenTag BOM generation across different platforms and environments.

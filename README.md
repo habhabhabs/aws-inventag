@@ -115,7 +115,14 @@ inventag-aws/
 │       ├── state_manager.py           # StateManager for persistence
 │       ├── delta_detector.py          # DeltaDetector for change tracking
 │       └── changelog_generator.py     # ChangelogGenerator for reports
-├── scripts/                     # CLI wrapper scripts
+├── inventag/                    # Unified Python package
+│   ├── __init__.py                    # Package initialization
+│   ├── cli/                           # Comprehensive CLI interface
+│   │   ├── __init__.py                # CLI module initialization
+│   │   ├── main.py                    # Main CLI entry point with multi-account support
+│   │   ├── config_validator.py        # Configuration validation framework
+│   │   └── logging_setup.py           # Advanced logging with account-specific context
+├── scripts/                     # Legacy CLI wrapper scripts (deprecated)
 │   ├── aws_resource_inventory.py      # Resource discovery CLI
 │   ├── tag_compliance_checker.py      # Tag validation CLI
 │   ├── bom_converter.py               # Excel/CSV generator CLI
@@ -184,7 +191,28 @@ aws iam attach-user-policy --user-name YOUR_USER --policy-arn arn:aws:iam::ACCOU
 ./examples/quick_start.sh
 ```
 
-**Or run tools individually:**
+**Or use the unified CLI:**
+```bash
+# Single account BOM generation with Excel and Word formats
+python -m inventag.cli.main --create-excel --create-word
+
+# Multi-account BOM generation from configuration file
+python -m inventag.cli.main --accounts-file examples/accounts_basic.json --create-excel --create-word
+
+# Interactive multi-account setup
+python -m inventag.cli.main --accounts-prompt --create-excel --verbose
+
+# CI/CD integration with S3 upload
+python -m inventag.cli.main --accounts-file accounts.json --create-excel --s3-bucket reports-bucket
+
+# Cross-account role assumption
+python -m inventag.cli.main --cross-account-role InvenTagRole --create-excel --account-regions us-east-1,us-west-2
+
+# Production safety and security validation demo
+python examples/production_safety_demo.py
+```
+
+**Legacy script usage (deprecated):**
 ```bash
 # Basic resource inventory
 python scripts/aws_resource_inventory.py
@@ -194,12 +222,6 @@ python scripts/tag_compliance_checker.py --config config/tag_policy_example.yaml
 
 # Convert to Excel with service sheets
 python scripts/bom_converter.py --input examples/basic_inventory_*.json --output examples/report.xlsx
-
-# CI/CD BOM generation with compliance gates
-python scripts/cicd_bom_generation.py --accounts-file examples/accounts_basic.json --formats excel word
-
-# Production safety and security validation demo
-python examples/production_safety_demo.py
 ```
 
 ## 🔄 CI/CD Integration & Automated Releases
@@ -525,7 +547,46 @@ jobs:
 
 ## 📋 Main Tools
 
-### 🔍 **Resource Inventory** (`scripts/aws_resource_inventory.py`)
+### 🚀 **Unified CLI Interface** (`python -m inventag.cli.main`)
+Comprehensive command-line interface for multi-account AWS cloud governance with BOM generation, compliance checking, and advanced reporting capabilities.
+
+**Key Features:**
+- 🏢 **Multi-Account Support**: Process multiple AWS accounts concurrently with flexible credential management
+- 📊 **Multiple Output Formats**: Generate Excel, Word, and Google Docs reports with professional branding
+- 🚀 **CI/CD Integration**: Built-in S3 upload, configuration validation, and credential management
+- ⚡ **Parallel Processing**: Configurable concurrent account processing with timeout management
+- 🔧 **Advanced Configuration**: Support for service descriptions, tag mappings, and BOM processing configs
+- 📝 **Comprehensive Logging**: Account-specific logging with debug capabilities and file output
+- ✅ **Validation Framework**: Built-in validation for credentials, configurations, and CLI arguments
+- 🔄 **State Management**: Optional state tracking and delta detection for change analysis
+
+**Usage Examples:**
+```bash
+# Single account BOM generation
+python -m inventag.cli.main --create-excel --create-word
+
+# Multi-account BOM from configuration file
+python -m inventag.cli.main --accounts-file accounts.json --create-excel --s3-bucket reports-bucket
+
+# Interactive multi-account setup
+python -m inventag.cli.main --accounts-prompt --create-excel --verbose
+
+# Cross-account role assumption
+python -m inventag.cli.main --cross-account-role InvenTagRole --create-excel --account-regions us-east-1,us-west-2
+
+# CI/CD integration with comprehensive options
+python -m inventag.cli.main --accounts-file accounts.json --create-excel --create-word \
+  --s3-bucket reports-bucket --s3-key-prefix bom-reports/ \
+  --max-concurrent-accounts 8 --verbose
+```
+
+**CLI Architecture:**
+The CLI is built on three core components:
+- **`main.py`**: Primary CLI interface with argument parsing and orchestration
+- **`config_validator.py`**: Comprehensive validation framework for all configuration types  
+- **`logging_setup.py`**: Advanced logging system with account-specific context
+
+### 🔍 **Resource Inventory** (`scripts/aws_resource_inventory.py`) - *Legacy*
 Discovers ALL AWS resources across your account with intelligent service enrichment.
 
 ```bash
@@ -699,8 +760,32 @@ formatted_text = resolver.substitute_text(
 Complete pipeline integration for automated compliance monitoring and BOM generation with comprehensive CLI script.
 
 #### **Command-Line Interface**
-The `scripts/cicd_bom_generation.py` script provides a complete command-line interface for CI/CD integration:
+The unified CLI (`python -m inventag.cli.main`) provides comprehensive CI/CD integration capabilities:
 
+```bash
+# Basic multi-account BOM generation
+python -m inventag.cli.main \
+  --accounts-file examples/accounts_basic.json \
+  --create-excel --create-word
+
+# Full CI/CD integration with S3 upload and monitoring
+python -m inventag.cli.main \
+  --accounts-file examples/accounts_cicd_environment.json \
+  --create-excel --create-word \
+  --s3-bucket my-compliance-bucket \
+  --s3-key-prefix bom-reports/ \
+  --max-concurrent-accounts 8 \
+  --account-processing-timeout 3600 \
+  --verbose
+
+# Configuration and credential validation
+python -m inventag.cli.main \
+  --accounts-file examples/accounts_basic.json \
+  --validate-config --validate-credentials \
+  --verbose
+```
+
+**Legacy CI/CD Script (deprecated):**
 ```bash
 # Basic multi-account BOM generation
 python scripts/cicd_bom_generation.py \
@@ -2034,22 +2119,41 @@ See [`docs/SECURITY.md`](docs/SECURITY.md) for detailed security information.
 
 ### Monthly Resource Audit
 ```bash
+# Using unified CLI
+python -m inventag.cli.main --create-excel --s3-bucket monthly-reports --verbose
+
+# Legacy script (deprecated)
 python scripts/aws_resource_inventory.py --export-excel --s3-bucket monthly-reports
 ```
 
-### Tag Compliance Monitoring
+### Multi-Account Compliance Monitoring
 ```bash
+# Using unified CLI with multi-account support
+python -m inventag.cli.main --accounts-file accounts.json --create-excel --create-word \
+  --s3-bucket compliance-reports --s3-key-prefix monthly-audit/
+
+# Legacy script (deprecated)
 python scripts/tag_compliance_checker.py --config config/production_tags.yaml --s3-bucket compliance-reports
 ```
 
 ### Cost Center Reporting
 ```bash
+# Using unified CLI with custom tag mappings
+python -m inventag.cli.main --create-excel --tag-mappings config/cost_center_tags.yaml \
+  --output-directory cost-reports
+
+# Legacy approach (deprecated)
 python scripts/aws_resource_inventory.py
 python scripts/bom_converter.py --input aws_resources_*.json --output cost_center_report.xlsx
 ```
 
 ### Security Audit Preparation
 ```bash
+# Using unified CLI with production safety features
+python -m inventag.cli.main --accounts-file security-accounts.json --create-excel --create-word \
+  --service-descriptions config/security_services.yaml --verbose --debug
+
+# Legacy script (deprecated)
 python scripts/tag_compliance_checker.py --config config/security_tags.yaml --verbose
 ```
 
@@ -2117,9 +2221,10 @@ All files include timestamps for easy tracking:
 - **[Security Guide](docs/SECURITY.md)** - Detailed permissions and security info
 - **[Network Analysis Guide](docs/NETWORK_ANALYSIS.md)** - Comprehensive VPC/subnet analysis and capacity planning
 - **[Service Enrichment Guide](docs/SERVICE_ENRICHMENT.md)** - Deep service attribute extraction and custom handlers
+- **[CLI User Guide](docs/CLI_USER_GUIDE.md)** - Comprehensive CLI interface documentation
 - **[State Management Guide](docs/STATE_MANAGEMENT.md)** - Comprehensive state tracking and change detection
 - **[Configuration Guide](config/README.md)** - Tag policies and IAM setup
-- **[Script Documentation](scripts/README.md)** - Detailed script usage
+- **[Script Documentation](scripts/README.md)** - Legacy script usage (deprecated)
 - **[Examples](examples/README.md)** - Usage patterns and outputs
 - **[Testing Guide](tests/README.md)** - Comprehensive test suite documentation
 
@@ -2151,7 +2256,11 @@ graph LR
 
 **Integration with Monitoring:**
 ```bash
-# Export compliance metrics to monitoring system
+# Export compliance metrics to monitoring system using unified CLI
+python -m inventag.cli.main --accounts-file accounts.json --create-excel \
+  --s3-bucket monitoring-reports --verbose
+
+# Legacy approach (deprecated)
 python scripts/tag_compliance_checker.py \
   --config production_tags.yaml \
   --format json | \
@@ -2192,6 +2301,9 @@ for account in prod staging dev; do
   AWS_ACCESS_KEY_ID=$key \
   AWS_SECRET_ACCESS_KEY=$secret \
   AWS_SESSION_TOKEN=$token \
+  # Using unified CLI (recommended)
+  python -m inventag.cli.main --accounts-file config/${account}_accounts.json --create-excel \
+  # Legacy script (deprecated)
   python scripts/tag_compliance_checker.py \
     --config config/${account}_tags.yaml \
     --output ${account}_compliance.json
@@ -2201,6 +2313,11 @@ done
 **3. Integration with ITSM/CMDB:**
 ```bash
 # Upload to ServiceNow/JIRA for ticket creation
+# Using unified CLI (recommended)
+python -m inventag.cli.main --accounts-file accounts.json --create-excel \
+  --s3-bucket integration-reports
+
+# Legacy script (deprecated)
 python scripts/tag_compliance_checker.py \
   --config production_tags.yaml | \
   jq '.non_compliant_resources[] | select(.resource.service=="EC2")' | \
@@ -2213,6 +2330,10 @@ python scripts/tag_compliance_checker.py \
 **Resource Cost Analysis:**
 ```bash
 # Combine with AWS Cost Explorer
+# Using unified CLI (recommended)
+python -m inventag.cli.main --create-excel --output-directory cost-analysis
+
+# Legacy script (deprecated)
 python scripts/aws_resource_inventory.py --export-excel
 # Import into cost analysis tools for optimization recommendations
 ```
@@ -2220,6 +2341,10 @@ python scripts/aws_resource_inventory.py --export-excel
 **Tag-Based Cost Allocation:**
 ```bash
 # Generate cost center reports
+# Using unified CLI (recommended)
+python -m inventag.cli.main --create-excel --tag-mappings cost_center_tags.yaml
+
+# Legacy script (deprecated)
 python scripts/tag_compliance_checker.py \
   --config cost_center_tags.yaml \
   --output cost_allocation_report.json

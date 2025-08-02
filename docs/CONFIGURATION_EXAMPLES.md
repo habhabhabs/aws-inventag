@@ -1,854 +1,896 @@
 # InvenTag Configuration Examples
 
-This document provides comprehensive configuration examples for all InvenTag features. You should never need to reverse engineer configuration formats - everything is documented here with working examples.
+## Overview
 
-## Table of Contents
+This document provides comprehensive examples of InvenTag configuration files for various use cases and environments. All configuration files support both JSON and YAML formats.
 
-1. [Account Configuration Files](#account-configuration-files)
-2. [CI/CD Integration Configuration](#cicd-integration-configuration)
-3. [CLI Usage Examples](#cli-usage-examples)
-4. [CI/CD Platform Integration](#cicd-platform-integration)
-5. [Monitoring and Alerting](#monitoring-and-alerting)
-6. [Environment Variables](#environment-variables)
-7. [Docker and Container Deployment](#docker-and-container-deployment)
-8. [Security Best Practices](#security-best-practices)
+## Accounts Configuration
 
-## 🔐 Security First
+### Basic Single Account
 
-**Before using any configuration examples, please review the [Credential Security Guide](CREDENTIAL_SECURITY_GUIDE.md) for secure credential management across different environments.**
-
-**Key Security Principles:**
-- ✅ **GitHub Actions**: Use GitHub Secrets
-- ✅ **AWS CodeBuild**: Use AWS Secrets Manager  
-- ✅ **Local Development**: Use AWS CLI profiles
-- ❌ **Never commit credentials to version control**
-
-## Account Configuration Files
-
-### Basic Multi-Account Configuration (JSON)
-
-**File: `examples/accounts_basic.json`**
-
-```json
-{
-  "version": "1.0",
-  "encrypted": false,
-  "accounts": [
-    {
-      "account_id": "123456789012",
-      "account_name": "Production Account",
-      "role_arn": "arn:aws:iam::123456789012:role/InvenTagCrossAccountRole",
-      "external_id": "unique-external-id-for-security",
-      "regions": ["us-east-1", "us-west-2"],
-      "services": ["EC2", "S3", "RDS", "Lambda"],
-      "tags": {
-        "Environment": "production",
-        "Owner": "devops-team"
-      }
-    }
-  ],
-  "global_config": {
-    "default_regions": ["us-east-1"],
-    "max_concurrent_accounts": 3,
-    "continue_on_error": true
-  }
-}
-```
-
-**Usage:**
-```bash
-python scripts/cicd_bom_generation.py --accounts-file examples/accounts_basic.json --formats excel word
-```
-
-### CI/CD Environment Configuration
-
-**File: `examples/accounts_cicd_environment.json`**
-
-This configuration is designed for CI/CD environments where AWS credentials are provided via environment variables.
-
-```json
-{
-  "version": "1.0",
-  "encrypted": false,
-  "accounts": [
-    {
-      "account_id": "123456789012",
-      "account_name": "Production Account",
-      "regions": ["us-east-1", "us-west-2"],
-      "services": ["EC2", "S3", "RDS", "Lambda", "ECS"],
-      "tags": {
-        "Environment": "production",
-        "Owner": "platform-team"
-      }
-    }
-  ],
-  "metadata": {
-    "notes": [
-      "This configuration assumes AWS credentials are provided via environment variables:",
-      "AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN (optional)"
-    ]
-  }
-}
-```
-
-### AWS CLI Profiles Configuration
-
-**File: `examples/accounts_with_profiles.json`**
-
-For local development using AWS CLI profiles.
-
+#### JSON Format
 ```json
 {
   "accounts": [
     {
       "account_id": "123456789012",
-      "account_name": "Production Account",
-      "profile_name": "prod-account",
-      "regions": ["us-east-1", "us-west-2"]
+      "account_name": "My AWS Account",
+      "profile_name": "default",
+      "regions": ["us-east-1"],
+      "services": [],
+      "tags": {}
     }
   ],
-  "metadata": {
-    "notes": [
-      "Ensure profiles are configured in ~/.aws/credentials",
-      "Use 'aws configure --profile <profile-name>' to set up each profile"
-    ]
+  "settings": {
+    "max_concurrent_accounts": 1,
+    "account_processing_timeout": 1800,
+    "output_directory": "bom_output"
   }
 }
 ```
 
-### Cross-Account Role Configuration
-
-**File: `examples/accounts_cross_account_roles.json`**
-
-Enterprise configuration with cross-account role assumption.
-
-```json
-{
-  "accounts": [
-    {
-      "account_id": "123456789012",
-      "account_name": "Production Account",
-      "role_arn": "arn:aws:iam::123456789012:role/InvenTagCrossAccountRole",
-      "external_id": "prod-external-id-12345",
-      "regions": ["us-east-1", "us-west-2", "eu-west-1"],
-      "services": ["EC2", "S3", "RDS", "Lambda", "ECS", "EKS"]
-    }
-  ],
-  "metadata": {
-    "setup_instructions": [
-      "1. Create InvenTagCrossAccountRole in each target account",
-      "2. Configure trust relationship to allow assumption from management account",
-      "3. Attach ReadOnlyAccess policy for resource discovery",
-      "4. Set unique external IDs for each account"
-    ]
-  }
-}
-```
-
-### YAML Format (Alternative)
-
-**File: `examples/cicd_accounts_example.yaml`**
-
+#### YAML Format
 ```yaml
-version: "1.0"
-encrypted: false
-
 accounts:
   - account_id: "123456789012"
-    account_name: "Production Account"
-    role_arn: "arn:aws:iam::123456789012:role/InvenTagCrossAccountRole"
-    external_id: "unique-external-id-for-security"
+    account_name: "My AWS Account"
+    profile_name: "default"
     regions:
       - "us-east-1"
+    services: []
+    tags: {}
+
+settings:
+  max_concurrent_accounts: 1
+  account_processing_timeout: 1800
+  output_directory: "bom_output"
+```
+
+### Multi-Account with Different Credential Types
+
+```json
+{
+  "accounts": [
+    {
+      "account_id": "123456789012",
+      "account_name": "Production Account",
+      "profile_name": "prod-profile",
+      "regions": ["us-east-1", "us-west-2", "eu-west-1"],
+      "services": ["EC2", "S3", "RDS", "Lambda", "VPC"],
+      "tags": {
+        "Environment": "production",
+        "Team": "platform",
+        "CostCenter": "engineering"
+      }
+    },
+    {
+      "account_id": "123456789013",
+      "account_name": "Development Account",
+      "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+      "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+      "regions": ["us-east-1"],
+      "services": ["EC2", "S3", "Lambda"],
+      "tags": {
+        "Environment": "development",
+        "Team": "development"
+      }
+    },
+    {
+      "account_id": "123456789014",
+      "account_name": "Security Account",
+      "role_arn": "arn:aws:iam::123456789014:role/InvenTagCrossAccountRole",
+      "external_id": "unique-external-id-123",
+      "regions": ["us-east-1", "us-west-2"],
+      "services": ["IAM", "CloudTrail", "Config", "GuardDuty"],
+      "tags": {
+        "Environment": "security",
+        "Team": "security"
+      }
+    },
+    {
+      "account_id": "123456789015",
+      "account_name": "Staging Account",
+      "access_key_id": "AKIAIOSFODNN7STAGING",
+      "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYSTAGING",
+      "session_token": "FwoGZXIvYXdzEBQaDH...",
+      "regions": ["us-east-1", "us-west-1"],
+      "services": [],
+      "tags": {
+        "Environment": "staging",
+        "Team": "qa"
+      }
+    }
+  ],
+  "settings": {
+    "max_concurrent_accounts": 4,
+    "account_processing_timeout": 3600,
+    "output_directory": "multi_account_bom",
+    "enable_state_management": true,
+    "enable_delta_detection": true,
+    "generate_per_account_reports": true
+  }
+}
+```
+
+### Enterprise Multi-Region Configuration
+
+```yaml
+accounts:
+  # US Production Accounts
+  - account_id: "111111111111"
+    account_name: "US-East Production"
+    role_arn: "arn:aws:iam::111111111111:role/InvenTagRole"
+    regions:
+      - "us-east-1"
+      - "us-east-2"
+    services:
+      - "EC2"
+      - "S3"
+      - "RDS"
+      - "Lambda"
+      - "ELB"
+      - "VPC"
+      - "IAM"
+    tags:
+      Environment: "production"
+      Region: "us-east"
+      BusinessUnit: "core-services"
+      CostCenter: "12345"
+
+  - account_id: "222222222222"
+    account_name: "US-West Production"
+    role_arn: "arn:aws:iam::222222222222:role/InvenTagRole"
+    regions:
+      - "us-west-1"
       - "us-west-2"
     services:
       - "EC2"
       - "S3"
       - "RDS"
+      - "Lambda"
+      - "ELB"
+      - "VPC"
     tags:
       Environment: "production"
-      Owner: "devops-team"
+      Region: "us-west"
+      BusinessUnit: "core-services"
+      CostCenter: "12345"
 
-global_config:
-  default_regions:
-    - "us-east-1"
-  max_concurrent_accounts: 3
-  continue_on_error: true
+  # European Accounts
+  - account_id: "333333333333"
+    account_name: "EU Production"
+    role_arn: "arn:aws:iam::333333333333:role/InvenTagRole"
+    regions:
+      - "eu-west-1"
+      - "eu-west-2"
+      - "eu-central-1"
+    services:
+      - "EC2"
+      - "S3"
+      - "RDS"
+      - "Lambda"
+      - "VPC"
+    tags:
+      Environment: "production"
+      Region: "europe"
+      BusinessUnit: "european-ops"
+      CostCenter: "67890"
+      DataResidency: "eu"
+
+  # Development and Testing
+  - account_id: "444444444444"
+    account_name: "Development Sandbox"
+    profile_name: "dev-sandbox"
+    regions:
+      - "us-east-1"
+    services: []  # All services
+    tags:
+      Environment: "development"
+      Team: "all-teams"
+      AutoShutdown: "enabled"
+
+settings:
+  max_concurrent_accounts: 6
+  account_processing_timeout: 7200  # 2 hours for large accounts
+  output_directory: "enterprise_bom_reports"
+  enable_state_management: true
+  enable_delta_detection: true
+  generate_per_account_reports: true
 ```
 
-## CI/CD Integration Configuration
-
-### Complete CI/CD Configuration
-
-**File: `examples/cicd_config_complete.json`**
+### CI/CD Environment Configuration
 
 ```json
 {
-  "s3_config": {
-    "bucket_name": "my-compliance-reports-bucket",
-    "key_prefix": "inventag-bom-reports",
-    "region": "us-east-1",
-    "encryption": "AES256",
-    "lifecycle_days": 90,
-    "storage_class": "STANDARD"
-  },
-  "compliance_gate_config": {
-    "minimum_compliance_percentage": 80.0,
-    "critical_violations_threshold": 0,
-    "required_tags": ["Environment", "Owner"],
-    "fail_on_security_issues": true,
-    "fail_on_network_issues": false
-  },
-  "notification_config": {
-    "slack_webhook_url": "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK",
-    "teams_webhook_url": "https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK",
-    "email_recipients": ["compliance@company.com"],
-    "notify_on_success": true,
-    "notify_on_failure": true
-  },
-  "prometheus_config": {
-    "push_gateway_url": "http://prometheus-pushgateway:9091",
-    "job_name": "inventag-bom-generation",
-    "instance_name": "production"
+  "accounts": [
+    {
+      "account_id": "555555555555",
+      "account_name": "CI/CD Production",
+      "role_arn": "arn:aws:iam::555555555555:role/GitHubActionsRole",
+      "regions": ["us-east-1", "us-west-2"],
+      "services": ["EC2", "S3", "RDS", "Lambda", "ECS", "EKS"],
+      "tags": {
+        "Environment": "production",
+        "ManagedBy": "github-actions",
+        "Project": "main-application"
+      }
+    },
+    {
+      "account_id": "666666666666",
+      "account_name": "CI/CD Staging",
+      "role_arn": "arn:aws:iam::666666666666:role/GitHubActionsRole",
+      "regions": ["us-east-1"],
+      "services": ["EC2", "S3", "Lambda", "ECS"],
+      "tags": {
+        "Environment": "staging",
+        "ManagedBy": "github-actions",
+        "Project": "main-application"
+      }
+    }
+  ],
+  "settings": {
+    "max_concurrent_accounts": 8,
+    "account_processing_timeout": 1800,
+    "output_directory": "cicd_bom_output",
+    "enable_state_management": true,
+    "enable_delta_detection": true,
+    "generate_per_account_reports": false
   }
 }
 ```
 
-### S3 Configuration Variants
+## Service Descriptions Configuration
 
-**Basic S3 Configuration:**
-```json
-{
-  "bucket_name": "my-compliance-bucket",
-  "key_prefix": "bom-reports",
-  "region": "us-east-1"
-}
-```
-
-**S3 with KMS Encryption:**
-```json
-{
-  "bucket_name": "secure-compliance-bucket",
-  "key_prefix": "encrypted-reports",
-  "region": "us-west-2",
-  "encryption": "aws:kms",
-  "kms_key_id": "arn:aws:kms:us-west-2:123456789012:key/12345678-1234-1234-1234-123456789012",
-  "lifecycle_days": 30,
-  "storage_class": "STANDARD_IA"
-}
-```
-
-### Compliance Gate Configurations
-
-**Strict Compliance (Production):**
-```json
-{
-  "minimum_compliance_percentage": 95.0,
-  "critical_violations_threshold": 0,
-  "required_tags": ["Environment", "Owner", "CostCenter", "Project"],
-  "fail_on_security_issues": true,
-  "fail_on_network_issues": true
-}
-```
-
-**Lenient Compliance (Development):**
-```json
-{
-  "minimum_compliance_percentage": 60.0,
-  "critical_violations_threshold": 5,
-  "required_tags": ["Environment"],
-  "allowed_non_compliant_services": ["CloudTrail", "Config"],
-  "fail_on_security_issues": false,
-  "fail_on_network_issues": false
-}
-```
-
-## CLI Usage Examples
-
-### Basic Usage
-
-```bash
-# Simple BOM generation
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_basic.json \
-  --formats excel word
-
-# With specific output directory
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_basic.json \
-  --formats excel word json \
-  --output-dir ./my_bom_output
-```
-
-### S3 Upload
-
-```bash
-# Upload to S3 with basic configuration
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_basic.json \
-  --formats excel word json \
-  --s3-bucket my-compliance-bucket \
-  --s3-key-prefix bom-reports
-
-# S3 with KMS encryption
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_basic.json \
-  --formats excel \
-  --s3-bucket secure-bucket \
-  --s3-encryption aws:kms \
-  --s3-kms-key-id arn:aws:kms:us-west-2:123456789012:key/12345678-1234-1234-1234-123456789012
-```
-
-### Compliance Gates
-
-```bash
-# Strict compliance checking
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_basic.json \
-  --formats excel \
-  --compliance-threshold 85 \
-  --fail-on-security-issues \
-  --fail-on-network-issues \
-  --required-tags Environment Owner CostCenter
-
-# Lenient compliance for development
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_basic.json \
-  --formats excel \
-  --compliance-threshold 60 \
-  --critical-violations-threshold 5
-```
-
-### Notifications
-
-```bash
-# Slack notifications
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_basic.json \
-  --formats excel \
-  --slack-webhook https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
-
-# Multiple notification channels
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_basic.json \
-  --formats excel \
-  --slack-webhook https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
-  --teams-webhook https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK \
-  --email-recipients admin@company.com compliance@company.com
-```
-
-### Prometheus Metrics
-
-```bash
-# Push metrics to Prometheus Push Gateway
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_basic.json \
-  --formats excel \
-  --prometheus-gateway http://prometheus-pushgateway:9091 \
-  --prometheus-job inventag-manual \
-  --prometheus-instance local-run
-```
-
-### Full-Featured Example
-
-```bash
-# Complete CI/CD integration
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_cross_account_roles.json \
-  --formats excel word json \
-  --output-dir ./bom_output \
-  --s3-bucket my-compliance-bucket \
-  --s3-key-prefix production-reports \
-  --compliance-threshold 80 \
-  --fail-on-security-issues \
-  --required-tags Environment Owner \
-  --slack-webhook https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK \
-  --prometheus-gateway http://prometheus:9091 \
-  --prometheus-job inventag-production \
-  --verbose
-```
-
-### Dry Run and Validation
-
-```bash
-# Validate configuration without execution
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_basic.json \
-  --formats excel \
-  --dry-run \
-  --verbose
-```
-
-## CI/CD Platform Integration
-
-### GitHub Actions
-
-**File: `examples/github_actions_cicd_example.yml`**
+### Basic Service Descriptions
 
 ```yaml
-name: Multi-Account BOM Generation
+# Basic service descriptions for common AWS services
+EC2:
+  default_description: "Amazon Elastic Compute Cloud - Virtual servers in the cloud providing scalable compute capacity"
+  resource_types:
+    Instance: "Virtual machine instances with various compute, memory, and networking capacity"
+    Volume: "Elastic Block Store (EBS) volumes providing persistent block storage"
+    SecurityGroup: "Virtual firewall controlling inbound and outbound traffic"
+    KeyPair: "Key pairs for secure SSH access to EC2 instances"
+    NetworkInterface: "Virtual network interface attachable to instances"
+    Snapshot: "Point-in-time backup of EBS volumes"
 
-on:
-  schedule:
-    - cron: '0 6 * * *'  # Daily at 6 AM UTC
-  workflow_dispatch:
-    inputs:
-      compliance_threshold:
-        description: 'Minimum compliance percentage'
-        default: '80'
+S3:
+  default_description: "Amazon Simple Storage Service - Highly scalable object storage service"
+  resource_types:
+    Bucket: "Container for objects with global namespace and configurable access controls"
 
-jobs:
-  bom-generation:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
-    
-    - name: Generate BOM
-      env:
-        INVENTAG_S3_BUCKET: ${{ secrets.INVENTAG_S3_BUCKET }}
-        INVENTAG_SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-        PROMETHEUS_PUSH_GATEWAY_URL: ${{ secrets.PROMETHEUS_PUSH_GATEWAY_URL }}
-      run: |
-        python scripts/cicd_bom_generation.py \
-          --accounts-file examples/accounts_cicd_environment.json \
-          --formats excel word json \
-          --compliance-threshold ${{ github.event.inputs.compliance_threshold || '80' }} \
-          --fail-on-security-issues \
-          --verbose
+RDS:
+  default_description: "Amazon Relational Database Service - Managed relational database service"
+  resource_types:
+    DBInstance: "Managed database instance with automated backups and maintenance"
+    DBCluster: "Aurora database cluster with multiple instances for high availability"
+    DBSubnetGroup: "Collection of subnets for database deployment"
+    DBParameterGroup: "Configuration parameters for database engines"
+
+Lambda:
+  default_description: "AWS Lambda - Serverless compute service for running code without managing servers"
+  resource_types:
+    Function: "Serverless function that runs code in response to events"
+
+VPC:
+  default_description: "Amazon Virtual Private Cloud - Isolated virtual network environment"
+  resource_types:
+    VPC: "Virtual private cloud providing isolated network environment"
+    Subnet: "Subdivision of VPC IP address range in specific availability zone"
+    InternetGateway: "Gateway enabling internet access for VPC resources"
+    NatGateway: "Network Address Translation gateway for outbound internet access"
+    RouteTable: "Rules determining where network traffic is directed"
+    NetworkAcl: "Network-level access control list for subnet traffic filtering"
 ```
 
-### Jenkins Pipeline
-
-**File: `examples/jenkins_pipeline.groovy`**
-
-```groovy
-pipeline {
-    agent any
-    
-    parameters {
-        choice(name: 'ENVIRONMENT', choices: ['production', 'staging', 'development'])
-        choice(name: 'OUTPUT_FORMATS', choices: ['excel', 'word', 'json', 'excel,word,json'])
-        string(name: 'COMPLIANCE_THRESHOLD', defaultValue: '80')
-    }
-    
-    environment {
-        INVENTAG_S3_BUCKET = credentials('inventag-s3-bucket')
-        INVENTAG_SLACK_WEBHOOK = credentials('slack-webhook-url')
-        PROMETHEUS_PUSH_GATEWAY_URL = 'http://prometheus-pushgateway:9091'
-    }
-    
-    stages {
-        stage('Generate BOM') {
-            steps {
-                withCredentials([aws(credentialsId: 'aws-credentials')]) {
-                    sh """
-                        python scripts/cicd_bom_generation.py \
-                          --accounts-file examples/accounts_${params.ENVIRONMENT}.json \
-                          --formats ${params.OUTPUT_FORMATS} \
-                          --compliance-threshold ${params.COMPLIANCE_THRESHOLD} \
-                          --s3-bucket \${INVENTAG_S3_BUCKET} \
-                          --slack-webhook \${INVENTAG_SLACK_WEBHOOK} \
-                          --prometheus-gateway \${PROMETHEUS_PUSH_GATEWAY_URL} \
-                          --verbose
-                    """
-                }
-            }
-        }
-    }
-}
-```
-
-### AWS CodeBuild
-
-**File: `examples/aws_codebuild_buildspec.yml`**
+### Comprehensive Enterprise Service Descriptions
 
 ```yaml
-version: 0.2
+# Comprehensive service descriptions for enterprise environments
+EC2:
+  default_description: "Amazon Elastic Compute Cloud - Virtual servers providing scalable compute capacity with enterprise-grade security and compliance features"
+  display_name: "EC2 (Elastic Compute Cloud)"
+  category: "Compute"
+  documentation_url: "https://docs.aws.amazon.com/ec2/"
+  compliance_notes: "All EC2 instances must comply with company security baseline and be properly tagged"
+  resource_types:
+    Instance: "Virtual machine instances providing scalable compute capacity. Must follow company AMI standards and security configurations"
+    Volume: "Elastic Block Store volumes providing persistent storage. Encryption required for production workloads"
+    SecurityGroup: "Virtual firewall controlling traffic. Must follow least-privilege access principles"
+    KeyPair: "SSH key pairs for secure instance access. Regular rotation required"
+    NetworkInterface: "Virtual network interface for advanced networking configurations"
+    Snapshot: "Point-in-time EBS volume backups. Automated backup policies required"
+    Image: "Amazon Machine Images for instance deployment. Must use approved corporate AMIs"
+    LaunchTemplate: "Template for consistent instance configuration and deployment"
 
-env:
-  variables:
-    OUTPUT_FORMATS: "excel,word,json"
-    COMPLIANCE_THRESHOLD: "80"
-  parameter-store:
-    INVENTAG_S3_BUCKET: "/inventag/s3/bucket-name"
-    INVENTAG_SLACK_WEBHOOK: "/inventag/notifications/slack-webhook"
-    PROMETHEUS_PUSH_GATEWAY_URL: "/inventag/prometheus/push-gateway-url"
+S3:
+  default_description: "Amazon Simple Storage Service - Enterprise object storage with advanced security and compliance features"
+  display_name: "S3 (Simple Storage Service)"
+  category: "Storage"
+  documentation_url: "https://docs.aws.amazon.com/s3/"
+  compliance_notes: "All S3 buckets must have encryption enabled and follow data classification policies"
+  resource_types:
+    Bucket: "Object storage container with enterprise security controls and lifecycle management"
 
-phases:
-  install:
-    runtime-versions:
-      python: 3.11
-    commands:
-      - pip install -r requirements.txt
-      
-  build:
-    commands:
-      - |
-        python scripts/cicd_bom_generation.py \
-          --accounts-file examples/accounts_cicd_environment.json \
-          --formats $OUTPUT_FORMATS \
-          --compliance-threshold $COMPLIANCE_THRESHOLD \
-          --s3-bucket $INVENTAG_S3_BUCKET \
-          --slack-webhook $INVENTAG_SLACK_WEBHOOK \
-          --prometheus-gateway $PROMETHEUS_PUSH_GATEWAY_URL \
-          --fail-on-security-issues \
-          --verbose
+RDS:
+  default_description: "Amazon Relational Database Service - Managed database service with enterprise features"
+  display_name: "RDS (Relational Database Service)"
+  category: "Database"
+  documentation_url: "https://docs.aws.amazon.com/rds/"
+  compliance_notes: "All RDS instances must have encryption at rest and automated backups enabled"
+  resource_types:
+    DBInstance: "Managed database instance with automated maintenance and enterprise security"
+    DBCluster: "Aurora cluster providing high availability and automatic failover"
+    DBSubnetGroup: "Subnet group for database network isolation and security"
+    DBParameterGroup: "Database configuration parameters following enterprise standards"
+    DBSnapshot: "Database backup snapshot for disaster recovery"
 
-artifacts:
-  files:
-    - 'bom_output/**/*'
-    - '/tmp/pipeline_summary.json'
-    - '/tmp/compliance_gate.json'
+Lambda:
+  default_description: "AWS Lambda - Serverless compute platform for event-driven applications"
+  display_name: "Lambda"
+  category: "Compute"
+  documentation_url: "https://docs.aws.amazon.com/lambda/"
+  compliance_notes: "Lambda functions must follow secure coding practices and have appropriate IAM permissions"
+  resource_types:
+    Function: "Serverless function with enterprise monitoring and security controls"
+
+VPC:
+  default_description: "Amazon Virtual Private Cloud - Enterprise network infrastructure with advanced security"
+  display_name: "VPC (Virtual Private Cloud)"
+  category: "Networking"
+  documentation_url: "https://docs.aws.amazon.com/vpc/"
+  compliance_notes: "VPC configurations must follow enterprise network security standards"
+  resource_types:
+    VPC: "Isolated virtual network environment with enterprise security controls"
+    Subnet: "Network subdivision with appropriate security group and NACL configurations"
+    InternetGateway: "Internet access gateway with controlled routing"
+    NatGateway: "Managed NAT service for secure outbound internet access"
+    RouteTable: "Network routing configuration following security best practices"
+    NetworkAcl: "Network-level access control for additional security layer"
+    VPCEndpoint: "Private connectivity to AWS services without internet routing"
+
+IAM:
+  default_description: "AWS Identity and Access Management - Enterprise identity and access control service"
+  display_name: "IAM (Identity and Access Management)"
+  category: "Security"
+  documentation_url: "https://docs.aws.amazon.com/iam/"
+  compliance_notes: "All IAM resources must follow least-privilege principles and regular access reviews"
+  resource_types:
+    User: "IAM user account with appropriate permissions and MFA requirements"
+    Role: "IAM role for service-to-service authentication and cross-account access"
+    Policy: "Permission policy defining allowed actions and resources"
+    Group: "User group for simplified permission management"
+
+ELB:
+  default_description: "Elastic Load Balancing - Managed load balancing service for high availability"
+  display_name: "ELB (Elastic Load Balancing)"
+  category: "Networking"
+  documentation_url: "https://docs.aws.amazon.com/elasticloadbalancing/"
+  compliance_notes: "Load balancers must have appropriate security groups and SSL/TLS configuration"
+  resource_types:
+    LoadBalancer: "Load balancer distributing traffic across multiple targets"
+    TargetGroup: "Group of targets for load balancer routing"
+
+ECS:
+  default_description: "Amazon Elastic Container Service - Managed container orchestration service"
+  display_name: "ECS (Elastic Container Service)"
+  category: "Containers"
+  documentation_url: "https://docs.aws.amazon.com/ecs/"
+  compliance_notes: "Container images must be scanned for vulnerabilities and follow security best practices"
+  resource_types:
+    Cluster: "Container cluster for running containerized applications"
+    Service: "Container service ensuring desired number of running tasks"
+    TaskDefinition: "Blueprint for running containers with resource requirements"
+
+EKS:
+  default_description: "Amazon Elastic Kubernetes Service - Managed Kubernetes service"
+  display_name: "EKS (Elastic Kubernetes Service)"
+  category: "Containers"
+  documentation_url: "https://docs.aws.amazon.com/eks/"
+  compliance_notes: "EKS clusters must have appropriate RBAC and network policies configured"
+  resource_types:
+    Cluster: "Managed Kubernetes cluster with enterprise security features"
+    NodeGroup: "Group of worker nodes for running Kubernetes workloads"
 ```
 
-## Monitoring and Alerting
-
-### Prometheus Configuration
-
-**File: `examples/prometheus.yml`**
+### Industry-Specific Service Descriptions
 
 ```yaml
-global:
-  scrape_interval: 15s
+# Healthcare/HIPAA-compliant descriptions
+EC2:
+  default_description: "HIPAA-eligible compute service for healthcare workloads with encryption and audit capabilities"
+  compliance_notes: "Must be configured for HIPAA compliance with encryption at rest and in transit"
+  resource_types:
+    Instance: "HIPAA-eligible virtual machines with required security configurations for PHI processing"
 
-scrape_configs:
-  - job_name: 'pushgateway'
-    static_configs:
-      - targets: ['prometheus-pushgateway:9091']
-    scrape_interval: 30s
+S3:
+  default_description: "HIPAA-eligible object storage with encryption and access logging for healthcare data"
+  compliance_notes: "Must have server-side encryption, access logging, and appropriate bucket policies for PHI"
+  resource_types:
+    Bucket: "HIPAA-compliant storage bucket with encryption and audit trail for healthcare data"
+
+# Financial Services descriptions
+EC2:
+  default_description: "SOC 2 Type II compliant compute service for financial services workloads"
+  compliance_notes: "Must meet PCI DSS requirements and financial services regulatory standards"
+  resource_types:
+    Instance: "SOC 2 compliant virtual machines for processing financial data with required security controls"
+
+RDS:
+  default_description: "SOC 2 compliant managed database service for financial data with encryption and audit"
+  compliance_notes: "Must have encryption at rest, automated backups, and meet financial regulatory requirements"
+  resource_types:
+    DBInstance: "PCI DSS compliant database instance for financial data processing"
 ```
 
-### Alerting Rules
+## Tag Mappings Configuration
 
-**File: `examples/inventag_alerts.yml`**
+### Basic Tag Mappings
 
 ```yaml
-groups:
-  - name: inventag_compliance_alerts
-    rules:
-      - alert: CompliancePercentageLow
-        expr: inventag_compliance_percentage < 80
-        labels:
-          severity: warning
-        annotations:
-          summary: "Compliance percentage below threshold"
-          description: "Compliance is {{ $value }}% for account {{ $labels.account_id }}"
-      
-      - alert: CriticalViolationsDetected
-        expr: inventag_critical_violations > 0
-        labels:
-          severity: critical
-        annotations:
-          summary: "Critical compliance violations detected"
-          description: "{{ $value }} critical violations in account {{ $labels.account_id }}"
+# Basic custom tag mappings
+"inventag:remarks":
+  column_name: "Remarks"
+  default_value: ""
+  description: "Additional remarks or notes about the resource"
+
+"inventag:costcenter":
+  column_name: "Cost Center"
+  default_value: "Unknown"
+  description: "Cost center responsible for the resource"
+
+"inventag:owner":
+  column_name: "Resource Owner"
+  default_value: "Unassigned"
+  description: "Person or team responsible for the resource"
+
+"inventag:project":
+  column_name: "Project"
+  default_value: ""
+  description: "Project or application the resource belongs to"
 ```
 
-## Environment Variables
-
-### AWS Credentials
-
-```bash
-# Basic AWS credentials
-export AWS_ACCESS_KEY_ID="your-access-key-id"
-export AWS_SECRET_ACCESS_KEY="your-secret-access-key"
-export AWS_SESSION_TOKEN="optional-session-token"
-export AWS_DEFAULT_REGION="us-east-1"
-```
-
-### InvenTag Configuration
-
-```bash
-# S3 Configuration
-export INVENTAG_S3_BUCKET="my-compliance-bucket"
-export INVENTAG_S3_KEY_PREFIX="bom-reports"
-
-# Notification Configuration
-export INVENTAG_SLACK_WEBHOOK="https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
-export INVENTAG_TEAMS_WEBHOOK="https://outlook.office.com/webhook/YOUR/TEAMS/WEBHOOK"
-
-# Prometheus Configuration
-export PROMETHEUS_PUSH_GATEWAY_URL="http://prometheus-pushgateway:9091"
-export PROMETHEUS_JOB_NAME="inventag-bom"
-export PROMETHEUS_INSTANCE_NAME="default"
-```
-
-### Environment-Specific Credentials
-
-```bash
-# GitHub Actions - Multi-account credentials
-export AWS_ACCESS_KEY_ID_PROD="production-access-key"
-export AWS_SECRET_ACCESS_KEY_PROD="production-secret-key"
-export AWS_SESSION_TOKEN_PROD="production-session-token"
-
-export AWS_ACCESS_KEY_ID_STAGING="staging-access-key"
-export AWS_SECRET_ACCESS_KEY_STAGING="staging-secret-key"
-
-export AWS_ACCESS_KEY_ID_DEV="development-access-key"
-export AWS_SECRET_ACCESS_KEY_DEV="development-secret-key"
-
-# AWS Secrets Manager - Secret name overrides
-export INVENTAG_SECRET_PRODUCTION="inventag/credentials/production"
-export INVENTAG_SECRET_STAGING="inventag/credentials/staging"
-export INVENTAG_SECRET_DEVELOPMENT="inventag/credentials/development"
-```
-
-### Usage with Environment Variables
-
-```bash
-# All configuration via environment variables
-python scripts/cicd_bom_generation.py \
-  --accounts-file examples/accounts_cicd_environment.json \
-  --formats excel word \
-  --compliance-threshold 80 \
-  --fail-on-security-issues
-```
-
-## Docker and Container Deployment
-
-### Docker Compose
-
-**File: `examples/docker_compose_cicd.yml`**
+### Enterprise Tag Mappings
 
 ```yaml
-version: '3.8'
+# Comprehensive enterprise tag mappings
+"company:cost-center":
+  column_name: "Cost Center"
+  default_value: "UNASSIGNED"
+  description: "Financial cost center for chargeback and budgeting"
 
-services:
-  inventag-bom:
-    build: .
-    environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - INVENTAG_S3_BUCKET=${INVENTAG_S3_BUCKET}
-      - INVENTAG_SLACK_WEBHOOK=${SLACK_WEBHOOK_URL}
-      - PROMETHEUS_PUSH_GATEWAY_URL=http://prometheus-pushgateway:9091
-    volumes:
-      - ./examples:/app/examples:ro
-      - ./output:/app/output
-    command: >
-      python scripts/cicd_bom_generation.py
-      --accounts-file examples/accounts_cicd_environment.json
-      --formats excel word json
-      --compliance-threshold 80
-      --fail-on-security-issues
-      --verbose
-    depends_on:
-      - prometheus-pushgateway
+"company:business-unit":
+  column_name: "Business Unit"
+  default_value: "UNKNOWN"
+  description: "Business unit or division owning the resource"
 
-  prometheus-pushgateway:
-    image: prom/pushgateway:latest
-    ports:
-      - "9091:9091"
+"company:environment":
+  column_name: "Environment"
+  default_value: "UNDEFINED"
+  description: "Environment classification (prod, staging, dev, test)"
+
+"company:application":
+  column_name: "Application"
+  default_value: "UNTAGGED"
+  description: "Application or service name"
+
+"company:owner":
+  column_name: "Technical Owner"
+  default_value: "UNASSIGNED"
+  description: "Technical owner or responsible team"
+
+"company:data-classification":
+  column_name: "Data Classification"
+  default_value: "UNCLASSIFIED"
+  description: "Data sensitivity classification (public, internal, confidential, restricted)"
+
+"company:backup-required":
+  column_name: "Backup Required"
+  default_value: "UNKNOWN"
+  description: "Whether resource requires backup (yes, no, n/a)"
+
+"company:monitoring-level":
+  column_name: "Monitoring Level"
+  default_value: "STANDARD"
+  description: "Required monitoring level (basic, standard, enhanced, critical)"
+
+"company:compliance-scope":
+  column_name: "Compliance Scope"
+  default_value: "NONE"
+  description: "Compliance frameworks applicable (sox, pci, hipaa, gdpr)"
+
+"company:auto-shutdown":
+  column_name: "Auto Shutdown"
+  default_value: "DISABLED"
+  description: "Automatic shutdown configuration for cost optimization"
+
+"company:patch-group":
+  column_name: "Patch Group"
+  default_value: "DEFAULT"
+  description: "Patching group for maintenance scheduling"
+
+"company:disaster-recovery":
+  column_name: "DR Tier"
+  default_value: "TIER3"
+  description: "Disaster recovery tier (tier1, tier2, tier3, tier4)"
 ```
 
-### Kubernetes Deployment
+### Compliance-Focused Tag Mappings
 
 ```yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: inventag-bom-generation
-spec:
-  schedule: "0 6 * * *"  # Daily at 6 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          containers:
-          - name: inventag
-            image: inventag:latest
-            env:
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: aws-credentials
-                  key: access-key-id
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: aws-credentials
-                  key: secret-access-key
-            - name: INVENTAG_S3_BUCKET
-              valueFrom:
-                configMapKeyRef:
-                  name: inventag-config
-                  key: s3-bucket
-            command:
-            - python
-            - scripts/cicd_bom_generation.py
-            - --accounts-file
-            - examples/accounts_cicd_environment.json
-            - --formats
-            - excel
-            - word
-            - json
-            - --compliance-threshold
-            - "80"
-            - --fail-on-security-issues
-            - --verbose
-          restartPolicy: OnFailure
+# HIPAA compliance tags
+"hipaa:phi-data":
+  column_name: "Contains PHI"
+  default_value: "UNKNOWN"
+  description: "Whether resource processes Protected Health Information"
+
+"hipaa:encryption-required":
+  column_name: "Encryption Required"
+  default_value: "YES"
+  description: "HIPAA encryption requirement status"
+
+"hipaa:access-logging":
+  column_name: "Access Logging"
+  default_value: "REQUIRED"
+  description: "HIPAA access logging requirement"
+
+# PCI DSS compliance tags
+"pci:cardholder-data":
+  column_name: "Cardholder Data"
+  default_value: "NO"
+  description: "Whether resource processes cardholder data"
+
+"pci:compliance-scope":
+  column_name: "PCI Scope"
+  default_value: "OUT_OF_SCOPE"
+  description: "PCI DSS compliance scope (in_scope, out_of_scope, connected)"
+
+# SOX compliance tags
+"sox:financial-reporting":
+  column_name: "Financial Reporting"
+  default_value: "NO"
+  description: "Whether resource supports financial reporting processes"
+
+"sox:control-environment":
+  column_name: "SOX Controls"
+  default_value: "STANDARD"
+  description: "SOX control environment classification"
+
+# GDPR compliance tags
+"gdpr:personal-data":
+  column_name: "Personal Data"
+  default_value: "UNKNOWN"
+  description: "Whether resource processes EU personal data"
+
+"gdpr:data-retention":
+  column_name: "Data Retention"
+  default_value: "STANDARD"
+  description: "GDPR data retention classification"
 ```
 
-## Quick Reference
+### Multi-Cloud Tag Mappings
 
-### Most Common Use Cases
+```yaml
+# Multi-cloud standardized tags
+"cloud:provider":
+  column_name: "Cloud Provider"
+  default_value: "AWS"
+  description: "Cloud service provider (AWS, Azure, GCP)"
 
-1. **Basic BOM Generation:**
-   ```bash
-   python scripts/cicd_bom_generation.py --accounts-file examples/accounts_basic.json --formats excel
-   ```
+"cloud:region":
+  column_name: "Cloud Region"
+  default_value: ""
+  description: "Cloud provider region"
 
-2. **CI/CD with S3 Upload:**
-   ```bash
-   python scripts/cicd_bom_generation.py --accounts-file examples/accounts_cicd_environment.json --formats excel word --s3-bucket my-bucket
-   ```
+"cloud:availability-zone":
+  column_name: "Availability Zone"
+  default_value: ""
+  description: "Specific availability zone within region"
 
-3. **Production with Full Monitoring:**
-   ```bash
-   python scripts/cicd_bom_generation.py --accounts-file examples/accounts_cross_account_roles.json --formats excel word json --s3-bucket prod-bucket --compliance-threshold 85 --fail-on-security-issues --slack-webhook $SLACK_WEBHOOK --prometheus-gateway http://prometheus:9091
-   ```
+"cloud:instance-type":
+  column_name: "Instance Type"
+  default_value: ""
+  description: "Cloud instance or resource type"
 
-4. **Validation Only:**
-   ```bash
-   python scripts/cicd_bom_generation.py --accounts-file examples/accounts_basic.json --formats excel --dry-run --verbose
-   ```
+"cloud:pricing-model":
+  column_name: "Pricing Model"
+  default_value: "ON_DEMAND"
+  description: "Pricing model (on_demand, reserved, spot, savings_plan)"
 
-### File Locations
-
-- **Account Configurations:** `examples/accounts_*.json` or `examples/*.yaml`
-- **CI/CD Examples:** `examples/github_actions_*.yml`, `examples/jenkins_*.groovy`, `examples/aws_codebuild_*.yml`
-- **Monitoring:** `examples/prometheus.yml`, `examples/inventag_alerts.yml`
-- **Container Deployment:** `examples/docker_compose_*.yml`
-
-## Security Best Practices
-
-### 🔐 Credential Management by Environment
-
-| Environment | Recommended Method | Configuration File | Security Level |
-|-------------|-------------------|-------------------|----------------|
-| **Local Development** | AWS CLI Profiles | `accounts_with_profiles.json` | ✅ High |
-| **GitHub Actions** | GitHub Secrets | `accounts_github_secrets.json` | ✅ High |
-| **AWS CodeBuild** | AWS Secrets Manager | `accounts_aws_secrets_manager.json` | ✅ High |
-| **Jenkins** | Jenkins Credential Store | `accounts_cicd_environment.json` | ✅ High |
-| **Local Testing** | Direct Credentials | `accounts_local_with_credentials.json` | ⚠️ Use with caution |
-
-### 🛡️ Security Requirements
-
-**For all environments:**
-- Use principle of least privilege for IAM permissions
-- Enable CloudTrail logging for audit trails
-- Rotate credentials regularly
-- Never commit credentials to version control
-
-**For production environments:**
-- Use cross-account roles with external IDs
-- Enable multi-factor authentication
-- Set up monitoring and alerting
-- Implement automated credential rotation
-
-### 📚 Additional Resources
-
-- **[Credential Security Guide](CREDENTIAL_SECURITY_GUIDE.md)** - Comprehensive security best practices
-- **[AWS IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)** - AWS official guidance
-- **[GitHub Secrets Documentation](https://docs.github.com/en/actions/security-guides/encrypted-secrets)** - GitHub Actions security
-
----
-
-All configuration files are fully documented with comments and examples. You should never need to reverse engineer the format - just copy and modify the appropriate example file for your use case.
-
-**Remember: Security is paramount. Always choose the most secure credential management method for your environment.**
-## Enviro
-nment Detection and Flexible Credential Management
-
-### 🔍 Automatic Environment Detection
-The InvenTag CLI automatically detects the execution environment and applies appropriate credential handling:
-
-- **GitHub Actions:** Uses GitHub Secrets via environment variables (flexible patterns)
-- **AWS CodeBuild:** Uses AWS Secrets Manager integration (flexible secret names)
-- **Jenkins:** Uses Jenkins credential store
-- **Local:** Uses AWS CLI profiles or environment variables
-
-### 🔑 Flexible Credential Management
-✅ **No hardcoded account IDs or mappings** - works with any account configuration  
-✅ **Multiple naming patterns** - automatically tries various environment variable and secret name patterns  
-✅ **Environment variable overrides** - customize secret names as needed  
-✅ **Clear error messages** - helpful guidance when credentials are missing  
-✅ **Automatic pattern matching** - works with any account names and IDs  
-
-### 📋 Credential Pattern Examples
-
-#### GitHub Actions Environment Variable Patterns
-For account ID `123456789012` with name `Production Account`:
-- `AWS_ACCESS_KEY_ID_123456789012` / `AWS_SECRET_ACCESS_KEY_123456789012`
-- `AWS_ACCESS_KEY_ID_PRODUCTION_ACCOUNT` / `AWS_SECRET_ACCESS_KEY_PRODUCTION_ACCOUNT`
-- `PRODUCTION_ACCOUNT_AWS_ACCESS_KEY_ID` / `PRODUCTION_ACCOUNT_AWS_SECRET_ACCESS_KEY`
-- `AWS_ACCESS_KEY_ID_9012` / `AWS_SECRET_ACCESS_KEY_9012` (last 4 digits)
-
-#### AWS Secrets Manager Secret Name Patterns
-For account ID `123456789012` with name `Production Account`:
-- `inventag/credentials/123456789012`
-- `inventag/credentials/production_account`
-- `inventag/123456789012/credentials`
-- `inventag-123456789012`
-- Environment variable override: `INVENTAG_SECRET_PRODUCTION_ACCOUNT`
-
-### 🧪 Testing Your Configuration
-Use the provided test script to verify your credential management setup:
-
-```bash
-python examples/test_credential_management.py
+"cloud:auto-scaling":
+  column_name: "Auto Scaling"
+  default_value: "DISABLED"
+  description: "Auto scaling configuration status"
 ```
 
-This will test:
-- Environment name sanitization
-- Credential pattern matching
-- Environment detection
-- Flexible account configuration support
+## BOM Processing Configuration
 
-## Quick Reference
+### Basic BOM Configuration
 
-### Most Common Use Cases
+```yaml
+# Basic BOM processing configuration
+document_generation:
+  formats:
+    - excel
+    - word
+  
+  branding:
+    company_name: "My Company"
+    logo_path: "assets/company-logo.png"
+    color_scheme:
+      primary: "#1f4e79"
+      secondary: "#70ad47"
+      accent: "#c55a11"
 
-1. **Basic BOM Generation:**
-   ```bash
-   python scripts/cicd_bom_generation.py --accounts-file examples/accounts_basic.json --formats excel
-   ```
+  templates:
+    excel_template: "templates/custom_excel_template.json"
+    word_template: "templates/custom_word_template.yaml"
 
-2. **CI/CD with S3 Upload:**
-   ```bash
-   python scripts/cicd_bom_generation.py --accounts-file examples/accounts_flexible_credentials.json --formats excel word --s3-bucket my-bucket
-   ```
+network_analysis:
+  enabled: true
+  include_vpc_flow_logs: false
+  calculate_ip_utilization: true
+  identify_unused_resources: true
 
-3. **Production with Full Monitoring:**
-   ```bash
-   python scripts/cicd_bom_generation.py --accounts-file examples/accounts_flexible_credentials.json --formats excel word json --s3-bucket prod-bucket --compliance-threshold 85 --fail-on-security-issues --slack-webhook $SLACK_WEBHOOK --prometheus-gateway http://prometheus:9091
-   ```
+security_analysis:
+  enabled: true
+  check_security_groups: true
+  analyze_nacls: true
+  identify_overly_permissive_rules: true
+  security_risk_threshold: "medium"
 
-4. **Validation Only:**
-   ```bash
-   python scripts/cicd_bom_generation.py --accounts-file examples/accounts_flexible_credentials.json --formats excel --dry-run --verbose
-   ```
+compliance_analysis:
+  enabled: true
+  policy_files:
+    - "config/tag_policy.yaml"
+  compliance_threshold: 85
+  generate_compliance_report: true
 
-### File Locations
+state_management:
+  enabled: true
+  state_directory: "state"
+  retention_days: 90
+  enable_delta_detection: true
+  generate_changelog: true
 
-- **Account Configurations:** `examples/accounts_*.json` or `examples/*.yaml`
-- **Flexible Configuration:** `examples/accounts_flexible_credentials.json`
-- **CI/CD Examples:** `examples/github_actions_*.yml`, `examples/jenkins_*.groovy`, `examples/aws_codebuild_*.yml`
-- **Monitoring:** `examples/prometheus.yml`, `examples/inventag_alerts.yml`
-- **Container Deployment:** `examples/docker_compose_*.yml`
-- **Testing:** `examples/test_credential_management.py`
+output_configuration:
+  directory: "bom_output"
+  file_naming_pattern: "bom_report_{timestamp}_{account}"
+  include_timestamp: true
+  compress_output: false
+```
 
-All configuration files are fully documented with comments and examples. You should never need to reverse engineer the format - just copy and modify the appropriate example file for your use case.
+### Enterprise BOM Configuration
 
-**Remember: Security is paramount. Always choose the most secure credential management method for your environment.**
+```yaml
+# Enterprise-grade BOM processing configuration
+document_generation:
+  formats:
+    - excel
+    - word
+    - pdf
+  
+  branding:
+    company_name: "Enterprise Corp"
+    logo_path: "assets/enterprise-logo.png"
+    header_text: "AWS Cloud Infrastructure Bill of Materials"
+    footer_text: "Confidential - Enterprise Corp Internal Use Only"
+    color_scheme:
+      primary: "#003366"
+      secondary: "#0066cc"
+      accent: "#ff6600"
+      success: "#00cc66"
+      warning: "#ffcc00"
+      danger: "#cc0000"
+    
+    themes:
+      default: "professional"
+      compliance: "high-contrast"
+      executive: "modern"
+
+  templates:
+    excel_template: "templates/enterprise_excel_template.json"
+    word_template: "templates/enterprise_word_template.yaml"
+    pdf_template: "templates/enterprise_pdf_template.yaml"
+
+network_analysis:
+  enabled: true
+  include_vpc_flow_logs: true
+  calculate_ip_utilization: true
+  identify_unused_resources: true
+  analyze_peering_connections: true
+  check_transit_gateways: true
+  generate_network_diagrams: true
+  capacity_planning:
+    enabled: true
+    growth_projection_months: 12
+    utilization_threshold: 80
+
+security_analysis:
+  enabled: true
+  check_security_groups: true
+  analyze_nacls: true
+  identify_overly_permissive_rules: true
+  security_risk_threshold: "low"
+  analyze_iam_policies: true
+  check_encryption_status: true
+  scan_for_public_resources: true
+  compliance_frameworks:
+    - "CIS"
+    - "NIST"
+    - "SOC2"
+  
+  risk_scoring:
+    enabled: true
+    weight_factors:
+      public_access: 0.4
+      encryption: 0.3
+      access_controls: 0.3
+
+compliance_analysis:
+  enabled: true
+  policy_files:
+    - "config/enterprise_tag_policy.yaml"
+    - "config/security_policy.yaml"
+    - "config/compliance_policy.yaml"
+  compliance_threshold: 95
+  generate_compliance_report: true
+  compliance_frameworks:
+    - name: "SOX"
+      enabled: true
+      policy_file: "config/sox_policy.yaml"
+    - name: "PCI DSS"
+      enabled: true
+      policy_file: "config/pci_policy.yaml"
+    - name: "HIPAA"
+      enabled: false
+      policy_file: "config/hipaa_policy.yaml"
+
+cost_analysis:
+  enabled: true
+  include_pricing_estimates: true
+  identify_cost_optimization_opportunities: true
+  analyze_reserved_instances: true
+  check_unused_resources: true
+  cost_allocation_tags:
+    - "company:cost-center"
+    - "company:business-unit"
+    - "company:project"
+
+state_management:
+  enabled: true
+  state_directory: "enterprise_state"
+  retention_days: 365
+  enable_delta_detection: true
+  generate_changelog: true
+  backup_state: true
+  backup_location: "s3://enterprise-inventag-state-backup"
+
+change_tracking:
+  enabled: true
+  track_configuration_changes: true
+  track_compliance_changes: true
+  track_security_changes: true
+  change_notification:
+    enabled: true
+    channels:
+      - slack
+      - email
+    thresholds:
+      major_changes: 10
+      security_changes: 1
+
+output_configuration:
+  directory: "enterprise_bom_output"
+  file_naming_pattern: "enterprise_bom_{environment}_{timestamp}"
+  include_timestamp: true
+  compress_output: true
+  encryption:
+    enabled: true
+    kms_key_id: "alias/enterprise-inventag-key"
+  
+  s3_upload:
+    enabled: true
+    bucket: "enterprise-compliance-reports"
+    key_prefix: "bom-reports/"
+    encryption: "aws:kms"
+    kms_key_id: "alias/enterprise-s3-key"
+
+monitoring:
+  enabled: true
+  metrics_export:
+    cloudwatch:
+      enabled: true
+      namespace: "Enterprise/InvenTag"
+    prometheus:
+      enabled: true
+      pushgateway_url: "http://prometheus-pushgateway:9091"
+  
+  alerting:
+    enabled: true
+    compliance_threshold_alerts: true
+    processing_failure_alerts: true
+    security_finding_alerts: true
+
+notification:
+  channels:
+    slack:
+      enabled: true
+      webhook_url: "${SLACK_WEBHOOK_URL}"
+      channel: "#compliance-alerts"
+    
+    email:
+      enabled: true
+      smtp_server: "smtp.enterprise.com"
+      recipients:
+        - "compliance-team@enterprise.com"
+        - "security-team@enterprise.com"
+    
+    teams:
+      enabled: false
+      webhook_url: "${TEAMS_WEBHOOK_URL}"
+
+performance:
+  parallel_processing:
+    max_concurrent_accounts: 10
+    max_concurrent_regions: 5
+    max_concurrent_services: 20
+  
+  caching:
+    enabled: true
+    cache_duration_hours: 24
+    cache_location: "cache/"
+  
+  optimization:
+    batch_size: 1000
+    api_retry_attempts: 3
+    api_timeout_seconds: 30
+```
+
+## Environment-Specific Configurations
+
+### Development Environment
+
+```yaml
+# Development environment configuration
+accounts:
+  - account_id: "111111111111"
+    account_name: "Development"
+    profile_name: "dev"
+    regions: ["us-east-1"]
+    services: ["EC2", "S3", "Lambda"]
+    tags:
+      Environment: "development"
+
+settings:
+  max_concurrent_accounts: 1
+  account_processing_timeout: 900
+  output_directory: "dev_bom"
+  enable_state_management: false
+  enable_delta_detection: false
+```
+
+### Production Environment
+
+```yaml
+# Production environment configuration
+accounts:
+  - account_id: "999999999999"
+    account_name: "Production"
+    role_arn: "arn:aws:iam::999999999999:role/InvenTagProdRole"
+    regions: ["us-east-1", "us-west-2", "eu-west-1"]
+    services: []  # All services
+    tags:
+      Environment: "production"
+
+settings:
+  max_concurrent_accounts: 8
+  account_processing_timeout: 7200
+  output_directory: "prod_bom"
+  enable_state_management: true
+  enable_delta_detection: true
+  generate_per_account_reports: true
+```
+
+This comprehensive configuration guide provides templates and examples for various InvenTag deployment scenarios and use cases.

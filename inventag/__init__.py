@@ -40,6 +40,9 @@ from .core import (
     CICDResult
 )
 
+# CLI components
+from .cli import main as cli_main, create_parser, ConfigValidator, setup_logging
+
 __all__ = [
     "AWSResourceInventory",
     "ComprehensiveTagComplianceChecker", 
@@ -61,4 +64,8 @@ __all__ = [
     "PrometheusConfig",
     "PrometheusMetrics",
     "CICDResult",
+    "cli_main",
+    "create_parser",
+    "ConfigValidator",
+    "setup_logging",
 ]
