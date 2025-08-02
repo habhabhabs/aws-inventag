@@ -519,21 +519,24 @@ Advanced multi-format document generation with professional templates and brandi
 
 ```python
 from inventag.reporting.document_generator import DocumentGenerator, DocumentConfig, BrandingConfig
+from inventag.reporting.template_framework import create_template_manager
+from inventag.reporting.branding_system import create_branding_theme_manager
+
+# Create template and branding managers
+template_manager = create_template_manager("templates")
+branding_manager = create_branding_theme_manager()
+
+# Load professional template
+template = template_manager.load_template("professional_word")
+
+# Get predefined branding theme
+branding_theme = branding_manager.get_theme("professional_blue")
 
 # Configure document generation
-branding = BrandingConfig(
-    company_name="Your Organization",
-    logo_path="assets/company_logo.png",
-    color_scheme={
-        "primary": "#366092",
-        "secondary": "#4472C4",
-        "accent": "#70AD47"
-    }
-)
-
 config = DocumentConfig(
     output_formats=["excel", "word", "csv"],
-    branding=branding,
+    template=template,
+    branding_theme=branding_theme,
     enable_parallel_generation=True,
     output_directory="reports"
 )
@@ -546,12 +549,14 @@ print(f"Generated {summary.successful_formats} documents in {summary.total_gener
 ```
 
 **Key Features:**
-- 🎨 **Professional Branding**: Company logos, color schemes, and custom styling
+- 🎨 **Professional Branding**: Company logos, color schemes, and custom styling with predefined themes
 - 📊 **Multi-Format Support**: Excel, Word, CSV with format-specific optimizations
 - ⚡ **Parallel Generation**: Concurrent document creation for better performance
-- 🔧 **Template System**: Customizable document templates and layouts
+- 🔧 **Advanced Template System**: Comprehensive template framework with variable substitution
 - 📈 **Progress Tracking**: Detailed generation statistics and error reporting
 - 🛡️ **Error Recovery**: Graceful handling of generation failures with partial results
+- 🎯 **Template Variables**: Dynamic content with {{variable}} syntax and formatting
+- 🏢 **Enterprise Themes**: Professional, corporate, modern, and high-contrast themes
 
 ### 🚀 **CI/CD Integration**
 Complete pipeline integration for automated compliance monitoring and BOM generation with comprehensive CLI script.
