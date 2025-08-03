@@ -107,7 +107,7 @@ Examples:
         enrich_vpc = not args.no_vpc_enrichment
         converter = BOMConverter(
             enrich_vpc_info=enrich_vpc,
-            enable_advanced_analysis=args.enable_advanced_analysis
+            enable_advanced_analysis=args.enable_advanced_analysis,
         )
 
         # Load data
@@ -140,9 +140,13 @@ Examples:
         # Show advanced analysis results
         if args.enable_advanced_analysis:
             if converter.network_analysis:
-                print(f"Network analysis: {len(converter.network_analysis)} VPCs analyzed")
+                print(
+                    f"Network analysis: {len(converter.network_analysis)} VPCs analyzed"
+                )
             if converter.security_analysis:
-                print(f"Security analysis: {len(converter.security_analysis)} security groups analyzed")
+                print(
+                    f"Security analysis: {len(converter.security_analysis)} security groups analyzed"
+                )
 
         # Show service breakdown
         if args.verbose:
@@ -154,19 +158,26 @@ Examples:
             print("\nService breakdown:")
             for service, count in sorted(services.items()):
                 print(f"  {service}: {count} resources")
-            
+
             # Show advanced analysis details
             if args.enable_advanced_analysis and converter.network_analysis:
                 print("\nNetwork analysis summary:")
                 for vpc_id, analysis in converter.network_analysis.items():
-                    print(f"  VPC {vpc_id}: {analysis.utilization_percentage:.1f}% utilized")
-            
+                    print(
+                        f"  VPC {vpc_id}: {analysis.utilization_percentage:.1f}% utilized"
+                    )
+
             if args.enable_advanced_analysis and converter.security_analysis:
                 print("\nSecurity analysis summary:")
-                high_risk_count = sum(1 for analysis in converter.security_analysis.values() 
-                                    if analysis.risk_level == "HIGH")
+                high_risk_count = sum(
+                    1
+                    for analysis in converter.security_analysis.values()
+                    if analysis.risk_level == "HIGH"
+                )
                 if high_risk_count > 0:
-                    print(f"  WARNING: {high_risk_count} high-risk security groups found")
+                    print(
+                        f"  WARNING: {high_risk_count} high-risk security groups found"
+                    )
 
     except FileNotFoundError:
         print(f"Error: Input file {args.input} not found")
