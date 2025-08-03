@@ -11,6 +11,6 @@ from .changelog_generator import ChangelogGenerator
 
 __all__ = [
     "StateManager",
-    "DeltaDetector", 
+    "DeltaDetector",
     "ChangelogGenerator",
 ]

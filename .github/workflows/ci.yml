@@ -194,8 +194,9 @@ jobs:
           --output compliance-report \
           --format json
         
-        # Verify compliance report was created
-        ls -la compliance-report.json
+        # Verify compliance report was created (with timestamp)
+        ls -la compliance-report_*.json
+        echo "✅ Tag compliance checker works correctly"
 
     - name: Test CI/CD BOM generation
       run: |
