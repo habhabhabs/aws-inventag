@@ -974,9 +974,9 @@ jobs:
         )
         
         # Set GitHub Actions outputs
-        print(f'::set-output name=success::{result.success}')
-        print(f'::set-output name=compliance_gate_passed::{result.compliance_gate_passed}')
-        print(f'::set-output name=generated_documents::{len(result.generated_documents)}')
+        print(f'::set-output name=success::{{result.success}}')
+        print(f'::set-output name=compliance_gate_passed::{{result.compliance_gate_passed}}')
+        print(f'::set-output name=generated_documents::{{len(result.generated_documents)}}')
         
         # Fail the job if compliance gate failed
         if not result.compliance_gate_passed:
