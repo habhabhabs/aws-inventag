@@ -156,14 +156,15 @@ jobs:
         
         # Create sample tag policy configuration
         cat > test-data/tag_policy.yaml << 'EOF'
-        tag_policies:
-          - name: "Environment Tag Policy"
-            required_tags:
-              - "Environment"
+        required_tags:
+          - "Environment"
+          - "Owner"
+          - key: "Environment"
             allowed_values:
-              Environment: ["dev", "test", "staging", "prod"]
-            scope:
-              services: ["*"]
+              - "dev"
+              - "test"
+              - "staging"
+              - "prod"
         EOF
 
     - name: Test BOM converter with sample data
