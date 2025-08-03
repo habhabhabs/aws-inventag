@@ -11,13 +11,13 @@ from .service_enrichment import (
     ServiceHandler,
     ServiceHandlerFactory,
     DynamicServiceHandler,
-    ServiceDiscoveryResult
+    ServiceDiscoveryResult,
 )
 from .network_analyzer import (
     NetworkAnalyzer,
     VPCAnalysis,
     SubnetAnalysis,
-    NetworkSummary
+    NetworkSummary,
 )
 from .security_analyzer import (
     SecurityAnalyzer,
@@ -25,20 +25,15 @@ from .security_analyzer import (
     SecurityRule,
     NACLAnalysis,
     NACLRule,
-    SecuritySummary
+    SecuritySummary,
 )
 from .service_descriptions import (
     ServiceDescriptionManager,
     ServiceDescription,
     DescriptionTemplate,
-    DescriptionTemplateEngine
+    DescriptionTemplateEngine,
 )
-from .tag_mapping import (
-    TagMappingEngine,
-    TagMapping,
-    TagMappingResult,
-    TagNormalizer
-)
+from .tag_mapping import TagMappingEngine, TagMapping, TagMappingResult, TagNormalizer
 
 # Import specific service handlers
 try:
@@ -48,19 +43,19 @@ try:
         EC2Handler,
         LambdaHandler,
         ECSHandler,
-        EKSHandler
+        EKSHandler,
     )
-    
+
     __all__ = [
         "AWSResourceInventory",
-        "ServiceAttributeEnricher", 
+        "ServiceAttributeEnricher",
         "ServiceHandler",
         "ServiceHandlerFactory",
         "DynamicServiceHandler",
         "ServiceDiscoveryResult",
         "NetworkAnalyzer",
         "VPCAnalysis",
-        "SubnetAnalysis", 
+        "SubnetAnalysis",
         "NetworkSummary",
         "SecurityAnalyzer",
         "SecurityGroupAnalysis",
@@ -77,25 +72,25 @@ try:
         "TagMappingResult",
         "TagNormalizer",
         "S3Handler",
-        "RDSHandler", 
+        "RDSHandler",
         "EC2Handler",
         "LambdaHandler",
         "ECSHandler",
-        "EKSHandler"
+        "EKSHandler",
     ]
-    
+
 except ImportError:
     # Fallback if service handlers are not available
     __all__ = [
         "AWSResourceInventory",
-        "ServiceAttributeEnricher", 
+        "ServiceAttributeEnricher",
         "ServiceHandler",
         "ServiceHandlerFactory",
         "DynamicServiceHandler",
         "ServiceDiscoveryResult",
         "NetworkAnalyzer",
         "VPCAnalysis",
-        "SubnetAnalysis", 
+        "SubnetAnalysis",
         "NetworkSummary",
         "SecurityAnalyzer",
         "SecurityGroupAnalysis",
@@ -110,5 +105,5 @@ except ImportError:
         "TagMappingEngine",
         "TagMapping",
         "TagMappingResult",
-        "TagNormalizer"
+        "TagNormalizer",
     ]

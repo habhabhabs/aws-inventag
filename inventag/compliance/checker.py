@@ -59,8 +59,12 @@ class ComprehensiveTagComplianceChecker:
     def _load_tag_policy(self) -> Dict[str, Any]:
         """Load tag policy from configuration file."""
         if not self.config_file:
-            print("WARNING: No configuration file specified. Only checking for completely untagged resources.")
-            print("It is recommended to provide a configuration file with at least 1 required tag key.")
+            print(
+                "WARNING: No configuration file specified. Only checking for completely untagged resources."
+            )
+            print(
+                "It is recommended to provide a configuration file with at least 1 required tag key."
+            )
             return {"required_tags": []}
 
         try:
@@ -85,7 +89,9 @@ class ComprehensiveTagComplianceChecker:
                 raise ValueError("'required_tags' must be a list")
 
             if len(config["required_tags"]) == 0:
-                print("WARNING: Configuration file contains no required tags. Consider adding at least 1 required tag key.")
+                print(
+                    "WARNING: Configuration file contains no required tags. Consider adding at least 1 required tag key."
+                )
 
             self.logger.info(f"Loaded tag policy from {self.config_file}")
             self.logger.info(f"Required tags: {len(config['required_tags'])}")
@@ -228,7 +234,9 @@ class ComprehensiveTagComplianceChecker:
         # Simplified implementation - full implementation would include more services
         pass
 
-    def _get_additional_resource_info(self, service: str, resource_type: str, resource_id: str, region: str, arn: str) -> Dict:
+    def _get_additional_resource_info(
+        self, service: str, resource_type: str, resource_id: str, region: str, arn: str
+    ) -> Dict:
         """Get additional resource information if possible."""
         # Simplified implementation
         return {}
@@ -243,50 +251,52 @@ class ComprehensiveTagComplianceChecker:
         # Try to get name from tags first
         if tags and "Name" in tags:
             return tags["Name"]
-        
+
         # Try additional info
         if additional_info and "name" in additional_info:
             return additional_info["name"]
-            
+
         return ""
 
     def _deduplicate_resources(self):
         """Remove duplicate resources based on ARN."""
         seen_arns = set()
         deduplicated = []
-        
+
         for resource in self.all_resources:
             arn = resource.get("arn", "")
             if arn not in seen_arns:
                 seen_arns.add(arn)
                 deduplicated.append(resource)
-        
+
         removed_count = len(self.all_resources) - len(deduplicated)
         if removed_count > 0:
             self.logger.info(f"Removed {removed_count} duplicate resources")
-        
+
         self.all_resources = deduplicated
 
-    def check_compliance(self, resources: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    def check_compliance(
+        self, resources: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
         """Check tag compliance for all resources."""
         if resources is None:
             resources = self.discover_all_resources()
-        
+
         self.logger.info(f"Checking compliance for {len(resources)} resources...")
-        
+
         compliant = []
         non_compliant = []
         untagged = []
-        
+
         required_tags = self.tag_policy.get("required_tags", [])
-        
+
         for resource in resources:
             tags = resource.get("tags", {}) or {}
-            
+
             if not tags:
                 untagged.append(resource)
                 continue
-            
+
             # Check if all required tags are present
             missing_tags = []
             for required_tag in required_tags:
@@ -296,25 +306,27 @@ class ComprehensiveTagComplianceChecker:
                     tag_key = required_tag.get("key", "")
                 else:
                     continue
-                    
+
                 if tag_key not in tags:
                     missing_tags.append(tag_key)
-            
+
             if missing_tags:
                 resource_copy = resource.copy()
                 resource_copy["missing_tags"] = missing_tags
                 non_compliant.append(resource_copy)
             else:
                 compliant.append(resource)
-        
+
         # Generate summary
         total_resources = len(resources)
         compliant_count = len(compliant)
         non_compliant_count = len(non_compliant)
         untagged_count = len(untagged)
-        
-        compliance_percentage = (compliant_count / total_resources * 100) if total_resources > 0 else 0
-        
+
+        compliance_percentage = (
+            (compliant_count / total_resources * 100) if total_resources > 0 else 0
+        )
+
         summary = {
             "total_resources": total_resources,
             "compliant_resources": compliant_count,
@@ -323,7 +335,7 @@ class ComprehensiveTagComplianceChecker:
             "compliance_percentage": round(compliance_percentage, 2),
             "check_timestamp": datetime.utcnow().isoformat(),
         }
-        
+
         self.compliance_results = {
             "compliant": compliant,
             "non_compliant": non_compliant,
@@ -331,9 +343,11 @@ class ComprehensiveTagComplianceChecker:
             "summary": summary,
             "all_discovered_resources": resources,  # Include all resources for BOM generation
         }
-        
-        self.logger.info(f"Compliance check complete. {compliance_percentage:.1f}% compliant")
-        
+
+        self.logger.info(
+            f"Compliance check complete. {compliance_percentage:.1f}% compliant"
+        )
+
         return self.compliance_results
 
     def save_results(self, filename: str, format_type: str = "json"):
@@ -356,22 +370,22 @@ class ComprehensiveTagComplianceChecker:
         self.logger.info(f"Compliance results saved to {filename}")
 
     def generate_bom_documents(
-        self, 
-        output_formats: List[str] = None, 
+        self,
+        output_formats: List[str] = None,
         output_directory: str = "bom_output",
         service_descriptions_file: str = None,
         tag_mappings_file: str = None,
         enable_vpc_enrichment: bool = True,
         enable_security_analysis: bool = True,
-        enable_network_analysis: bool = True
+        enable_network_analysis: bool = True,
     ) -> Dict[str, Any]:
         """
         Generate BOM documents from compliance results.
-        
+
         This method provides seamless integration between compliance checking
         and BOM generation, allowing users to generate professional reports
         as an optional step after compliance analysis.
-        
+
         Args:
             output_formats: List of formats to generate ('excel', 'word', 'csv')
             output_directory: Directory to save BOM documents
@@ -380,116 +394,148 @@ class ComprehensiveTagComplianceChecker:
             enable_vpc_enrichment: Enable VPC/subnet name enrichment
             enable_security_analysis: Enable security group analysis
             enable_network_analysis: Enable network capacity analysis
-            
+
         Returns:
             Dictionary with generation results and file paths
         """
-        if not self.compliance_results or not self.compliance_results.get("all_discovered_resources"):
-            raise ValueError("No compliance results available. Run check_compliance() first.")
-        
+        if not self.compliance_results or not self.compliance_results.get(
+            "all_discovered_resources"
+        ):
+            raise ValueError(
+                "No compliance results available. Run check_compliance() first."
+            )
+
         self.logger.info("Starting BOM document generation from compliance results...")
-        
+
         # Import BOM generation components
         try:
-            from ..reporting import BOMDataProcessor, BOMProcessingConfig, DocumentGenerator
+            from ..reporting import (
+                BOMDataProcessor,
+                BOMProcessingConfig,
+                DocumentGenerator,
+            )
             from ..discovery import NetworkAnalyzer, SecurityAnalyzer
             import os
             from pathlib import Path
         except ImportError as e:
             self.logger.error(f"Failed to import BOM generation components: {e}")
             raise
-        
+
         # Set default formats if none specified
         if output_formats is None:
-            output_formats = ['excel']
-        
+            output_formats = ["excel"]
+
         # Create output directory
         Path(output_directory).mkdir(parents=True, exist_ok=True)
-        
+
         # Load configuration files
         bom_config = BOMProcessingConfig()
-        
+
         if service_descriptions_file:
             try:
-                with open(service_descriptions_file, 'r') as f:
-                    if service_descriptions_file.lower().endswith('.json'):
+                with open(service_descriptions_file, "r") as f:
+                    if service_descriptions_file.lower().endswith(".json"):
                         bom_config.service_descriptions = json.load(f)
                     else:
                         bom_config.service_descriptions = yaml.safe_load(f)
-                self.logger.info(f"Loaded service descriptions from {service_descriptions_file}")
+                self.logger.info(
+                    f"Loaded service descriptions from {service_descriptions_file}"
+                )
             except Exception as e:
                 self.logger.warning(f"Could not load service descriptions: {e}")
-        
+
         if tag_mappings_file:
             try:
-                with open(tag_mappings_file, 'r') as f:
-                    if tag_mappings_file.lower().endswith('.json'):
+                with open(tag_mappings_file, "r") as f:
+                    if tag_mappings_file.lower().endswith(".json"):
                         bom_config.tag_mappings = json.load(f)
                     else:
                         bom_config.tag_mappings = yaml.safe_load(f)
                 self.logger.info(f"Loaded tag mappings from {tag_mappings_file}")
             except Exception as e:
                 self.logger.warning(f"Could not load tag mappings: {e}")
-        
+
         # Configure BOM processing options
         bom_config.enable_vpc_enrichment = enable_vpc_enrichment
         bom_config.enable_security_analysis = enable_security_analysis
         bom_config.enable_network_analysis = enable_network_analysis
-        
+
         # Get all discovered resources
         all_resources = self.compliance_results["all_discovered_resources"]
-        
+
         # Initialize BOM processor
         processor = BOMDataProcessor(bom_config)
-        
+
         # Process inventory data into BOM format
-        self.logger.info(f"Processing {len(all_resources)} resources for BOM generation...")
+        self.logger.info(
+            f"Processing {len(all_resources)} resources for BOM generation..."
+        )
         bom_data = processor.process_inventory_data(all_resources)
-        
+
         # Add compliance information to BOM data
         bom_data.compliance_summary = self.compliance_results["summary"]
         bom_data.compliance_details = {
             "compliant_resources": len(self.compliance_results["compliant"]),
             "non_compliant_resources": len(self.compliance_results["non_compliant"]),
             "untagged_resources": len(self.compliance_results["untagged"]),
-            "compliance_percentage": self.compliance_results["summary"]["compliance_percentage"]
+            "compliance_percentage": self.compliance_results["summary"][
+                "compliance_percentage"
+            ],
         }
-        
+
         # Generate timestamp for filenames
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-        
+
         # Generate documents
         generated_files = []
         generation_results = {}
-        
+
         for format_type in output_formats:
             try:
-                if format_type.lower() == 'excel':
-                    filename = os.path.join(output_directory, f"compliance_bom_{timestamp}.xlsx")
+                if format_type.lower() == "excel":
+                    filename = os.path.join(
+                        output_directory, f"compliance_bom_{timestamp}.xlsx"
+                    )
                     self._generate_excel_bom(bom_data, filename)
                     generated_files.append(filename)
-                    generation_results[format_type] = {"success": True, "file": filename}
-                    
-                elif format_type.lower() == 'word':
-                    filename = os.path.join(output_directory, f"compliance_bom_{timestamp}.docx")
+                    generation_results[format_type] = {
+                        "success": True,
+                        "file": filename,
+                    }
+
+                elif format_type.lower() == "word":
+                    filename = os.path.join(
+                        output_directory, f"compliance_bom_{timestamp}.docx"
+                    )
                     self._generate_word_bom(bom_data, filename)
                     generated_files.append(filename)
-                    generation_results[format_type] = {"success": True, "file": filename}
-                    
-                elif format_type.lower() == 'csv':
-                    filename = os.path.join(output_directory, f"compliance_bom_{timestamp}.csv")
+                    generation_results[format_type] = {
+                        "success": True,
+                        "file": filename,
+                    }
+
+                elif format_type.lower() == "csv":
+                    filename = os.path.join(
+                        output_directory, f"compliance_bom_{timestamp}.csv"
+                    )
                     self._generate_csv_bom(bom_data, filename)
                     generated_files.append(filename)
-                    generation_results[format_type] = {"success": True, "file": filename}
-                    
+                    generation_results[format_type] = {
+                        "success": True,
+                        "file": filename,
+                    }
+
                 else:
                     self.logger.warning(f"Unsupported format: {format_type}")
-                    generation_results[format_type] = {"success": False, "error": f"Unsupported format: {format_type}"}
-                    
+                    generation_results[format_type] = {
+                        "success": False,
+                        "error": f"Unsupported format: {format_type}",
+                    }
+
             except Exception as e:
                 self.logger.error(f"Failed to generate {format_type} BOM: {e}")
                 generation_results[format_type] = {"success": False, "error": str(e)}
-        
+
         # Return results
         result = {
             "success": len(generated_files) > 0,
@@ -497,28 +543,30 @@ class ComprehensiveTagComplianceChecker:
             "generation_results": generation_results,
             "total_resources": len(all_resources),
             "compliance_summary": self.compliance_results["summary"],
-            "timestamp": timestamp
+            "timestamp": timestamp,
         }
-        
+
         if generated_files:
-            self.logger.info(f"Successfully generated {len(generated_files)} BOM document(s)")
+            self.logger.info(
+                f"Successfully generated {len(generated_files)} BOM document(s)"
+            )
             for file_path in generated_files:
                 self.logger.info(f"  - {file_path}")
         else:
             self.logger.error("No BOM documents were generated successfully")
-        
+
         return result
-    
+
     def _generate_excel_bom(self, bom_data, filename: str):
         """Generate Excel BOM document."""
         from ..reporting import BOMConverter
-        
+
         # Create a temporary JSON file with the processed data
         temp_data = []
         for resource in bom_data.resources:
             # Add compliance status to each resource
             resource_copy = resource.copy()
-            
+
             # Determine compliance status
             if resource in self.compliance_results["compliant"]:
                 resource_copy["compliance_status"] = "Compliant"
@@ -527,63 +575,69 @@ class ComprehensiveTagComplianceChecker:
                 # Add missing tags info if available
                 for nc_resource in self.compliance_results["non_compliant"]:
                     if nc_resource.get("arn") == resource.get("arn"):
-                        resource_copy["missing_tags"] = ", ".join(nc_resource.get("missing_tags", []))
+                        resource_copy["missing_tags"] = ", ".join(
+                            nc_resource.get("missing_tags", [])
+                        )
                         break
             elif resource in self.compliance_results["untagged"]:
                 resource_copy["compliance_status"] = "Untagged"
             else:
                 resource_copy["compliance_status"] = "Unknown"
-            
+
             temp_data.append(resource_copy)
-        
+
         # Use BOM converter to generate Excel
         converter = BOMConverter(enrich_vpc_info=False)  # Already enriched by processor
         converter.data = temp_data
         converter.export_to_excel(filename)
-    
+
     def _generate_word_bom(self, bom_data, filename: str):
         """Generate Word BOM document."""
         try:
             from ..reporting import DocumentGenerator, DocumentConfig
-            
+
             # Create document config
             doc_config = DocumentConfig()
             doc_config.include_compliance_section = True
             doc_config.include_executive_summary = True
-            
+
             # Generate document
             generator = DocumentGenerator(doc_config)
             generator.generate_word_document(bom_data, filename)
-            
+
         except ImportError:
             # Fallback: create a simple text-based report
-            self.logger.warning("Word document generation not available, creating text report")
-            with open(filename.replace('.docx', '.txt'), 'w') as f:
+            self.logger.warning(
+                "Word document generation not available, creating text report"
+            )
+            with open(filename.replace(".docx", ".txt"), "w") as f:
                 f.write("InvenTag Compliance BOM Report\n")
                 f.write("=" * 40 + "\n\n")
                 f.write(f"Generated: {datetime.utcnow().isoformat()}\n")
                 f.write(f"Total Resources: {len(bom_data.resources)}\n")
-                f.write(f"Compliance Rate: {bom_data.compliance_details['compliance_percentage']}%\n\n")
-                
+                f.write(
+                    f"Compliance Rate: {bom_data.compliance_details['compliance_percentage']}%\n\n"
+                )
+
                 # Write summary by service
                 services = {}
                 for resource in bom_data.resources:
-                    service = resource.get('service', 'Unknown')
+                    service = resource.get("service", "Unknown")
                     services[service] = services.get(service, 0) + 1
-                
+
                 f.write("Resources by Service:\n")
                 for service, count in sorted(services.items()):
                     f.write(f"  {service}: {count}\n")
-    
+
     def _generate_csv_bom(self, bom_data, filename: str):
         """Generate CSV BOM document."""
         from ..reporting import BOMConverter
-        
+
         # Prepare data with compliance status
         temp_data = []
         for resource in bom_data.resources:
             resource_copy = resource.copy()
-            
+
             # Add compliance status
             if resource in self.compliance_results["compliant"]:
                 resource_copy["compliance_status"] = "Compliant"
@@ -593,9 +647,9 @@ class ComprehensiveTagComplianceChecker:
                 resource_copy["compliance_status"] = "Untagged"
             else:
                 resource_copy["compliance_status"] = "Unknown"
-            
+
             temp_data.append(resource_copy)
-        
+
         # Use BOM converter to generate CSV
         converter = BOMConverter(enrich_vpc_info=False)
         converter.data = temp_data
