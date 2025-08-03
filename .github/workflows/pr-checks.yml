@@ -127,8 +127,24 @@ jobs:
           echo "🔧 Core BOM converter modified - ensure thorough testing"
         fi
         
+        if grep -q "scripts/tag_compliance_checker.py" changed_files.txt; then
+          echo "🏷️ Tag compliance checker modified - validate policy logic"
+        fi
+        
+        if grep -q "scripts/cicd_bom_generation.py" changed_files.txt; then
+          echo "🚀 CI/CD integration modified - test multi-account workflows"
+        fi
+        
+        if grep -q "inventag/" changed_files.txt; then
+          echo "📦 Core package modified - run comprehensive tests"
+        fi
+        
         if grep -q "requirements.txt\|setup.py\|pyproject.toml" changed_files.txt; then
           echo "📦 Dependencies modified - check for security vulnerabilities"
+        fi
+        
+        if grep -q "\.github/workflows/" changed_files.txt; then
+          echo "⚙️ CI/CD workflows modified - validate GitHub Actions syntax"
         fi
 
   size-check:

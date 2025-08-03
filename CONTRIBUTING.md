@@ -77,11 +77,18 @@ Thank you for your interest in contributing to **InvenTag**! This document provi
    # Type checking
    mypy scripts/
    
-   # Run tests
-   pytest tests/
+   # Run tests (if tests directory exists)
+   if [ -d "tests" ]; then
+     pytest tests/ -v --cov=inventag
+   fi
    
-   # Test BOM converter functionality
+   # Test all main scripts
    python scripts/bom_converter.py --help
+   python scripts/tag_compliance_checker.py --help
+   python scripts/cicd_bom_generation.py --help
+   
+   # Test core package imports
+   python -c "import inventag; print('InvenTag package imports successfully')"
    ```
 
 ### Commit Guidelines

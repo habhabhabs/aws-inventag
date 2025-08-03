@@ -47,6 +47,8 @@ Closes #<!-- issue number -->
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] I have tested the BOM converter with sample data
+- [ ] I have verified tag compliance checker functionality
+- [ ] I have tested CI/CD integration scripts if applicable
 
 ### Documentation
 - [ ] I have made corresponding changes to the documentation
@@ -58,14 +60,32 @@ Closes #<!-- issue number -->
 - [ ] I have considered the performance impact of my changes
 - [ ] I have not exposed any secrets or sensitive information
 
-## 📊 BOM Converter Specific
-<!-- For changes to BOM converter functionality -->
+## 📊 InvenTag Specific Testing
+<!-- For changes to core InvenTag functionality -->
 
-- [ ] Tested with different AWS service data
+### BOM Generation
+- [ ] Tested BOM converter with different AWS service data
+- [ ] Confirmed Excel/Word/CSV output is properly formatted
+- [ ] Verified advanced analysis features (network, security, cost)
+- [ ] Tested with both single and multi-account configurations
+
+### Tag Compliance
 - [ ] Verified tag compliance checking works correctly
-- [ ] Confirmed Excel/CSV output is properly formatted
-- [ ] Tested with both ResourceGroupsTaggingAPI and AWSConfig data
-- [ ] Validated account_id extraction works properly
+- [ ] Tested with various tag policy configurations
+- [ ] Confirmed compliance reports are accurate
+- [ ] Validated integrated compliance-BOM workflow
+
+### CI/CD Integration
+- [ ] Tested multi-account credential management
+- [ ] Verified GitHub Actions/CodeBuild integration
+- [ ] Confirmed S3 upload and notification features
+- [ ] Tested Prometheus metrics collection
+
+### Core Package
+- [ ] Tested resource discovery and enrichment
+- [ ] Verified template framework functionality
+- [ ] Confirmed production safety features
+- [ ] Validated security and audit logging
 
 ## 🔄 Migration Notes
 <!-- Any special migration steps or breaking changes -->
@@ -94,6 +114,9 @@ Closes #<!-- issue number -->
 
 ### Testing Requirements
 - [ ] Run the BOM converter with sample data
+- [ ] Test tag compliance checker with policy files
+- [ ] Verify CI/CD scripts help and basic functionality
 - [ ] Verify no regressions in existing functionality
-- [ ] Check output formats (Excel/CSV) are correct
+- [ ] Check output formats (Excel/Word/CSV) are correct
 - [ ] Validate tag compliance reports are accurate
+- [ ] Test core inventag package imports and basic functionality

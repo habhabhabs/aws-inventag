@@ -40,23 +40,34 @@ jobs:
     - name: Run linting with flake8
       run: |
         # Stop the build if there are Python syntax errors or undefined names
-        flake8 scripts/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 scripts/ inventag/ --count --select=E9,F63,F7,F82 --show-source --statistics
         # Exit-zero treats all errors as warnings
-        flake8 scripts/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        flake8 scripts/ inventag/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
     - name: Check code formatting with black
       run: |
-        black --check scripts/
+        black --check scripts/ inventag/
 
     - name: Type checking with mypy
       run: |
-        mypy scripts/ --ignore-missing-imports || true
+        mypy scripts/ inventag/ --ignore-missing-imports || true
 
-    - name: Test BOM converter functionality
+    - name: Test core functionality
       run: |
-        python -m pytest tests/ -v --cov=scripts --cov-report=xml || true
-        # Basic functionality test
+        # Run test suite if tests directory exists
+        if [ -d "tests" ]; then
+          python -m pytest tests/ -v --cov=inventag --cov-report=xml || true
+        fi
+        
+        # Test all main scripts
         python scripts/bom_converter.py --help
+        python scripts/tag_compliance_checker.py --help
+        python scripts/cicd_bom_generation.py --help
+        
+        # Test AWS resource inventory if it exists
+        if [ -f "scripts/aws_resource_inventory.py" ]; then
+          python scripts/aws_resource_inventory.py --help
+        fi
         
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -93,8 +104,8 @@ jobs:
       run: |
         safety check || true
 
-  validate-data:
-    name: Validate Sample Data
+  integration-tests:
+    name: Integration Tests
     runs-on: ubuntu-latest
     
     steps:
@@ -125,11 +136,34 @@ jobs:
               "name": "test-bucket",
               "arn": "arn:aws:s3:::test-bucket",
               "account_id": "123456789012",
-              "tags": {"Environment": "test"},
+              "tags": {"Environment": "test", "Owner": "TeamA"},
               "discovered_via": "ResourceGroupsTaggingAPI"
+            },
+            {
+              "service": "EC2",
+              "type": "Instance",
+              "region": "us-east-1",
+              "id": "i-1234567890abcdef0",
+              "name": "test-instance",
+              "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
+              "account_id": "123456789012",
+              "tags": {"Environment": "test"},
+              "discovered_via": "EC2"
             }
           ]
         }
+        EOF
+        
+        # Create sample tag policy configuration
+        cat > test-data/tag_policy.yaml << 'EOF'
+        tag_policies:
+          - name: "Environment Tag Policy"
+            required_tags:
+              - "Environment"
+            allowed_values:
+              Environment: ["dev", "test", "staging", "prod"]
+            scope:
+              services: ["*"]
         EOF
 
     - name: Test BOM converter with sample data
@@ -141,9 +175,43 @@ jobs:
         
         # Verify output file was created
         ls -la test-output.xlsx
+        
+        # Test CSV format
+        python scripts/bom_converter.py \
+          --input test-data/sample.json \
+          --output test-output.csv \
+          --format csv \
+          --no-vpc-enrichment
+        
+        ls -la test-output.csv
 
     - name: Test tag compliance checker
       run: |
-        if [ -f scripts/tag_compliance_checker.py ]; then
-          python scripts/tag_compliance_checker.py --help || true
-        fi
+        python scripts/tag_compliance_checker.py \
+          --config test-data/tag_policy.yaml \
+          --input test-data/sample.json \
+          --output compliance-report \
+          --format json
+        
+        # Verify compliance report was created
+        ls -la compliance-report.json
+
+    - name: Test CI/CD BOM generation
+      run: |
+        # Create a simple accounts configuration
+        cat > test-data/accounts.json << 'EOF'
+        [
+          {
+            "account_id": "123456789012",
+            "account_name": "test-account",
+            "environment": "test",
+            "access_key_id": null,
+            "secret_access_key": null,
+            "profile_name": null,
+            "role_arn": null
+          }
+        ]
+        EOF
+        
+        # Test help and configuration validation
+        python scripts/cicd_bom_generation.py --help || true

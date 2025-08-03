@@ -249,14 +249,19 @@ jobs:
         # Install dependencies
         pip install -r requirements.txt
         
-        # Run AWS resource inventory
-        python scripts/aws_resource_inventory.py --output inventory
+        # Run AWS resource inventory (if available)
+        if [ -f "scripts/aws_resource_inventory.py" ]; then
+          python scripts/aws_resource_inventory.py --output inventory
+        fi
         
         # Convert to Excel/CSV format
-        python scripts/bom_converter.py --input inventory.json --output report.xlsx
+        python scripts/bom_converter.py --input sample.json --output report.xlsx
         
         # Check tag compliance
-        python scripts/tag_compliance_checker.py --config config/tag_policy_example.yaml --output compliance_report
+        python scripts/tag_compliance_checker.py --config tag_policy.yaml --input sample.json --output compliance_report
+        
+        # Test CI/CD BOM generation
+        python scripts/cicd_bom_generation.py --help
         ```
         
         ### Docker Usage
@@ -362,4 +367,11 @@ jobs:
         if [ -f scripts/aws_resource_inventory.py ]; then
           python scripts/aws_resource_inventory.py --help
           echo "✅ AWS resource inventory works correctly"
+        else
+          echo "ℹ️ AWS resource inventory script not found - skipping"
         fi
+
+    - name: Test CI/CD BOM generation
+      run: |
+        python scripts/cicd_bom_generation.py --help
+        echo "✅ CI/CD BOM generation works correctly"
