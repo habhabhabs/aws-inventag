@@ -356,11 +356,37 @@ Comprehensive metrics export for monitoring and alerting systems.
 
 ### Contributing with Automated Releases
 
-1. **Create a feature branch:**
+> **⚠️ IMPORTANT: This project strictly follows [Semantic Commit](https://www.conventionalcommits.org/) conventions. All commits must use semantic prefixes for automated versioning and release notes generation.**
+
+1. **Create a feature branch with semantic commits:**
    ```bash
    git checkout -b feat/new-export-format
+   
+   # ✅ REQUIRED: Use semantic commit format
    git commit -m "feat: add JSON export format for compliance reports"
+   
+   # ❌ WRONG: Non-semantic commits will break automation
+   git commit -m "added json stuff"
    ```
+
+   **Semantic Commit Format:**
+   ```
+   <type>[optional scope]: <description>
+   
+   [optional body]
+   
+   [optional footer(s)]
+   ```
+
+   **Required Types:**
+   - `feat:` - New features (triggers minor version bump)
+   - `fix:` - Bug fixes (triggers patch version bump) 
+   - `docs:` - Documentation changes
+   - `style:` - Code style/formatting changes
+   - `refactor:` - Code refactoring without feature changes
+   - `test:` - Adding or updating tests
+   - `chore:` - Maintenance tasks, dependency updates
+   - `feat!:` or `fix!:` - Breaking changes (triggers major version bump)
 
 2. **Create PR with appropriate release label:**
    ```bash
@@ -396,7 +422,7 @@ gh workflow run "Automated Release" --field version_bump=major
 
 - ✅ **Automated Testing**: Python syntax, formatting, and functionality tests
 - 🔍 **PR Validation**: Title format, description length, release labels
-- 📝 **Conventional Commits**: Enhanced release notes from commit messages
+- 📝 **Semantic Commits (REQUIRED)**: Automated versioning and enhanced release notes from conventional commit messages
 - 🏷️ **Breaking Change Detection**: Requires proper labeling for major releases
 - 📊 **Release Analytics**: Track version history and change patterns
 - 🚀 **CI/CD Integration**: Automated BOM generation with compliance gates
