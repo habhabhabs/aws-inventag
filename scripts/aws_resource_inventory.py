@@ -99,16 +99,16 @@ def main():
             print("Exporting to Excel/CSV format...")
             excel_filename = f"{args.output}_{timestamp}.xlsx"
             python_cmd = get_python_command()
-            
+
             # Get the correct path to bom_converter.py
             script_dir = os.path.dirname(os.path.abspath(__file__))
             bom_converter_path = os.path.join(script_dir, "bom_converter.py")
-            
+
             # Execute the conversion command with proper path quoting
             exit_code = os.system(
                 f'"{python_cmd}" "{bom_converter_path}" --input "{filename}" --output "{excel_filename}" --format excel'
             )
-            
+
             if exit_code == 0:
                 print(f"Excel export saved to {excel_filename}")
             else:
