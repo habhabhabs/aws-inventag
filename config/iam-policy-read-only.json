@@ -37,7 +37,7 @@
       "Sid": "ComprehensiveResourceDiscovery",
       "Effect": "Allow",
       "Action": [
-        "resourcegroupstaggingapi:GetResources",
+        "tag:GetResources",
         "config:DescribeConfigurationRecorderStatus",
         "config:ListDiscoveredResources",
         "config:ListAggregateDiscoveredResources",
@@ -60,10 +60,8 @@
         "kms:DescribeKey",
         "kms:ListResourceTags",
         "elasticache:DescribeCacheClusters",
-        "elasticache:ListTagsForResource",
-        "opensearch:ListDomainNames",
-        "opensearch:DescribeDomain",
-        "opensearch:ListTags",
+        "es:ListTagsForResource",
+        "es:DescribeDomain",
         "es:ListDomainNames",
         "es:DescribeElasticsearchDomain",
         "es:ListTags"
