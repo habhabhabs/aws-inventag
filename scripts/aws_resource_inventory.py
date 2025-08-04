@@ -99,10 +99,21 @@ def main():
             print("Exporting to Excel/CSV format...")
             excel_filename = f"{args.output}_{timestamp}.xlsx"
             python_cmd = get_python_command()
-            os.system(
-                f"{python_cmd} bom_converter.py --input {filename} --output {excel_filename} --format excel"
+            
+            # Get the correct path to bom_converter.py
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            bom_converter_path = os.path.join(script_dir, "bom_converter.py")
+            
+            # Execute the conversion command
+            exit_code = os.system(
+                f"{python_cmd} {bom_converter_path} --input {filename} --output {excel_filename} --format excel"
             )
-            print(f"Excel export saved to {excel_filename}")
+            
+            if exit_code == 0:
+                print(f"Excel export saved to {excel_filename}")
+            else:
+                print(f"Error: Excel export failed with exit code {exit_code}")
+                sys.exit(1)
 
     except NoCredentialsError:
         print(
