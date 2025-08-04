@@ -3,7 +3,6 @@
 
 required_tags:
   # Simple required tags (key must exist, any value allowed)
-  - "Environment"
   - "Owner"
   - "Project"
   
