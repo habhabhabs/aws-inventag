@@ -12,6 +12,7 @@ import argparse
 import sys
 import os
 import logging
+import shutil
 from datetime import datetime
 from botocore.exceptions import NoCredentialsError
 
@@ -22,6 +23,18 @@ except ImportError:
     # Fallback for development/testing
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
     from inventag.discovery import AWSResourceInventory
+
+
+def get_python_command():
+    """Detect the correct Python command to use (python or python3)."""
+    # Check if python3 is available
+    if shutil.which("python3"):
+        return "python3"
+    # Fall back to python if available
+    elif shutil.which("python"):
+        return "python"
+    else:
+        raise RuntimeError("Neither 'python' nor 'python3' command found in PATH")
 
 
 def main():
@@ -85,8 +98,9 @@ def main():
         if args.export_excel:
             print("Exporting to Excel/CSV format...")
             excel_filename = f"{args.output}_{timestamp}.xlsx"
+            python_cmd = get_python_command()
             os.system(
-                f"python bom_converter.py --input {filename} --output {excel_filename} --format excel"
+                f"{python_cmd} bom_converter.py --input {filename} --output {excel_filename} --format excel"
             )
             print(f"Excel export saved to {excel_filename}")
 
