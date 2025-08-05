@@ -47,7 +47,9 @@ class AccountCredentials:
     profile_name: Optional[str] = None
     role_arn: Optional[str] = None
     external_id: Optional[str] = None
-    regions: List[str] = field(default_factory=lambda: ["us-east-1"])
+    regions: List[str] = field(
+        default_factory=list
+    )  # Empty list means auto-discover all regions
     services: List[str] = field(default_factory=list)  # Empty means all services
     tags: Dict[str, str] = field(default_factory=dict)  # Account-specific tag filters
 
@@ -300,10 +302,53 @@ class CloudBOMGenerator:
                         f"Account ID mismatch for {credentials.account_id}. "
                         f"Actual: {actual_account_id}"
                     )
+                    
+                    # If the original account_id was "default", update it with the real account ID
+                    if credentials.account_id == "default":
+                        self.logger.info(f"Updating account ID from 'default' to actual account ID: {actual_account_id}")
+                        credentials.account_id = actual_account_id
+                        # Also update account name to be more descriptive if it was generic
+                        if credentials.account_name == "Default AWS Account":
+                            caller_arn = caller_identity.get("Arn", "")
+                            if "assumed-role" in caller_arn:
+                                try:
+                                    role_part = caller_arn.split("assumed-role/")[1].split("/")[0]
+                                    credentials.account_name = f"AWS Account {actual_account_id} ({role_part})"
+                                except:
+                                    credentials.account_name = f"AWS Account {actual_account_id}"
+                            elif "user" in caller_arn:
+                                try:
+                                    user_part = caller_arn.split("user/")[1]
+                                    credentials.account_name = f"AWS Account {actual_account_id} ({user_part})"
+                                except:
+                                    credentials.account_name = f"AWS Account {actual_account_id}"
+                            else:
+                                credentials.account_name = f"AWS Account {actual_account_id}"
+
+                # Auto-discover regions if none specified
+                target_regions = credentials.regions
+                if not target_regions:
+                    try:
+                        ec2 = session.client("ec2", region_name="us-east-1")
+                        all_regions = ec2.describe_regions()["Regions"]
+                        target_regions = [
+                            region["RegionName"] for region in all_regions
+                        ]
+                        self.logger.info(
+                            f"Auto-discovered {len(target_regions)} regions for account {credentials.account_id}"
+                        )
+                    except Exception as e:
+                        self.logger.warning(f"Failed to auto-discover regions: {e}")
+                        target_regions = [
+                            "us-east-1",
+                            "us-west-2",
+                            "eu-west-1",
+                            "ap-southeast-1",
+                        ]  # Fallback
 
                 # Test accessible regions
                 accessible_regions = self._test_accessible_regions(
-                    session, credentials.regions
+                    session, target_regions
                 )
 
                 # Create account context
@@ -578,10 +623,34 @@ class CloudBOMGenerator:
         start_time = datetime.now(timezone.utc)
 
         try:
+            # Auto-discover regions if none specified
+            regions_to_use = context.accessible_regions
+            if not regions_to_use and not context.credentials.regions:
+                # Auto-discover all regions if none specified
+                try:
+                    ec2 = context.session.client("ec2", region_name="us-east-1")
+                    all_regions = ec2.describe_regions()["Regions"]
+                    regions_to_use = [region["RegionName"] for region in all_regions]
+                    self.logger.info(
+                        f"Auto-discovered {len(regions_to_use)} regions for account {account_id}"
+                    )
+                except Exception as e:
+                    self.logger.warning(
+                        f"Failed to auto-discover regions for account {account_id}: {e}"
+                    )
+                    regions_to_use = [
+                        "us-east-1",
+                        "us-west-2",
+                        "eu-west-1",
+                        "ap-southeast-1",
+                    ]  # Fallback
+            elif not regions_to_use:
+                regions_to_use = context.credentials.regions
+
             # Initialize resource inventory for this account
             inventory = AWSResourceInventory(
                 session=context.session,
-                regions=context.accessible_regions,
+                regions=regions_to_use,
                 services=context.credentials.services
                 or None,  # None means all services
                 tag_filters=context.credentials.tags,
@@ -591,8 +660,10 @@ class CloudBOMGenerator:
             resources = inventory.discover_all_resources()
 
             # Add account context to each resource
+            # Use the account_id from credentials (which may have been updated from "default" to actual account ID)
+            actual_account_id = context.credentials.account_id
             for resource in resources:
-                resource["source_account_id"] = account_id
+                resource["source_account_id"] = actual_account_id
                 resource["source_account_name"] = context.credentials.account_name
                 resource["discovery_timestamp"] = datetime.now(timezone.utc).isoformat()
 
@@ -1020,10 +1091,11 @@ class CloudBOMGenerator:
 
             # Regions
             regions_input = input(
-                "Regions (comma-separated, default: us-east-1): "
+                "Regions (comma-separated, empty for all regions): "
             ).strip()
             if regions_input:
                 credentials.regions = [r.strip() for r in regions_input.split(",")]
+            # If empty, regions will remain empty list and auto-discovery will happen later
 
             accounts.append(credentials)
 

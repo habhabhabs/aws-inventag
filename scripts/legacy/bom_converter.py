@@ -76,7 +76,7 @@ Examples:
     )
     parser.add_argument(
         "--format",
-        choices=["excel", "csv"],
+        choices=["excel", "csv", "word"],
         default="excel",
         help="Output format (default: excel)",
     )
@@ -124,6 +124,8 @@ Examples:
             base_name = os.path.splitext(os.path.basename(args.input))[0]
             if args.format == "excel":
                 args.output = f"{base_name}_bom_{timestamp}.xlsx"
+            elif args.format == "word":
+                args.output = f"{base_name}_bom_{timestamp}.docx"
             else:
                 args.output = f"{base_name}_bom_{timestamp}.csv"
 
@@ -133,6 +135,8 @@ Examples:
             converter.export_to_excel(args.output)
         elif args.format == "csv":
             converter.export_to_csv(args.output)
+        elif args.format == "word":
+            converter.export_to_word(args.output)
 
         print(f"BOM report generated: {args.output}")
         print(f"Total resources processed: {len(data)}")

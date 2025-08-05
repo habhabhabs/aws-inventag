@@ -435,91 +435,69 @@ RDS:
 ### Basic Tag Mappings
 
 ```yaml
-# Basic custom tag mappings
-"inventag:remarks":
-  column_name: "Remarks"
-  default_value: ""
-  description: "Additional remarks or notes about the resource"
-
-"inventag:costcenter":
-  column_name: "Cost Center"
-  default_value: "Unknown"
-  description: "Cost center responsible for the resource"
-
-"inventag:owner":
+# Basic tag mappings - maps AWS tag keys to BOM column names
+Owner:
   column_name: "Resource Owner"
-  default_value: "Unassigned"
-  description: "Person or team responsible for the resource"
 
-"inventag:project":
-  column_name: "Project"
-  default_value: ""
-  description: "Project or application the resource belongs to"
+CostCenter:
+  column_name: "Cost Center"
+
+Project:
+  column_name: "Project Name"
+
+Environment:
+  column_name: "Environment"
+
+Application:
+  column_name: "Application"
+
+# Infrastructure tags
+InstanceType:
+  column_name: "Instance Type"
+
+PatchGroup:
+  column_name: "Patch Group"
 ```
 
 ### Enterprise Tag Mappings
 
 ```yaml
-# Comprehensive enterprise tag mappings
+# Enterprise tag mappings with company-specific prefixes
 "company:cost-center":
   column_name: "Cost Center"
-  default_value: "UNASSIGNED"
-  description: "Financial cost center for chargeback and budgeting"
 
 "company:business-unit":
   column_name: "Business Unit"
-  default_value: "UNKNOWN"
-  description: "Business unit or division owning the resource"
 
 "company:environment":
   column_name: "Environment"
-  default_value: "UNDEFINED"
-  description: "Environment classification (prod, staging, dev, test)"
 
 "company:application":
   column_name: "Application"
-  default_value: "UNTAGGED"
-  description: "Application or service name"
 
 "company:owner":
   column_name: "Technical Owner"
-  default_value: "UNASSIGNED"
-  description: "Technical owner or responsible team"
 
 "company:data-classification":
   column_name: "Data Classification"
-  default_value: "UNCLASSIFIED"
-  description: "Data sensitivity classification (public, internal, confidential, restricted)"
 
 "company:backup-required":
   column_name: "Backup Required"
-  default_value: "UNKNOWN"
-  description: "Whether resource requires backup (yes, no, n/a)"
 
 "company:monitoring-level":
   column_name: "Monitoring Level"
-  default_value: "STANDARD"
-  description: "Required monitoring level (basic, standard, enhanced, critical)"
 
 "company:compliance-scope":
   column_name: "Compliance Scope"
-  default_value: "NONE"
-  description: "Compliance frameworks applicable (sox, pci, hipaa, gdpr)"
 
 "company:auto-shutdown":
   column_name: "Auto Shutdown"
-  default_value: "DISABLED"
-  description: "Automatic shutdown configuration for cost optimization"
 
 "company:patch-group":
   column_name: "Patch Group"
-  default_value: "DEFAULT"
-  description: "Patching group for maintenance scheduling"
 
 "company:disaster-recovery":
   column_name: "DR Tier"
-  default_value: "TIER3"
-  description: "Disaster recovery tier (tier1, tier2, tier3, tier4)"
 ```
 
 ### Compliance-Focused Tag Mappings
@@ -528,51 +506,33 @@ RDS:
 # HIPAA compliance tags
 "hipaa:phi-data":
   column_name: "Contains PHI"
-  default_value: "UNKNOWN"
-  description: "Whether resource processes Protected Health Information"
 
 "hipaa:encryption-required":
   column_name: "Encryption Required"
-  default_value: "YES"
-  description: "HIPAA encryption requirement status"
 
 "hipaa:access-logging":
   column_name: "Access Logging"
-  default_value: "REQUIRED"
-  description: "HIPAA access logging requirement"
 
 # PCI DSS compliance tags
 "pci:cardholder-data":
   column_name: "Cardholder Data"
-  default_value: "NO"
-  description: "Whether resource processes cardholder data"
 
 "pci:compliance-scope":
   column_name: "PCI Scope"
-  default_value: "OUT_OF_SCOPE"
-  description: "PCI DSS compliance scope (in_scope, out_of_scope, connected)"
 
 # SOX compliance tags
 "sox:financial-reporting":
   column_name: "Financial Reporting"
-  default_value: "NO"
-  description: "Whether resource supports financial reporting processes"
 
 "sox:control-environment":
   column_name: "SOX Controls"
-  default_value: "STANDARD"
-  description: "SOX control environment classification"
 
 # GDPR compliance tags
 "gdpr:personal-data":
   column_name: "Personal Data"
-  default_value: "UNKNOWN"
-  description: "Whether resource processes EU personal data"
 
 "gdpr:data-retention":
   column_name: "Data Retention"
-  default_value: "STANDARD"
-  description: "GDPR data retention classification"
 ```
 
 ### Multi-Cloud Tag Mappings
@@ -581,33 +541,21 @@ RDS:
 # Multi-cloud standardized tags
 "cloud:provider":
   column_name: "Cloud Provider"
-  default_value: "AWS"
-  description: "Cloud service provider (AWS, Azure, GCP)"
 
 "cloud:region":
   column_name: "Cloud Region"
-  default_value: ""
-  description: "Cloud provider region"
 
 "cloud:availability-zone":
   column_name: "Availability Zone"
-  default_value: ""
-  description: "Specific availability zone within region"
 
 "cloud:instance-type":
   column_name: "Instance Type"
-  default_value: ""
-  description: "Cloud instance or resource type"
 
 "cloud:pricing-model":
   column_name: "Pricing Model"
-  default_value: "ON_DEMAND"
-  description: "Pricing model (on_demand, reserved, spot, savings_plan)"
 
 "cloud:auto-scaling":
   column_name: "Auto Scaling"
-  default_value: "DISABLED"
-  description: "Auto scaling configuration status"
 ```
 
 ## BOM Processing Configuration

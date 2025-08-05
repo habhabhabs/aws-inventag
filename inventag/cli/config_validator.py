@@ -29,6 +29,17 @@ class ConfigValidator:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
+    def _is_tag_policy_file(self, config: Dict[str, Any]) -> bool:
+        """Check if this looks like a tag policy file instead of tag mappings."""
+        tag_policy_indicators = [
+            "required_tags",
+            "service_specific",
+            "exemptions",
+            "policies",
+            "compliance_rules",
+        ]
+        return any(key in config for key in tag_policy_indicators)
+
     def validate_accounts_file(self, file_path: str) -> ValidationResult:
         """
         Validate accounts configuration file.
@@ -320,35 +331,76 @@ class ConfigValidator:
                 result.errors.append("Tag mappings must be a dictionary")
                 return result
 
-            # Validate structure
-            for tag_key, mapping in config.items():
-                if not isinstance(tag_key, str):
-                    result.errors.append(f"Tag key must be string: {tag_key}")
-                    continue
+            # Check if user accidentally used a tag policy file instead of tag mappings
+            if self._is_tag_policy_file(config):
+                result.errors.append(
+                    "This appears to be a tag compliance policy file, not a tag mappings file. "
+                    "Tag mappings should map tag keys to column names like: "
+                    "Owner: {column_name: 'Resource Owner'}. "
+                    f"Try using 'tag_to_column_mappings_example.yaml' instead of '{file_path}'"
+                )
+                return result
 
-                if not isinstance(mapping, dict):
-                    result.errors.append(
-                        f"Tag mapping for '{tag_key}' must be a dictionary"
-                    )
-                    continue
+            # Check if this has the tag_mappings key (new format)
+            if "tag_mappings" in config:
+                tag_mappings = config["tag_mappings"]
+                if not isinstance(tag_mappings, list):
+                    result.errors.append("'tag_mappings' must be a list of mapping objects")
+                    return result
+                
+                # Validate each tag mapping in the list
+                for i, mapping in enumerate(tag_mappings):
+                    if not isinstance(mapping, dict):
+                        result.errors.append(f"Tag mapping {i + 1} must be a dictionary")
+                        continue
+                    
+                    required_fields = ["tag", "name"]
+                    for field in required_fields:
+                        if field not in mapping:
+                            result.errors.append(
+                                f"Tag mapping {i + 1} missing required field: {field}"
+                            )
+                        elif not isinstance(mapping[field], str):
+                            result.errors.append(
+                                f"Tag mapping {i + 1} field '{field}' must be a string"
+                            )
+                    
+                    optional_fields = ["description", "default_value"]
+                    for field in optional_fields:
+                        if field in mapping and not isinstance(mapping[field], str):
+                            result.errors.append(
+                                f"Tag mapping {i + 1} field '{field}' must be a string"
+                            )
+            else:
+                # Legacy format validation (dictionary of tag->column mappings)
+                for tag_key, mapping in config.items():
+                    if not isinstance(tag_key, str):
+                        result.errors.append(f"Tag key must be string: {tag_key}")
+                        continue
 
-                required_fields = ["column_name"]
-                for field in required_fields:
-                    if field not in mapping:
+                    if not isinstance(mapping, dict):
                         result.errors.append(
-                            f"Tag mapping for '{tag_key}' missing required field: {field}"
+                            f"Tag mapping for '{tag_key}' must be a dictionary"
                         )
-                    elif not isinstance(mapping[field], str):
-                        result.errors.append(
-                            f"Tag mapping for '{tag_key}' field '{field}' must be a string"
-                        )
+                        continue
 
-                optional_fields = ["default_value", "description"]
-                for field in optional_fields:
-                    if field in mapping and not isinstance(mapping[field], str):
-                        result.errors.append(
-                            f"Tag mapping for '{tag_key}' field '{field}' must be a string"
-                        )
+                    required_fields = ["column_name"]
+                    for field in required_fields:
+                        if field not in mapping:
+                            result.errors.append(
+                                f"Tag mapping for '{tag_key}' missing required field: {field}"
+                            )
+                        elif not isinstance(mapping[field], str):
+                            result.errors.append(
+                                f"Tag mapping for '{tag_key}' field '{field}' must be a string"
+                            )
+
+                    optional_fields = ["default_value", "description"]
+                    for field in optional_fields:
+                        if field in mapping and not isinstance(mapping[field], str):
+                            result.errors.append(
+                                f"Tag mapping for '{tag_key}' field '{field}' must be a string"
+                            )
 
             result.is_valid = len(result.errors) == 0
 

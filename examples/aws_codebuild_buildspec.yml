@@ -96,8 +96,8 @@ phases:
       - |
         python inventag_cli.py \
           --accounts-file accounts.json \
-          --service-descriptions config/service_descriptions_example.yaml \
-          --tag-mappings config/tag_mappings_example.yaml \
+          --service-descriptions config/defaults/services/service_descriptions_example.yaml \
+          --tag-mappings config/defaults/mappings/tag_to_column_mappings_example.yaml \
           $FORMAT_FLAGS \
           $S3_OPTIONS \
           --enable-state-management \

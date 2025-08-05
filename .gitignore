@@ -116,6 +116,9 @@ bom_*.json
 bom_*.csv
 *_bom_document.*
 
+# Compliance report output directory
+compliance_reports/
+
 # Temporary export files
 *_export.json
 *_export.xlsx

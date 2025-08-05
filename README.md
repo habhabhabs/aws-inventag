@@ -15,6 +15,7 @@ cd inventag-aws
 pip install -r requirements.txt
 
 # Generate professional BOM reports with production safety
+# The script automatically detects python3/python
 ./inventag.sh --create-excel --create-word \
   --enable-production-safety --security-validation
 ```
@@ -46,12 +47,15 @@ pip install -r requirements.txt
 # Multi-account BOM with comprehensive analysis
 ./inventag.sh --accounts-file accounts.json \
   --create-excel --create-word \
+  --tag-mappings config/defaults/mappings/tag_to_column_mappings_example.yaml \
+  --service-descriptions config/defaults/services/service_descriptions_example.yaml \
   --enable-network-analysis --enable-security-analysis \
   --compliance-standard soc2 --s3-bucket enterprise-reports
 
 # Interactive multi-account setup with advanced features
 ./inventag.sh --accounts-prompt \
   --create-excel --create-google-docs \
+  --tag-mappings config/defaults/mappings/tag_to_column_mappings_example.yaml \
   --enable-cost-analysis --generate-changelog
 
 # Cross-account role with production safety
