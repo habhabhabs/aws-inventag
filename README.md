@@ -17,25 +17,22 @@
 
 ### ✨ Key Features
 
+- 🛡️ **Production Safety & Security** - Enterprise-grade security validation, read-only enforcement, and comprehensive audit logging
+- 🔐 **Compliance Standards** - Built-in support for SOC 2, PCI, HIPAA, GDPR with automated compliance reporting
 - 🔍 **Multi-Method Discovery** - Leverages ResourceGroupsTaggingAPI, AWSConfig, and service-specific APIs
-- 🎯 **Service-Specific Enrichment** - Deep attribute extraction for S3, RDS, EC2, Lambda, ECS, EKS and more
 - 📊 **Professional BOM Generation** - Creates detailed Excel/Word/CSV reports with service-specific sheets
+- 🌐 **Network & Security Analysis** - Comprehensive VPC/subnet analysis with security posture assessment
+- 💰 **Cost Analysis & Optimization** - Resource cost estimation, forgotten resource detection, and optimization recommendations
+- 🎯 **Service-Specific Enrichment** - Deep attribute extraction for S3, RDS, EC2, Lambda, ECS, EKS and more
 - 🏷️ **Tag Compliance Checking** - Validates resources against organizational tagging policies with integrated BOM generation
+- 🔄 **State Management & Change Tracking** - Track changes over time with delta detection and professional changelog generation
+- 🚀 **CI/CD Ready** - Easy integration into automated compliance workflows with S3 upload and GitHub Actions support
+- 🧩 **Multi-Account Support** - Comprehensive multi-account scanning with cross-account role assumption
+- 📋 **Template Framework** - Advanced document template system with variable substitution and professional branding
 - 🔧 **Intelligent Data Enhancement** - Enriches resources with VPC names, account IDs, and inferred tags
-- 🌐 **Network Analysis** - Comprehensive VPC/subnet analysis with IP utilization and capacity planning
-- 🔒 **Security Analysis** - Security posture assessment with vulnerability detection and compliance checks
-- 📋 **Template Framework** - Advanced document template system with variable substitution and professional branding
-- 🛡️ **Production Safety** - Enterprise-grade error handling, monitoring, and graceful degradation
-- 🔐 **Security Validation** - Read-only access validation with comprehensive audit logging for compliance
-- 💰 **Cost Analysis** - Resource cost estimation, forgotten resource detection, and optimization recommendations
-- 🚀 **CI/CD Ready** - Easy integration into automated compliance workflows
 - 📈 **Comprehensive Reporting** - Summary dashboards with compliance percentages and service breakdowns
-- 🔄 **State Management** - Track changes over time with persistent state storage and versioning
-- 🎯 **Delta Detection** - Advanced change analysis with impact assessment and categorization
-- 📝 **Changelog Generation** - Professional change reports for audit trails and documentation
 - 🔗 **Integrated Compliance-BOM Workflow** - Seamless transition from compliance checking to professional BOM document generation
-- 📋 **Template Framework** - Advanced document template system with variable substitution and professional branding
-- 🧪 **Comprehensive Testing** - Full test coverage including dynamic service discovery, production safety, and template framework testing
+- 🧪 **Production-Grade Testing** - Full test coverage including dynamic service discovery, production safety, and template framework testing
 
 ## 🧪 Testing Framework
 
@@ -195,26 +192,108 @@ aws iam attach-user-policy --user-name YOUR_USER --policy-arn arn:aws:iam::ACCOU
 ./examples/quick_start.sh
 ```
 
-**Or use the unified CLI:**
+## 🚀 Core CLI Commands
+
+### Basic BOM Generation
 ```bash
-# Single account BOM generation with Excel and Word formats
+# Single account BOM with Excel and Word formats
 python -m inventag.cli.main --create-excel --create-word
 
-# Multi-account BOM generation from configuration file
-python -m inventag.cli.main --accounts-file examples/accounts_basic.json --create-excel --create-word
+# BOM with comprehensive analysis enabled
+python -m inventag.cli.main --create-excel --create-word \
+  --enable-network-analysis --enable-security-analysis --enable-cost-analysis
+
+# Multi-account BOM from configuration file
+python -m inventag.cli.main --accounts-file examples/accounts_basic.json \
+  --create-excel --create-word --verbose
 
 # Interactive multi-account setup
 python -m inventag.cli.main --accounts-prompt --create-excel --verbose
-
-# CI/CD integration with S3 upload
-python -m inventag.cli.main --accounts-file accounts.json --create-excel --s3-bucket reports-bucket
-
-# Cross-account role assumption
-python -m inventag.cli.main --cross-account-role InvenTagRole --create-excel --account-regions us-east-1,us-west-2
-
-# Production safety and security validation demo
-python examples/production_safety_demo.py
 ```
+
+### 🛡️ Production Safety & Security Commands
+```bash
+# Production-safe BOM with security validation
+python -m inventag.cli.main --create-excel \
+  --enable-production-safety --security-validation \
+  --enforce-read-only --risk-threshold HIGH
+
+# SOC 2 compliance BOM with audit trail
+python -m inventag.cli.main --create-excel \
+  --compliance-standard soc2 --audit-output soc2-compliance.json
+
+# Security validation for specific operations
+python -m inventag.cli.main --create-excel \
+  --validate-operations ec2:describe_instances s3:list_buckets iam:list_users
+
+# Real-time production monitoring
+python scripts/production_monitor.py \
+  --operations ec2:describe_instances s3:list_buckets \
+  --report-output production-monitor.json --verbose
+
+# Security validation with audit report
+python scripts/security_validator.py --validate-inventory \
+  --enforce-read-only --risk-threshold HIGH \
+  --audit-output security-validation.json
+```
+
+### 🌐 Multi-Account & Enterprise Commands
+```bash
+# Cross-account role assumption
+python scripts/multi_account_scanner.py \
+  --accounts-file examples/accounts_basic.json \
+  --enable-security-analysis --enable-network-analysis \
+  --output-format excel json --verbose
+
+# Enterprise-scale multi-account BOM
+python -m inventag.cli.main --accounts-file enterprise-accounts.json \
+  --create-excel --create-word --enable-network-analysis \
+  --enable-security-analysis --enable-cost-analysis \
+  --max-concurrent-accounts 12 --per-account-reports
+
+# CI/CD integration with S3 upload and security validation
+python -m inventag.cli.main --accounts-file accounts.json \
+  --create-excel --s3-bucket reports-bucket \
+  --enable-production-safety --security-validation \
+  --s3-key-prefix "secure-reports/$(date +%Y-%m-%d)/"
+```
+
+### 📊 Advanced Analysis Commands
+```bash
+# Comprehensive network and security analysis
+python -m inventag.cli.main --create-excel \
+  --enable-network-analysis --enable-security-analysis \
+  --service-descriptions config/service_descriptions_example.yaml \
+  --tag-mappings config/tag_mappings_example.yaml
+
+# Cost optimization analysis
+python -m inventag.cli.main --create-excel \
+  --enable-cost-analysis --account-services ec2,rds,s3,lambda \
+  --create-word --output-directory cost-optimization
+
+# State management with change tracking
+python -m inventag.cli.main --create-excel \
+  --enable-state-management --enable-delta-detection \
+  --generate-changelog --output-directory state-tracking
+```
+
+### 🔧 Debug & Troubleshooting Commands
+```bash
+# Debug mode with comprehensive logging
+python -m inventag.cli.main --create-excel --debug \
+  --log-file inventag-debug.log --verbose
+
+# Credential validation before processing
+python -m inventag.cli.main --validate-credentials \
+  --accounts-file accounts.json --credential-timeout 60
+
+# Configuration validation only
+python -m inventag.cli.main --validate-config \
+  --accounts-file accounts.json \
+  --service-descriptions config/service_descriptions_example.yaml
+```
+
+> 📚 **For complete CLI documentation with all options and examples, see [CLI_USAGE_ENHANCED.md](CLI_USAGE_ENHANCED.md)**
 
 **Legacy script usage (deprecated):**
 ```bash

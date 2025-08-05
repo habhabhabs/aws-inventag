@@ -256,6 +256,55 @@ Examples:
         help="Timeout in seconds for credential validation (default: 30)",
     )
 
+    # Production Safety and Security options
+    safety_group = parser.add_argument_group("Production Safety and Security")
+    safety_group.add_argument(
+        "--enable-production-safety",
+        action="store_true",
+        default=True,
+        help="Enable production safety monitoring and validation (default: enabled)",
+    )
+    safety_group.add_argument(
+        "--disable-production-safety",
+        action="store_true",
+        help="Disable production safety monitoring (not recommended for production use)",
+    )
+    safety_group.add_argument(
+        "--enforce-read-only",
+        action="store_true",
+        default=True,
+        help="Enforce read-only operations only for security (default: enabled)",
+    )
+    safety_group.add_argument(
+        "--security-validation",
+        action="store_true",
+        default=True,
+        help="Enable security validation for all AWS operations (default: enabled)",
+    )
+    safety_group.add_argument(
+        "--compliance-standard",
+        choices=["general", "soc2", "pci", "hipaa", "gdpr"],
+        default="general",
+        help="Compliance standard to enforce (default: general)",
+    )
+    safety_group.add_argument(
+        "--risk-threshold",
+        choices=["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+        default="MEDIUM",
+        help="Risk threshold for operation blocking (default: MEDIUM)",
+    )
+    safety_group.add_argument(
+        "--audit-output",
+        type=str,
+        help="Path to security audit report output file",
+    )
+    safety_group.add_argument(
+        "--validate-operations",
+        type=str,
+        nargs="+",
+        help="Validate specific AWS operations (format: service:operation)",
+    )
+
     return parser
 
 
