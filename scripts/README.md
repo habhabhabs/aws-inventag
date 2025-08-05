@@ -1,97 +1,61 @@
-# Scripts
+# 📋 InvenTag Scripts
 
-This directory contains the main AWS Cloud BOM Automation tools.
+Standalone scripts for various InvenTag operations.
 
-## Scripts
+## 🛡️ Production Scripts
+**Recommended for production environments**
 
-### `aws_resource_inventory.py`
-**Comprehensive AWS resource discovery** across all services and regions.
+- **[production_monitor.py](production/production_monitor.py)** - Real-time production safety monitoring
+- **[security_validator.py](production/security_validator.py)** - Security validation for AWS operations  
+- **[multi_account_scanner.py](production/multi_account_scanner.py)** - Comprehensive multi-account resource scanning
 
-**Features:**
-- Discovers ALL AWS resources using multiple methods
-- Supports all AWS regions with automatic fallback
-- Multiple output formats (JSON, YAML)
-- Optional Excel export and S3 upload
-
-**Usage:**
+### Usage
 ```bash
-# Basic usage - discovers all resources
-python scripts/aws_resource_inventory.py
+# Production monitoring with compliance reporting
+python scripts/production/production_monitor.py \
+  --operations ec2:describe_instances s3:list_buckets \
+  --report-output production-compliance.json
 
-# With Excel export
-python scripts/aws_resource_inventory.py --export-excel
+# Security validation with audit logging
+python scripts/production/security_validator.py \
+  --compliance-standard soc2 --audit-output security-audit.json
 
-# Specific regions only  
-python scripts/aws_resource_inventory.py --regions us-east-1 eu-west-1
-
-# Upload to S3
-python scripts/aws_resource_inventory.py --s3-bucket reports-bucket
+# Multi-account comprehensive scanning
+python scripts/production/multi_account_scanner.py \
+  --accounts-file accounts.json --output-format excel
 ```
 
-### `tag_compliance_checker.py`
-**Comprehensive tag compliance validation** against your organization's policies.
+## 🔧 Development Scripts
+**For development and testing**
 
-**Features:**
-- Discovers ALL AWS resources across ALL services
-- Validates against custom tag policies
-- Service-by-service compliance breakdown
-- Color-coded console output with detailed reporting
+- **[cicd_bom_generation.py](development/cicd_bom_generation.py)** - CI/CD pipeline BOM generation
 
-**Usage:**
+### Usage
 ```bash
-# Check for untagged resources only
-python scripts/tag_compliance_checker.py
-
-# Use custom tag policy
-python scripts/tag_compliance_checker.py --config config/tag_policy_example.yaml
-
-# Upload compliance report
-python scripts/tag_compliance_checker.py --config my_policy.yaml --s3-bucket compliance-reports
+# CI/CD BOM generation
+python scripts/development/cicd_bom_generation.py \
+  --config cicd-config.json --output build/
 ```
 
-### `bom_converter.py`
-**Professional Excel/CSV report generator** with enhanced formatting.
+## 📚 Legacy Scripts
+**Deprecated - Use unified CLI instead**
 
-**Features:**
-- Separate Excel sheets per AWS service
-- Automatic VPC/subnet name enrichment
-- Professional formatting with color-coded headers
-- CSV export with service column
+- **[aws_resource_inventory.py](legacy/aws_resource_inventory.py)** - ⚠️ Use `python -m inventag.cli.main --create-excel` instead
+- **[bom_converter.py](legacy/bom_converter.py)** - ⚠️ Use `python -m inventag.cli.main --create-excel` instead  
+- **[tag_compliance_checker.py](legacy/tag_compliance_checker.py)** - ⚠️ Use `python -m inventag.cli.main --compliance-standard` instead
 
-**Usage:**
+### Migration Notice
+These legacy scripts are maintained for backward compatibility but are deprecated. 
+Please migrate to the unified CLI interface:
+
 ```bash
-# Convert to Excel with service sheets
-python scripts/bom_converter.py --input data.json --output report.xlsx
-
-# Convert to CSV
-python scripts/bom_converter.py --input data.json --output report.csv --format csv
-
-# Skip VPC enrichment for faster processing
-python scripts/bom_converter.py --input data.json --output fast_report.xlsx --no-vpc-enrichment
+# Instead of legacy scripts, use:
+python -m inventag.cli.main --create-excel --create-word \
+  --enable-production-safety --security-validation
 ```
 
-## Requirements
-
-All scripts require:
-- Python 3.7+
-- AWS credentials configured (`aws configure`)
-- Required Python packages (`pip install -r requirements.txt`)
-- Appropriate IAM permissions (`config/iam-policy-read-only.json`)
-
-## Common Options
-
-All scripts support these common options:
-- `--verbose` - Detailed logging output
-- `--regions LIST` - Specify regions to scan
-- `--output NAME` - Custom output filename
-- `--s3-bucket BUCKET` - Upload results to S3
-
-## Integration
-
-These scripts are designed to work together:
-
-1. **Discover resources**: `aws_resource_inventory.py`
-2. **Check compliance**: `tag_compliance_checker.py --config policy.yaml`  
-3. **Generate reports**: `bom_converter.py --input results.json --output report.xlsx`
-
-Or use the automated quick start: `examples/quick_start.sh`
+## 📖 Documentation
+For complete documentation, see:
+- **[CLI User Guide](../docs/user-guides/CLI_USER_GUIDE.md)** - Complete command reference
+- **[Production Safety Guide](../docs/user-guides/PRODUCTION_SAFETY.md)** - Security and compliance features
+- **[Configuration Examples](../docs/user-guides/CONFIGURATION_EXAMPLES.md)** - Setup and configuration

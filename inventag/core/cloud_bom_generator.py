@@ -250,6 +250,33 @@ class CloudBOMGenerator:
                 },
             }
 
+    def generate_comprehensive_bom(
+        self,
+        output_formats: List[str] = None,
+        s3_upload_config: Optional[Any] = None,
+        compliance_policies: Optional[Dict] = None,
+    ) -> Dict[str, Any]:
+        """
+        Alias for generate_multi_account_bom for backward compatibility.
+
+        Args:
+            output_formats: List of output formats (word, excel, csv, json)
+            s3_upload_config: S3 upload configuration (currently not implemented)
+            compliance_policies: Tag compliance policies to apply
+
+        Returns:
+            Dictionary containing generation results and metadata
+        """
+        # Note: s3_upload_config is ignored for now - S3 upload should be handled separately
+        if s3_upload_config:
+            self.logger.warning(
+                "S3 upload configuration passed but not implemented in this method"
+            )
+
+        return self.generate_multi_account_bom(
+            output_formats=output_formats, compliance_policies=compliance_policies
+        )
+
     def _establish_account_contexts(self) -> Dict[str, AccountContext]:
         """Validate credentials and establish account contexts."""
         account_contexts = {}
@@ -815,13 +842,25 @@ class CloudBOMGenerator:
         try:
             # Initialize state manager
             state_manager = StateManager(
-                state_directory=str(self.output_dir / "state"), retention_days=30
+                state_dir=str(self.output_dir / "state"), retention_days=30
             )
 
             # Save current state
+            all_regions = list(
+                set(
+                    region
+                    for ctx in self.account_contexts.values()
+                    for region in ctx.accessible_regions
+                )
+            )
+            primary_account = next(iter(self.account_contexts.keys()), "multi-account")
+
             state_id = state_manager.save_state(
-                resources,
-                {
+                resources=resources,
+                account_id=primary_account,
+                regions=all_regions,
+                discovery_method="multi-account",
+                tags={
                     "multi_account": True,
                     "total_accounts": len(self.account_contexts),
                     "generation_type": "multi_account_bom",
@@ -845,8 +884,8 @@ class CloudBOMGenerator:
                         previous_state_id = previous_states[-2][
                             "state_id"
                         ]  # Second to last
-                        delta_results = delta_detector.detect_changes(
-                            previous_state_id, state_id
+                        delta_results = delta_detector.detect_changes_by_state_id(
+                            state_manager, previous_state_id, state_id
                         )
 
                         results["delta_detection"] = {
@@ -858,17 +897,22 @@ class CloudBOMGenerator:
 
                         # Generate changelog if enabled
                         if self.config.enable_changelog_generation:
-                            changelog_generator = ChangelogGenerator(delta_detector)
+                            changelog_generator = ChangelogGenerator(
+                                output_dir=str(self.output_dir / "changelogs")
+                            )
                             changelog_file = (
                                 self.output_dir
                                 / f"changelog_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
                             )
 
-                            changelog_generator.generate_changelog(
+                            changelog = changelog_generator.generate_changelog(
                                 delta_results,
-                                str(changelog_file),
                                 title="Multi-Account Infrastructure Changes",
                             )
+
+                            # Write changelog to file
+                            with open(changelog_file, "w") as f:
+                                f.write(changelog.to_markdown())
 
                             results["changelog_generated"] = True
                             results["changelog_file"] = str(changelog_file)

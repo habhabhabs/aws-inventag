@@ -43,12 +43,10 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
-
     # Initialize compliance manager
     config = ComplianceConfiguration(
         standard=ComplianceStandard.GENERAL,
         enable_security_validation=True,
-        enable_production_monitoring=True,
         enforce_read_only=True,
     )
 
@@ -80,7 +78,6 @@ def main():
 
     with open(args.report_output, "w") as f:
         json.dump(report, f, indent=2, default=str)
-
     print(f"\n📊 Compliance report saved to: {args.report_output}")
     print(f"📈 Overall Compliance: {report['compliance_status']}")
     print(f"📊 Compliance Score: {report['compliance_score']:.1f}%")

@@ -1,66 +1,94 @@
-# Configuration Files
+# ⚙️ InvenTag Configuration
 
-This directory contains configuration files and policies for the AWS Cloud BOM Automation tools.
+Configuration files and examples for customizing InvenTag behavior.
 
-## Files
+## 📁 Directory Structure
 
-### `iam-policy-read-only.json`
-**Complete IAM policy** with minimal read-only permissions required by all tools.
-
-**Usage:**
-```bash
-aws iam create-policy --policy-name AWSResourceInventoryReadOnly --policy-document file://config/iam-policy-read-only.json
-aws iam attach-user-policy --user-name YOUR_USER --policy-arn arn:aws:iam::ACCOUNT:policy/AWSResourceInventoryReadOnly
+```
+config/
+├── README.md                           # This file
+├── defaults/                           # Default configuration examples
+│   ├── complete_configuration_example.yaml
+│   ├── service_descriptions_example.yaml
+│   ├── tag_mappings_example.yaml
+│   ├── tag_policy_example.json
+│   ├── tag_policy_example.yaml
+│   └── iam-policy-read-only.json
+└── schemas/                           # JSON schemas for validation
+    └── account-config.schema.json
 ```
 
-**Important:** Replace `YOUR-REPORTS-BUCKET-NAME` with your actual S3 bucket name if using S3 upload features.
+## 🚀 Quick Start
 
-### `tag_policy_example.yaml`
-**Example tag policy** in YAML format showing all supported features.
-
-**Usage:**
+1. **Copy default configurations:**
 ```bash
-# Copy and customize for your organization
-cp config/tag_policy_example.yaml my_tag_policy.yaml
-# Edit my_tag_policy.yaml with your requirements
-python scripts/tag_compliance_checker.py --config my_tag_policy.yaml
+# Basic BOM configuration
+cp config/defaults/complete_configuration_example.yaml config/my_config.yaml
+
+# Tag compliance policy
+cp config/defaults/tag_policy_example.yaml config/my_tag_policy.yaml
+
+# Multi-account setup
+cp examples/accounts_basic.json config/my_accounts.json
 ```
 
-### `tag_policy_example.json`
-**Same tag policy** in JSON format for organizations preferring JSON.
-
-### `service_descriptions_example.yaml`
-**Example service description configuration** showing how to customize resource descriptions and templates.
-
-**Usage:**
+2. **Use with InvenTag CLI:**
 ```bash
-# Copy and customize for your organization
-cp config/service_descriptions_example.yaml my_service_descriptions.yaml
-# Edit my_service_descriptions.yaml with your custom descriptions
-python scripts/aws_resource_inventory.py --service-descriptions my_service_descriptions.yaml
+# With custom configuration
+python -m inventag.cli.main --config config/my_config.yaml
+
+# With multi-account setup
+python -m inventag.cli.main --accounts-file config/my_accounts.json
 ```
 
-**Features:**
-- **Custom service descriptions**: Override default descriptions for AWS services
-- **Template system**: Dynamic description generation using resource attributes
-- **Fallback mechanisms**: Intelligent fallbacks when templates fail
-- **Service hierarchies**: Service-level and resource-type-level descriptions
-- **Metadata tracking**: Track configuration sources and update timestamps
+## 📋 Configuration Files
 
-## Tag Policy Features
+### 🔧 **Default Examples** (`defaults/`)
 
-Your tag policy can include:
+- **`complete_configuration_example.yaml`** - Comprehensive BOM generation settings
+- **`service_descriptions_example.yaml`** - Custom AWS service descriptions
+- **`tag_mappings_example.yaml`** - Tag transformation and normalization rules
+- **`tag_policy_example.json`** - Tag compliance policies (JSON format)
+- **`tag_policy_example.yaml`** - Tag compliance policies (YAML format)
+- **`iam-policy-read-only.json`** - Minimum required IAM permissions
 
-- **Simple required tags**: Keys that must exist with any value
-- **Allowed values**: Keys that must have specific values
-- **Required values**: Keys that must have one of the required values  
-- **Service-specific rules**: Different requirements per AWS service
-- **Exemptions**: Resources that don't need to follow the policy
+### 🔍 **Validation Schemas** (`schemas/`)
 
-## Customization Tips
+- **`account-config.schema.json`** - JSON schema for multi-account configuration validation
 
-1. **Start simple**: Begin with just a few required tags like "Environment", "Owner", "Project"
-2. **Add gradually**: Introduce more complex rules over time
-3. **Use exemptions**: Skip tagging for AWS-managed resources
-4. **Test first**: Run with `--verbose` to see what would be flagged
-5. **Iterate**: Refine your policy based on compliance reports
+## 🛡️ Security Configuration
+
+### IAM Permissions
+InvenTag requires minimal read-only access. Use the provided IAM policy:
+
+```bash
+# Review the policy
+cat config/defaults/iam-policy-read-only.json
+
+# Apply to your IAM user/role
+aws iam put-user-policy --user-name inventag-user \
+  --policy-name InvenTagReadOnly \
+  --policy-document file://config/defaults/iam-policy-read-only.json
+```
+
+### Multi-Account Authentication
+Supports multiple authentication methods:
+
+- **AWS CLI Profiles** - Recommended for local development
+- **Cross-Account Roles** - Recommended for production/CI-CD
+- **Access Keys** - For specific use cases (not recommended)
+
+## 📖 Configuration Examples
+
+See the [examples/](../examples/) directory for complete working configurations:
+
+- **Basic Setup**: `examples/accounts_basic.json`
+- **AWS Profiles**: `examples/accounts_with_profiles.json`
+- **Cross-Account Roles**: `examples/accounts_cross_account_roles.json`
+- **CI/CD Environment**: `examples/accounts_cicd_environment.json`
+
+## 🔗 Documentation Links
+
+- **[Configuration Examples Guide](../docs/user-guides/CONFIGURATION_EXAMPLES.md)** - Detailed setup instructions
+- **[CLI User Guide](../docs/user-guides/CLI_USER_GUIDE.md)** - Command-line usage
+- **[Production Safety Guide](../docs/user-guides/PRODUCTION_SAFETY.md)** - Security best practices

@@ -1,5 +1,10 @@
 
-setup-branch-protection.md
+# Build outputs and generated files
+build/
+*.xlsx
+*.docx
+*.csv
+temp_*.py
 
 .DS_Store
 
@@ -105,6 +110,7 @@ changelog_*.yaml
 changelog_section.md
 
 # BOM output files (generated)
+bom_output/
 bom_*.xlsx
 bom_*.json
 bom_*.csv

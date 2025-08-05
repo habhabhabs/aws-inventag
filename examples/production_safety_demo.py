@@ -8,7 +8,12 @@ and monitoring features for secure AWS operations with audit trail generation.
 
 import json
 import time
+import sys
+import os
 from datetime import datetime, timezone
+
+# Add the parent directory to the Python path to import inventag
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from inventag.compliance import (
     ComplianceManager,

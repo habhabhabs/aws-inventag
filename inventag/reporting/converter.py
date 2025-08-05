@@ -28,7 +28,10 @@ except ImportError:
 
 class BOMConverter:
     def __init__(
-        self, enrich_vpc_info: bool = True, enable_advanced_analysis: bool = False
+        self,
+        enrich_vpc_info: bool = True,
+        enable_advanced_analysis: bool = False,
+        session: Optional[boto3.Session] = None,
     ):
         """Initialize the BOM converter."""
         self.data = []
@@ -36,7 +39,7 @@ class BOMConverter:
         self.enrich_vpc_info = enrich_vpc_info
         self.enable_advanced_analysis = enable_advanced_analysis
         self.vpc_cache = {}  # Cache for VPC/subnet name lookups
-        self.session = boto3.Session() if enrich_vpc_info else None
+        self.session = session or (boto3.Session() if enrich_vpc_info else None)
 
         # Advanced analysis components
         self.network_analysis = {}
@@ -358,8 +361,8 @@ class BOMConverter:
         for item in flattened_data:
             all_headers.update(item.keys())
 
-        # Sort headers for consistent output
-        sorted_headers = sorted(all_headers)
+        # Apply logical column ordering instead of alphabetical
+        sorted_headers = self._get_logical_column_order(all_headers)
 
         # Write CSV
         with open(filename, "w", newline="", encoding="utf-8") as csvfile:
@@ -483,7 +486,8 @@ class BOMConverter:
             flattened = self._flatten_dict(resource)
             headers.update(flattened.keys())
 
-        sorted_headers = sorted(headers)
+        # Apply logical column ordering instead of alphabetical
+        sorted_headers = self._get_logical_column_order(headers)
 
         # Write headers
         for col, header in enumerate(sorted_headers, 1):
@@ -930,3 +934,220 @@ class BOMConverter:
                     pass
             adjusted_width = min(max_length + 2, 50)
             ws.column_dimensions[column_letter].width = adjusted_width
+
+    def _get_logical_column_order(self, headers: set) -> list:
+        """
+        Return headers in a logical, methodical order instead of alphabetical.
+        Order: Core Info -> Account Info -> Location -> Resource Details -> Analysis -> Tags
+        """
+        # Define the logical ordering categories
+        core_columns = ["service", "type", "id", "name", "arn"]
+
+        account_columns = [
+            "account_id",
+            "source_account_id",
+            "source_account_name",
+            "account_name",
+            "region",
+            "availability_zone",
+        ]
+
+        resource_details = [
+            "status",
+            "state",
+            "creation_date",
+            "created_time",
+            "launch_time",
+            "size",
+            "instance_type",
+            "storage_type",
+            "engine",
+            "engine_version",
+            "allocated_storage",
+            "storage_encrypted",
+            "multi_az",
+            "publicly_accessible",
+            "vpc_id",
+            "vpc_name",
+            "subnet_id",
+            "subnet_name",
+            "security_groups",
+            "security_group_ids",
+        ]
+
+        network_analysis = [
+            "vpc_cidr_block",
+            "vpc_total_ips",
+            "vpc_utilization_percentage",
+            "subnet_cidr_block",
+            "subnet_total_ips",
+            "subnet_utilization_percentage",
+            "subnet_is_public",
+            "subnet_availability_zone",
+        ]
+
+        security_analysis = [
+            "security_risk_level",
+            "security_groups",
+            "security_group_count",
+            "max_security_risk",
+            "inbound_rules_count",
+            "outbound_rules_count",
+            "associated_resources_count",
+            "has_permissive_rules",
+            "permissive_rules",
+        ]
+
+        cost_analysis = [
+            "estimated_monthly_cost",
+            "cost_breakdown",
+            "pricing_model",
+            "confidence_level",
+            "cost_optimization_opportunities",
+        ]
+
+        compliance_tracking = [
+            "compliance_status",
+            "compliance_score",
+            "discovery_timestamp",
+            "consolidation_timestamp",
+            "total_accounts_in_consolidation",
+            "processing_statistics",
+        ]
+
+        service_specific = [
+            # These will be detected by prefixes
+        ]
+
+        # Headers that should come last (tags and custom attributes)
+        tag_columns = []
+        custom_columns = []
+
+        # Categorize headers
+        ordered_headers = []
+        remaining_headers = set(headers)
+
+        # 1. Core columns (service, type, id, name, arn)
+        for col in core_columns:
+            if col in remaining_headers:
+                ordered_headers.append(col)
+                remaining_headers.remove(col)
+
+        # 2. Account and location columns
+        for col in account_columns:
+            if col in remaining_headers:
+                ordered_headers.append(col)
+                remaining_headers.remove(col)
+
+        # 3. Resource details
+        for col in resource_details:
+            if col in remaining_headers:
+                ordered_headers.append(col)
+                remaining_headers.remove(col)
+
+        # 4. Network analysis
+        for col in network_analysis:
+            if col in remaining_headers:
+                ordered_headers.append(col)
+                remaining_headers.remove(col)
+
+        # 5. Security analysis
+        for col in security_analysis:
+            if col in remaining_headers:
+                ordered_headers.append(col)
+                remaining_headers.remove(col)
+
+        # 6. Cost analysis
+        for col in cost_analysis:
+            if col in remaining_headers:
+                ordered_headers.append(col)
+                remaining_headers.remove(col)
+
+        # 7. Compliance tracking
+        for col in compliance_tracking:
+            if col in remaining_headers:
+                ordered_headers.append(col)
+                remaining_headers.remove(col)
+
+        # 8. Service-specific columns (columns starting with service_)
+        service_cols = [col for col in remaining_headers if col.startswith("service_")]
+        service_cols.sort()  # Alphabetical within service columns
+        ordered_headers.extend(service_cols)
+        remaining_headers -= set(service_cols)
+
+        # 9. Other analysis columns (network_, security_, cost_, etc.)
+        analysis_prefixes = ["network_", "security_", "cost_", "vpc_", "subnet_"]
+        analysis_cols = []
+        for col in remaining_headers:
+            if any(col.startswith(prefix) for prefix in analysis_prefixes):
+                analysis_cols.append(col)
+        analysis_cols.sort()
+        ordered_headers.extend(analysis_cols)
+        remaining_headers -= set(analysis_cols)
+
+        # 10. Tag columns (anything with 'tag' in the name or common tag patterns)
+        tag_patterns = ["tag", "tags", "Tag", "Tags"]
+        tag_cols = []
+        for col in remaining_headers:
+            if any(pattern in col for pattern in tag_patterns):
+                tag_cols.append(col)
+        tag_cols.sort()  # Alphabetical within tags
+        remaining_headers -= set(tag_cols)
+
+        # 11. Remaining columns (alphabetically sorted)
+        other_cols = sorted(list(remaining_headers))
+
+        # 12. Add tags at the very end
+        ordered_headers.extend(other_cols)
+        ordered_headers.extend(tag_cols)
+
+        return ordered_headers
+
+    def generate_excel_bom(self, bom_data, filename: str) -> str:
+        """Generate Excel BOM document with provided data."""
+        # Handle both BOMData objects and lists
+        if hasattr(bom_data, "resources"):
+            # It's a BOMData object
+            resources = bom_data.resources
+        elif isinstance(bom_data, list):
+            # It's a list of resources
+            resources = bom_data
+        else:
+            # Try to iterate over it
+            resources = list(bom_data)
+
+        # Load the data first
+        self.data = resources
+        self.headers = set()
+        for item in resources:
+            if isinstance(item, dict):
+                self.headers.update(item.keys())
+
+        self.export_to_excel(filename)
+        return filename
+
+    def generate_word_bom(self, bom_data, filename: str) -> str:
+        """Generate Word BOM document - currently generates Excel as Word support is not implemented."""
+        # For now, generate Excel as Word support is not implemented
+        excel_filename = filename.replace(".docx", ".xlsx").replace(".doc", ".xlsx")
+
+        # Handle both BOMData objects and lists
+        if hasattr(bom_data, "resources"):
+            # It's a BOMData object
+            resources = bom_data.resources
+        elif isinstance(bom_data, list):
+            # It's a list of resources
+            resources = bom_data
+        else:
+            # Try to iterate over it
+            resources = list(bom_data)
+
+        # Load the data first
+        self.data = resources
+        self.headers = set()
+        for item in resources:
+            if isinstance(item, dict):
+                self.headers.update(item.keys())
+
+        self.export_to_excel(excel_filename)
+        return excel_filename
