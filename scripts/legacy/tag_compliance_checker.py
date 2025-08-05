@@ -38,8 +38,8 @@ init(autoreset=True)
 try:
     from inventag.compliance import ComprehensiveTagComplianceChecker
 except ImportError:
-    # Fallback for development/testing
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+    # Fallback for development/testing - add project root to path
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
     from inventag.compliance import ComprehensiveTagComplianceChecker
 
 
