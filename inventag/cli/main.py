@@ -92,6 +92,24 @@ Examples:
         help="Generate Google Docs/Sheets BOM report (requires Google API credentials)",
     )
 
+    # Analysis options
+    analysis_group = parser.add_argument_group("Analysis Options")
+    analysis_group.add_argument(
+        "--enable-network-analysis",
+        action="store_true",
+        help="Enable network analysis for VPC, subnets, and network security",
+    )
+    analysis_group.add_argument(
+        "--enable-security-analysis",
+        action="store_true",
+        help="Enable security analysis for security groups, NACLs, and security posture",
+    )
+    analysis_group.add_argument(
+        "--enable-cost-analysis",
+        action="store_true",
+        help="Enable cost analysis and optimization recommendations",
+    )
+
     # S3 upload options for CI/CD
     s3_group = parser.add_argument_group("S3 Upload Options (CI/CD Integration)")
     s3_group.add_argument(
@@ -506,17 +524,21 @@ def create_multi_account_config(args) -> MultiAccountConfig:
             sys.exit(1)
 
     # Create BOM processing config
-    bom_config = BOMProcessingConfig()
+    bom_config = BOMProcessingConfig(
+        enable_network_analysis=getattr(args, 'enable_network_analysis', False),
+        enable_security_analysis=getattr(args, 'enable_security_analysis', False),
+        enable_cost_analysis=getattr(args, 'enable_cost_analysis', False),
+    )
 
     if args.service_descriptions:
         service_desc_config = load_configuration_file(
             args.service_descriptions, "service_descriptions"
         )
-        bom_config.service_descriptions = service_desc_config
+        bom_config.service_descriptions_config = args.service_descriptions
 
     if args.tag_mappings:
         tag_mappings_config = load_configuration_file(args.tag_mappings, "tag_mappings")
-        bom_config.tag_mappings = tag_mappings_config
+        bom_config.tag_mappings_config = args.tag_mappings
 
     if args.bom_config:
         bom_file_config = load_configuration_file(args.bom_config, "bom_config")
