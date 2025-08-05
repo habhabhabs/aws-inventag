@@ -14,6 +14,8 @@
 **InvenTag** is a comprehensive Python toolkit for AWS™ resource inventory management and tag compliance checking. Designed for enterprise environments, it automates the discovery, analysis, and reporting of AWS™ resources while ensuring adherence to organizational tagging policies.
 
 > **Disclaimer**: AWS™ is a trademark of Amazon Web Services, Inc. InvenTag is an independent tool and is not affiliated with, endorsed by, or sponsored by Amazon Web Services, Inc.
+>
+> [AWS Trademark Guidelines & License Terms](https://aws.amazon.com/trademark-guidelines/)
 
 ### ✨ Key Features
 
