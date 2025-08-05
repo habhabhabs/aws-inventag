@@ -1,3 +1,9 @@
+---
+title: Service Enrichment
+description: AWS service attribute enhancement and enrichment framework
+sidebar_position: 4
+---
+
 # Service Enrichment Framework
 
 ## Overview

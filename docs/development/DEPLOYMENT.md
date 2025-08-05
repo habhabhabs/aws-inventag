@@ -1,3 +1,9 @@
+---
+title: Deployment Guide
+description: Production deployment instructions for InvenTag
+sidebar_position: 2
+---
+
 # 🚀 Deployment Guide: GitLab CI/CD & GitHub Actions
 
 This guide shows how to deploy InvenTag in your own repository using GitLab CI/CD or GitHub Actions for automated AWS™ compliance monitoring.

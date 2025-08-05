@@ -1,3 +1,9 @@
+---
+title: Security Guide
+description: Security best practices and implementation details
+sidebar_position: 4
+---
+
 # Security Documentation
 
 ## 🔒 Read-Only Operation Guarantee

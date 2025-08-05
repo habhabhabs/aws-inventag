@@ -1,3 +1,9 @@
+---
+title: Template System Summary
+description: Advanced document customization and template system overview
+sidebar_position: 10
+---
+
 # Advanced Document Customization and Template System - Implementation Summary
 
 ## Overview

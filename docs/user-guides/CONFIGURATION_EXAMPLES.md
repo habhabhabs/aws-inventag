@@ -1,3 +1,9 @@
+---
+title: Configuration Examples
+description: Setup and configuration guidance for InvenTag
+sidebar_position: 2
+---
+
 # InvenTag Configuration Examples
 
 ## Overview

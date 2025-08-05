@@ -1,3 +1,9 @@
+---
+title: CI/CD Integration
+description: Pipeline integration examples and automation setup
+sidebar_position: 3
+---
+
 # InvenTag CI/CD Integration Guide
 
 ## Overview

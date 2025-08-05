@@ -1,3 +1,9 @@
+---
+title: CLI User Guide
+description: Comprehensive CLI reference and usage examples for InvenTag
+sidebar_position: 1
+---
+
 # InvenTag CLI User Guide
 
 ## Overview

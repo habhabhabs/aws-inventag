@@ -1,3 +1,9 @@
+---
+title: Tag Compliance
+description: Compliance checking framework and tag validation
+sidebar_position: 8
+---
+
 # InvenTag Tag Compliance Checker
 
 ## Overview

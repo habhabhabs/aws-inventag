@@ -1,3 +1,9 @@
+---
+title: Cost Analysis
+description: Cost estimation and optimization recommendations
+sidebar_position: 7
+---
+
 # Cost Analysis & Optimization
 
 The InvenTag Cost Analyzer provides comprehensive cost estimation, forgotten resource detection, and optimization recommendations for AWS resources using the AWS Pricing API and CloudWatch metrics.

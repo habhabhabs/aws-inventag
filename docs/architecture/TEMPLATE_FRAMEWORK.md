@@ -1,3 +1,9 @@
+---
+title: Template Framework
+description: Document generation system and template architecture
+sidebar_position: 3
+---
+
 # InvenTag Template Framework
 
 ## Overview

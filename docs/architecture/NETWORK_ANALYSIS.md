@@ -1,3 +1,9 @@
+---
+title: Network Analysis
+description: VPC and network analysis capabilities
+sidebar_position: 6
+---
+
 # Network Analysis & Capacity Planning
 
 InvenTag's NetworkAnalyzer provides comprehensive VPC and subnet analysis for network visibility, capacity planning, and optimization recommendations. This module extracts and enhances the VPC enrichment functionality from the original BOM converter into a dedicated, powerful network analysis framework.

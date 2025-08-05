@@ -1,3 +1,9 @@
+---
+title: State Management
+description: Change tracking and delta detection system
+sidebar_position: 2
+---
+
 # 🔄 InvenTag State Management
 
 InvenTag's state management system provides comprehensive tracking of AWS resource inventory changes over time, enabling organizations to maintain audit trails, detect infrastructure drift, and generate professional change reports.

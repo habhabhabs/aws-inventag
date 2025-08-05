@@ -1,3 +1,9 @@
+---
+title: Troubleshooting Guide
+description: Common issues and solutions for InvenTag
+sidebar_position: 4
+---
+
 # InvenTag Troubleshooting Guide
 
 ## Overview

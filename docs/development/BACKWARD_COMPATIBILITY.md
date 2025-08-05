@@ -1,3 +1,9 @@
+---
+title: Backward Compatibility
+description: Version compatibility matrix and migration information
+sidebar_position: 5
+---
+
 # InvenTag Backward Compatibility Confirmation
 
 ## ✅ COMPREHENSIVE BACKWARD COMPATIBILITY VERIFIED

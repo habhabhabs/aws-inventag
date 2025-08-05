@@ -1,3 +1,9 @@
+---
+title: Contributing Guide
+description: Development setup and guidelines for contributing to InvenTag
+sidebar_position: 1
+---
+
 # Contributing to InvenTag
 
 Thank you for your interest in contributing to **InvenTag**! This document provides guidelines and information for contributors.

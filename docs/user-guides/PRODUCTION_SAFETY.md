@@ -1,3 +1,9 @@
+---
+title: Production Safety Guide
+description: Security, compliance, and safety features for production environments
+sidebar_position: 3
+---
+
 # InvenTag Production Safety & Security Validation
 
 This document provides comprehensive information about InvenTag's enterprise-grade production safety and security validation features.

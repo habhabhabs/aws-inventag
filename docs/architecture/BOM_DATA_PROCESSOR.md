@@ -1,3 +1,9 @@
+---
+title: BOM Data Processor
+description: Data processing pipeline and BOM generation architecture
+sidebar_position: 5
+---
+
 # 📊 InvenTag BOM Data Processor
 
 The BOM Data Processor is InvenTag's central orchestrator for processing raw inventory data and coordinating with specialized analyzers to produce enriched, analysis-ready datasets. It serves as the unified processing pipeline that transforms raw AWS resource data into comprehensive Bill of Materials (BOM) reports with deep analysis and insights.

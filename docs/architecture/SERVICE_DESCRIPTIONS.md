@@ -1,3 +1,9 @@
+---
+title: Service Descriptions
+description: Service description management and customization framework
+sidebar_position: 9
+---
+
 # Service Description Management Framework
 
 The Service Description Management Framework provides intelligent, customizable descriptions for AWS resources with template-based dynamic generation and comprehensive configuration support.

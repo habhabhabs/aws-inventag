@@ -1,3 +1,9 @@
+---
+title: Core Module Integration
+description: System architecture overview and core module integration
+sidebar_position: 1
+---
+
 # InvenTag Core Module Integration
 
 ## Overview

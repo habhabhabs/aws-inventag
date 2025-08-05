@@ -1,3 +1,9 @@
+---
+title: Migration Guide
+description: Upgrade and migration procedures for InvenTag
+sidebar_position: 6
+---
+
 # BOM Generation Migration Guide
 
 This guide helps existing InvenTag users migrate to the new enhanced BOM generation capabilities while maintaining backward compatibility.
