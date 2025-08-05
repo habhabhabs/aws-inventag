@@ -1,0 +1,29 @@
+{
+  "name": "inventag-aws",
+  "version": "1.0.0",
+  "description": "Professional AWS Cloud Governance Platform",
+  "scripts": {
+    "docs:start": "cd website && npm start",
+    "docs:build": "cd website && npm run build",
+    "docs:serve": "cd website && npm run serve",
+    "docs:clear": "cd website && npm run clear",
+    "docs:install": "cd website && npm install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/habhabhabs/inventag-aws.git"
+  },
+  "keywords": [
+    "aws",
+    "cloud-governance",
+    "inventory",
+    "tagging",
+    "compliance"
+  ],
+  "author": "InvenTag Team",
+  "license": "MIT",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
