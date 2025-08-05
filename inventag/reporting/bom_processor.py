@@ -674,9 +674,15 @@ class BOMDataProcessor:
         try:
             self.logger.info("Generating network analysis summary")
             # First analyze VPC resources, then generate summary
-            vpc_resources = [r for r in resources if r.get("service") == "VPC" and r.get("type") in ["VPC", "Subnet"]]
+            vpc_resources = [
+                r
+                for r in resources
+                if r.get("service") == "VPC" and r.get("type") in ["VPC", "Subnet"]
+            ]
             if vpc_resources:
-                vpc_analysis = self.network_analyzer.analyze_vpc_resources(vpc_resources)
+                vpc_analysis = self.network_analyzer.analyze_vpc_resources(
+                    vpc_resources
+                )
                 return self.network_analyzer.generate_network_summary(vpc_analysis)
             return {}
         except Exception as e:
@@ -694,9 +700,15 @@ class BOMDataProcessor:
         try:
             self.logger.info("Generating security analysis summary")
             # First analyze security groups, then generate summary
-            sg_resources = [r for r in resources if r.get("service") == "VPC" and r.get("type") == "SecurityGroup"]
+            sg_resources = [
+                r
+                for r in resources
+                if r.get("service") == "VPC" and r.get("type") == "SecurityGroup"
+            ]
             if sg_resources:
-                sg_analysis = self.security_analyzer.analyze_security_groups(sg_resources)
+                sg_analysis = self.security_analyzer.analyze_security_groups(
+                    sg_resources
+                )
                 return self.security_analyzer.generate_security_summary(sg_analysis)
             return {}
         except Exception as e:

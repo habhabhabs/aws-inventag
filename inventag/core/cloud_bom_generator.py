@@ -258,22 +258,23 @@ class CloudBOMGenerator:
     ) -> Dict[str, Any]:
         """
         Alias for generate_multi_account_bom for backward compatibility.
-        
+
         Args:
             output_formats: List of output formats (word, excel, csv, json)
             s3_upload_config: S3 upload configuration (currently not implemented)
             compliance_policies: Tag compliance policies to apply
-        
+
         Returns:
             Dictionary containing generation results and metadata
         """
         # Note: s3_upload_config is ignored for now - S3 upload should be handled separately
         if s3_upload_config:
-            self.logger.warning("S3 upload configuration passed but not implemented in this method")
-        
+            self.logger.warning(
+                "S3 upload configuration passed but not implemented in this method"
+            )
+
         return self.generate_multi_account_bom(
-            output_formats=output_formats,
-            compliance_policies=compliance_policies
+            output_formats=output_formats, compliance_policies=compliance_policies
         )
 
     def _establish_account_contexts(self) -> Dict[str, AccountContext]:
@@ -845,13 +846,15 @@ class CloudBOMGenerator:
             )
 
             # Save current state
-            all_regions = list(set(
-                region 
-                for ctx in self.account_contexts.values() 
-                for region in ctx.accessible_regions
-            ))
+            all_regions = list(
+                set(
+                    region
+                    for ctx in self.account_contexts.values()
+                    for region in ctx.accessible_regions
+                )
+            )
             primary_account = next(iter(self.account_contexts.keys()), "multi-account")
-            
+
             state_id = state_manager.save_state(
                 resources=resources,
                 account_id=primary_account,
@@ -906,9 +909,9 @@ class CloudBOMGenerator:
                                 delta_results,
                                 title="Multi-Account Infrastructure Changes",
                             )
-                            
+
                             # Write changelog to file
-                            with open(changelog_file, 'w') as f:
+                            with open(changelog_file, "w") as f:
                                 f.write(changelog.to_markdown())
 
                             results["changelog_generated"] = True

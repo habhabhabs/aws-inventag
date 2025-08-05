@@ -696,9 +696,15 @@ def main():
             processing_stats = results.get("processing_statistics", {})
             if processing_stats:
                 logger.info(f"Processing summary:")
-                logger.info(f"  - Total accounts: {processing_stats.get('total_accounts', 0)}")
-                logger.info(f"  - Total resources: {processing_stats.get('total_resources', 0)}")
-                logger.info(f"  - Processing time: {processing_stats.get('processing_time_seconds', 0):.2f}s")
+                logger.info(
+                    f"  - Total accounts: {processing_stats.get('total_accounts', 0)}"
+                )
+                logger.info(
+                    f"  - Total resources: {processing_stats.get('total_resources', 0)}"
+                )
+                logger.info(
+                    f"  - Processing time: {processing_stats.get('processing_time_seconds', 0):.2f}s"
+                )
 
         else:
             logger.error("✗ BOM generation failed")
@@ -711,7 +717,9 @@ def main():
                 logger.error("Account-specific errors:")
                 for account_id, ctx in account_contexts.items():
                     if ctx.get("error_count", 0) > 0:
-                        logger.error(f"  - {account_id}: {ctx.get('error_count', 0)} errors")
+                        logger.error(
+                            f"  - {account_id}: {ctx.get('error_count', 0)} errors"
+                        )
 
             sys.exit(1)
 

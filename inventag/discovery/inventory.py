@@ -17,11 +17,11 @@ from botocore.exceptions import ClientError, NoCredentialsError
 
 class AWSResourceInventory:
     def __init__(
-        self, 
+        self,
         regions: Optional[List[str]] = None,
         session: Optional[boto3.Session] = None,
         services: Optional[List[str]] = None,
-        tag_filters: Optional[Dict[str, Any]] = None
+        tag_filters: Optional[Dict[str, Any]] = None,
     ):
         """Initialize the AWS Resource Inventory tool."""
         self.session = session or boto3.Session()
