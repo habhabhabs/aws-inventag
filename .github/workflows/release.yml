@@ -283,37 +283,6 @@ jobs:
             f.write(release_notes)
         "
 
-    - name: Update version file
-      run: |
-        # Update version.json with comprehensive release notes
-        python -c "
-        import json
-        from datetime import datetime
-        
-        # Read the generated release notes
-        with open('version_release_notes.txt', 'r') as f:
-            release_notes = f.read()
-        
-        # Update version.json
-        with open('version.json', 'r') as f:
-            data = json.load(f)
-        
-        # Update version and release notes
-        data['version'] = '${{ steps.version.outputs.new_version }}'
-        data['release_notes'] = release_notes
-        data['release_date'] = datetime.now().isoformat()
-        data['previous_version'] = '${{ steps.version.outputs.current_version }}'
-        data['version_bump_type'] = '${{ needs.check-for-release.outputs.version_bump }}'
-        
-        # Add PR information if available
-        if '${{ needs.check-for-release.outputs.pr_number }}':
-            data['triggered_by_pr'] = '${{ needs.check-for-release.outputs.pr_number }}'
-        
-        with open('version.json', 'w') as f:
-            json.dump(data, f, indent=2)
-        
-        print('Updated version.json with comprehensive release information')
-        "
 
     - name: Generate release notes
       id: release_notes
@@ -435,80 +404,13 @@ jobs:
         echo "Release notes generated:"
         cat release_notes.md
 
-    - name: Check if version bump is needed
-      id: check_version_bump
+    - name: Prepare release information
       run: |
-        # Check if version.json needs to be updated
-        git add version.json
-        if git diff --staged --quiet; then
-          echo "No version changes to commit"
-          echo "needs_version_bump=false" >> $GITHUB_OUTPUT
-        else
-          echo "Version file has changes"
-          echo "needs_version_bump=true" >> $GITHUB_OUTPUT
-        fi
-        git reset HEAD version.json  # Unstage for now
-
-    - name: Create version bump PR for protected branch
-      if: steps.check_version_bump.outputs.needs_version_bump == 'true'
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        # Create a separate branch for version bump
-        BRANCH_NAME="release/version-bump-${{ steps.version.outputs.new_version }}"
-        git checkout -b "$BRANCH_NAME"
-        
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        
-        # Commit the version bump
-        git add version.json
-        git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}
-
-        Automated version bump for release ${{ steps.version.outputs.new_version }}
-        
-        - Previous version: ${{ steps.version.outputs.current_version }}
-        - Version bump type: ${{ needs.check-for-release.outputs.version_bump }}
-        - Triggered by: ${{ github.event_name }}
-        ${{ needs.check-for-release.outputs.pr_number != '' && format('- Source PR: #{0}', needs.check-for-release.outputs.pr_number) || '' }}
-
-        🤖 Generated with [Claude Code](https://claude.ai/code)
-
-        Co-Authored-By: Claude <noreply@anthropic.com>"
-        
-        # Push the version bump branch
-        git push origin "$BRANCH_NAME"
-        
-        # Create a PR for the version bump (will be auto-merged if possible)
-        gh pr create \
-          --title "chore: bump version to ${{ steps.version.outputs.new_version }}" \
-          --body "$(cat <<'EOFPR'
-        ## Automated Version Bump
-
-        This PR contains the automated version bump for release ${{ steps.version.outputs.new_version }}.
-
-        ### Changes
-        - **Version**: ${{ steps.version.outputs.current_version }} → ${{ steps.version.outputs.new_version }}
-        - **Bump Type**: ${{ needs.check-for-release.outputs.version_bump }}
-        - **Release Notes**: Updated with comprehensive changelog
-
-        ### Metadata
-        - **Triggered by**: ${{ github.event_name }}
-        ${{ needs.check-for-release.outputs.pr_number != '' && format('- **Source PR**: #{0}', needs.check-for-release.outputs.pr_number) || '' }}
-        - **Release Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-
-        This PR should be merged automatically to complete the release process.
-
-        🤖 Generated with [Claude Code](https://claude.ai/code)
-        EOFPR
-        )" \
-          --head "$BRANCH_NAME" \
-          --base main
-        
-        echo "Created version bump PR for protected branch"
-        
-        # Switch back to main for release creation
-        git checkout main
+        # Just save the version info - no need to commit anything to protected branch
+        echo "Version info saved for release creation"
+        echo "New version: ${{ steps.version.outputs.new_version }}"
+        echo "Previous version: ${{ steps.version.outputs.current_version }}"
+        echo "Release notes available in version_release_notes.txt"
 
     - name: Create Git Tag
       run: |
@@ -555,7 +457,8 @@ jobs:
       run: |
         echo "🚀 Successfully created release ${{ steps.version.outputs.new_version }}"
         echo "📦 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag_name }}"
-        echo "📋 Version bumped from ${{ steps.version.outputs.current_version }} to ${{ steps.version.outputs.new_version }} (${{ needs.check-for-release.outputs.version_bump }} release)"
+        echo "📋 Release created for version ${{ steps.version.outputs.new_version }} (${{ needs.check-for-release.outputs.version_bump }} release)"
+        echo "✅ No version bump commits needed - release created directly from current HEAD"
 
   test-release:
     name: Test Release
