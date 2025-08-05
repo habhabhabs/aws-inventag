@@ -14,8 +14,8 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 
-# Add the parent directory to the path so we can import inventag
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add the project root to the path so we can import inventag
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from inventag.core.cloud_bom_generator import CloudBOMGenerator, MultiAccountConfig
 from inventag.core.credential_manager import CredentialManager

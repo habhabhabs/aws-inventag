@@ -123,16 +123,20 @@ jobs:
         cat changed_files.txt
         
         # Check if critical files are modified
-        if grep -q "scripts/bom_converter.py" changed_files.txt; then
+        if grep -q "scripts/legacy/bom_converter.py" changed_files.txt; then
           echo "🔧 Core BOM converter modified - ensure thorough testing"
         fi
         
-        if grep -q "scripts/tag_compliance_checker.py" changed_files.txt; then
+        if grep -q "scripts/legacy/tag_compliance_checker.py" changed_files.txt; then
           echo "🏷️ Tag compliance checker modified - validate policy logic"
         fi
         
-        if grep -q "scripts/cicd_bom_generation.py" changed_files.txt; then
+        if grep -q "scripts/development/cicd_bom_generation.py" changed_files.txt; then
           echo "🚀 CI/CD integration modified - test multi-account workflows"
+        fi
+        
+        if grep -q "scripts/production/" changed_files.txt; then
+          echo "🛡️ Production scripts modified - validate security and monitoring features"
         fi
         
         if grep -q "inventag/" changed_files.txt; then

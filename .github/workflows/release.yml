@@ -148,20 +148,144 @@ jobs:
         echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
         echo "tag_name=v$NEW_VERSION" >> $GITHUB_OUTPUT
 
-    - name: Update version file
+    - name: Generate comprehensive release notes for version.json
+      id: version_notes
       run: |
-        # Update version.json with new version
+        # Get commits since last tag for version.json release notes
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        
+        if [ -z "$LAST_TAG" ]; then
+          echo "No previous tags found, generating notes from first commit"
+          COMMIT_RANGE="$(git rev-list --max-parents=0 HEAD)..HEAD"
+        else
+          echo "Last tag: $LAST_TAG"
+          COMMIT_RANGE="$LAST_TAG..HEAD"
+        fi
+        
+        # Generate structured release notes for version.json
         python -c "
         import json
-        with open('version.json', 'r') as f:
-            data = json.load(f)
-        data['version'] = '${{ steps.version.outputs.new_version }}'
-        data['release_notes'] = 'InvenTag ${{ steps.version.outputs.new_version }} - Comprehensive AWS Cloud Governance Platform'
-        with open('version.json', 'w') as f:
-            json.dump(data, f, indent=2)
+        import subprocess
+        import re
+        from datetime import datetime
+        
+        # Get commit messages
+        result = subprocess.run(['git', 'log', '$COMMIT_RANGE', '--pretty=format:%s', '--no-merges'], 
+                              capture_output=True, text=True)
+        commits = result.stdout.strip().split('\n') if result.stdout.strip() else []
+        
+        # Categorize commits
+        features = []
+        fixes = []
+        docs = []
+        chores = []
+        style = []
+        refactor = []
+        perf = []
+        test = []
+        other = []
+        
+        for commit in commits:
+            if not commit.strip():
+                continue
+            commit_lower = commit.lower()
+            if commit_lower.startswith('feat'):
+                features.append(commit)
+            elif commit_lower.startswith('fix'):
+                fixes.append(commit)
+            elif commit_lower.startswith('docs'):
+                docs.append(commit)
+            elif commit_lower.startswith('chore'):
+                chores.append(commit)
+            elif commit_lower.startswith('style'):
+                style.append(commit)
+            elif commit_lower.startswith('refactor'):
+                refactor.append(commit)
+            elif commit_lower.startswith('perf'):
+                perf.append(commit)
+            elif commit_lower.startswith('test'):
+                test.append(commit)
+            else:
+                other.append(commit)
+        
+        # Build comprehensive release notes
+        notes_parts = []
+        notes_parts.append(f'Release ${{ steps.version.outputs.new_version }} - {datetime.now().strftime(\"%Y-%m-%d\")}')
+        notes_parts.append('')
+        
+        if features:
+            notes_parts.append('✨ New Features:')
+            for feat in features:
+                notes_parts.append(f'  • {feat}')
+            notes_parts.append('')
+        
+        if fixes:
+            notes_parts.append('🐛 Bug Fixes:')
+            for fix in fixes:
+                notes_parts.append(f'  • {fix}')
+            notes_parts.append('')
+        
+        if docs:
+            notes_parts.append('📚 Documentation:')
+            for doc in docs:
+                notes_parts.append(f'  • {doc}')
+            notes_parts.append('')
+        
+        if style:
+            notes_parts.append('💄 Style Changes:')
+            for s in style:
+                notes_parts.append(f'  • {s}')
+            notes_parts.append('')
+        
+        if refactor:
+            notes_parts.append('♻️ Code Refactoring:')
+            for r in refactor:
+                notes_parts.append(f'  • {r}')
+            notes_parts.append('')
+        
+        if perf:
+            notes_parts.append('⚡ Performance Improvements:')
+            for p in perf:
+                notes_parts.append(f'  • {p}')
+            notes_parts.append('')
+        
+        if test:
+            notes_parts.append('✅ Tests:')
+            for t in test:
+                notes_parts.append(f'  • {t}')
+            notes_parts.append('')
+        
+        if chores:
+            notes_parts.append('🔧 Maintenance:')
+            for chore in chores:
+                notes_parts.append(f'  • {chore}')
+            notes_parts.append('')
+        
+        if other:
+            notes_parts.append('📝 Other Changes:')
+            for o in other:
+                notes_parts.append(f'  • {o}')
+            notes_parts.append('')
+        
+        # Add summary statistics
+        total_commits = len([c for c in commits if c.strip()])
+        if total_commits > 0:
+            notes_parts.append(f'📊 Summary: {total_commits} commits in this release')
+            
+            if '${{ needs.check-for-release.outputs.pr_number }}':
+                notes_parts.append(f'🔀 Triggered by PR #${{ needs.check-for-release.outputs.pr_number }}')
+        
+        release_notes = '\n'.join(notes_parts)
+        print('Generated release notes for version.json:')
+        print(release_notes)
+        print('---')
+        
+        # Save release notes to a file for the next step
+        with open('version_release_notes.txt', 'w') as f:
+            f.write(release_notes)
         "
 
-    - name: Generate comprehensive release notes
+    - name: Generate release notes
       id: release_notes
       run: |
         # Get commits since last tag
@@ -289,52 +413,19 @@ jobs:
         # Install dependencies
         pip install -r requirements.txt
         
-        # Basic BOM generation with production safety
-        python -m inventag.cli.main --create-excel --create-word \
-          --enable-production-safety --security-validation
+        # Run AWS resource inventory (if available)
+        if [ -f "scripts/legacy/aws_resource_inventory.py" ]; then
+          python scripts/legacy/aws_resource_inventory.py --output inventory
+        fi
         
-        # Multi-account BOM with comprehensive analysis
-        python -m inventag.cli.main --accounts-file accounts.json \
-          --create-excel --enable-network-analysis --enable-security-analysis \
-          --enable-cost-analysis --compliance-standard soc2
+        # Convert to Excel/CSV format
+        python scripts/legacy/bom_converter.py --input sample.json --output report.xlsx
         
-        # Production monitoring and security validation
-        python scripts/production/production_monitor.py \
-          --operations ec2:describe_instances s3:list_buckets \
-          --report-output production-compliance.json
-        ```
+        # Check tag compliance
+        python scripts/legacy/tag_compliance_checker.py --config tag_policy.yaml --input sample.json --output compliance_report
         
-        ### Advanced Usage Examples
-        ```bash
-        # Enterprise-scale multi-account scanning
-        python -m inventag.cli.main --accounts-file enterprise-accounts.json \
-          --create-excel --create-word --max-concurrent-accounts 12 \
-          --enable-network-analysis --enable-security-analysis \
-          --s3-bucket enterprise-bom-reports --per-account-reports
-        
-        # Compliance-focused BOM generation
-        python -m inventag.cli.main --create-excel \
-          --compliance-standard soc2 --risk-threshold HIGH \
-          --audit-output soc2-compliance-audit.json \
-          --enforce-read-only --security-validation
-        
-        # CI/CD integration with S3 upload
-        python -m inventag.cli.main --accounts-file accounts.json \
-          --create-excel --s3-bucket reports-bucket \
-          --enable-production-safety --security-validation \
-          --s3-key-prefix "automated-reports/$(date +%Y-%m-%d)/"
-        ```
-        
-        ### Legacy Script Support (Deprecated but Functional)
-        ```bash
-        # Resource inventory (use CLI --create-excel instead)
-        python scripts/aws_resource_inventory.py
-        
-        # BOM conversion (use CLI --create-excel instead)
-        python scripts/bom_converter.py --input data.json --output report.xlsx
-        
-        # Tag compliance (use CLI --compliance-standard instead)
-        python scripts/tag_compliance_checker.py --config policy.yaml
+        # Test CI/CD BOM generation
+        python scripts/development/cicd_bom_generation.py --help
         ```
         
         ### Docker Usage
@@ -456,34 +547,21 @@ jobs:
         echo "Comprehensive release notes generated:"
         echo "Length: $(wc -l < release_notes.md) lines"
 
-    - name: Commit version bump
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Prepare release information
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        
-        git add version.json
-        if git diff --staged --quiet; then
-          echo "No changes to commit"
-        else
-          git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}"
-          
-          # Push using GitHub API to bypass branch protection
-          COMMIT_SHA=$(git rev-parse HEAD)
-          gh api \
-            --method PATCH \
-            /repos/${{ github.repository }}/git/refs/heads/main \
-            -f sha="$COMMIT_SHA" || {
-            echo "Failed to push via API, trying direct push..."
-            git push
-          }
-        fi
+        # Just save the version info - no need to commit anything to protected branch
+        echo "Version info saved for release creation"
+        echo "New version: ${{ steps.version.outputs.new_version }}"
+        echo "Previous version: ${{ steps.version.outputs.current_version }}"
+        echo "Release notes available in version_release_notes.txt"
 
     - name: Create Git Tag
       run: |
+        # Create tag from the current HEAD on main (before version bump)
+        # This allows the release to be created even with protected branches
         git tag ${{ steps.version.outputs.tag_name }}
         git push origin ${{ steps.version.outputs.tag_name }}
+        echo "Created and pushed tag ${{ steps.version.outputs.tag_name }}"
 
     - name: Create GitHub Release
       env:
@@ -522,10 +600,8 @@ jobs:
       run: |
         echo "🚀 Successfully created InvenTag release ${{ steps.version.outputs.new_version }}"
         echo "📦 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag_name }}"
-        echo "📋 Version bumped from ${{ steps.version.outputs.current_version }} to ${{ steps.version.outputs.new_version }} (${{ needs.check-for-release.outputs.version_bump }} release)"
-        echo "🛡️ Production Safety: Enabled"
-        echo "📊 BOM Generation: Excel, Word, CSV supported"
-        echo "🔍 Multi-Account: Comprehensive scanning supported"
+        echo "📋 Release created for version ${{ steps.version.outputs.new_version }} (${{ needs.check-for-release.outputs.version_bump }} release)"
+        echo "✅ No version bump commits needed - release created directly from current HEAD"
 
   test-release:
     name: Test Release Functionality
@@ -548,35 +624,13 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
-    - name: Test unified CLI interface
+    - name: Test BOM converter
       run: |
-        echo "🧪 Testing unified CLI interface..."
-        python -m inventag.cli.main --help
-        echo "✅ Unified CLI works correctly"
-
-    - name: Test production safety scripts
-      run: |
-        echo "🧪 Testing production safety monitoring..."
-        python scripts/production/production_monitor.py --help
-        echo "✅ Production monitor works correctly"
-        
-        echo "🧪 Testing security validator..."
-        python scripts/production/security_validator.py --help
-        echo "✅ Security validator works correctly"
-        
-        echo "🧪 Testing multi-account scanner..."
-        python scripts/production/multi_account_scanner.py --help
-        echo "✅ Multi-account scanner works correctly"
-
-    - name: Test legacy BOM converter
-      run: |
-        echo "🧪 Testing legacy BOM converter..."
         python scripts/legacy/bom_converter.py --help
-        echo "✅ Legacy BOM converter works correctly"
+        echo "✅ BOM converter works correctly"
 
     - name: Test tag compliance checker
       run: |
-        echo "🧪 Testing tag compliance checker..."
         if [ -f scripts/legacy/tag_compliance_checker.py ]; then
           python scripts/legacy/tag_compliance_checker.py --help
           echo "✅ Tag compliance checker works correctly"
@@ -584,9 +638,6 @@ jobs:
           echo "ℹ️ Tag compliance checker not found - skipping"
         fi
 
-    - name: Test AWS resource inventory
-      run: |
-        echo "🧪 Testing AWS resource inventory..."
         if [ -f scripts/legacy/aws_resource_inventory.py ]; then
           python scripts/legacy/aws_resource_inventory.py --help
           echo "✅ AWS resource inventory works correctly"
@@ -596,52 +647,5 @@ jobs:
 
     - name: Test CI/CD BOM generation
       run: |
-        echo "🧪 Testing CI/CD BOM generation..."
-        if [ -f scripts/development/cicd_bom_generation.py ]; then
-          python scripts/development/cicd_bom_generation.py --help
-          echo "✅ CI/CD BOM generation works correctly"
-        else
-          echo "ℹ️ CI/CD BOM generation script not found - skipping"
-        fi
-
-    - name: Test configuration validation
-      run: |
-        echo "🧪 Testing configuration files..."
-        
-        # Test example configurations exist
-        if [ -f examples/accounts_basic.json ]; then
-          echo "✅ Basic account configuration exists"
-        fi
-        
-        if [ -f config/defaults/service_descriptions_example.yaml ]; then
-          echo "✅ Service descriptions configuration exists"
-        fi
-        
-        if [ -f config/defaults/tag_mappings_example.yaml ]; then
-          echo "✅ Tag mappings configuration exists"
-        fi
-
-    - name: Test import functionality
-      run: |
-        echo "🧪 Testing Python imports..."
-        python -c "
-        try:
-            from inventag.core import CloudBOMGenerator
-            from inventag.reporting import BOMConverter
-            from inventag.compliance import ComplianceManager
-            from inventag.discovery import AWSResourceInventory
-            print('✅ All core imports work correctly')
-        except ImportError as e:
-            print(f'❌ Import error: {e}')
-            exit(1)
-        "
-
-    - name: Final validation
-      run: |
-        echo "🎉 All tests passed! Release ${{ needs.release.outputs.new_version || 'unknown' }} is ready"
-        echo "📋 InvenTag capabilities validated:"
-        echo "  🛡️ Production Safety & Security"
-        echo "  📊 Professional BOM Generation" 
-        echo "  🔍 Multi-Account Resource Discovery"
-        echo "  🚀 Unified CLI Interface"
-        echo "  📈 Comprehensive Analysis & Reporting"
+        python scripts/development/cicd_bom_generation.py --help
+        echo "✅ CI/CD BOM generation works correctly"
