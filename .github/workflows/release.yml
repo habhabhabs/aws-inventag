@@ -252,18 +252,18 @@ jobs:
         pip install -r requirements.txt
         
         # Run AWS resource inventory (if available)
-        if [ -f "scripts/aws_resource_inventory.py" ]; then
-          python scripts/aws_resource_inventory.py --output inventory
+        if [ -f "scripts/legacy/aws_resource_inventory.py" ]; then
+          python scripts/legacy/aws_resource_inventory.py --output inventory
         fi
         
         # Convert to Excel/CSV format
-        python scripts/bom_converter.py --input sample.json --output report.xlsx
+        python scripts/legacy/bom_converter.py --input sample.json --output report.xlsx
         
         # Check tag compliance
-        python scripts/tag_compliance_checker.py --config tag_policy.yaml --input sample.json --output compliance_report
+        python scripts/legacy/tag_compliance_checker.py --config tag_policy.yaml --input sample.json --output compliance_report
         
         # Test CI/CD BOM generation
-        python scripts/cicd_bom_generation.py --help
+        python scripts/development/cicd_bom_generation.py --help
         ```
         
         ### Docker Usage
@@ -369,20 +369,20 @@ jobs:
 
     - name: Test BOM converter
       run: |
-        python scripts/bom_converter.py --help
+        python scripts/legacy/bom_converter.py --help
         echo "✅ BOM converter works correctly"
 
     - name: Test tag compliance checker
       run: |
-        if [ -f scripts/tag_compliance_checker.py ]; then
-          python scripts/tag_compliance_checker.py --help
+        if [ -f scripts/legacy/tag_compliance_checker.py ]; then
+          python scripts/legacy/tag_compliance_checker.py --help
           echo "✅ Tag compliance checker works correctly"
         fi
 
     - name: Test AWS resource inventory
       run: |
-        if [ -f scripts/aws_resource_inventory.py ]; then
-          python scripts/aws_resource_inventory.py --help
+        if [ -f scripts/legacy/aws_resource_inventory.py ]; then
+          python scripts/legacy/aws_resource_inventory.py --help
           echo "✅ AWS resource inventory works correctly"
         else
           echo "ℹ️ AWS resource inventory script not found - skipping"
@@ -390,5 +390,5 @@ jobs:
 
     - name: Test CI/CD BOM generation
       run: |
-        python scripts/cicd_bom_generation.py --help
+        python scripts/development/cicd_bom_generation.py --help
         echo "✅ CI/CD BOM generation works correctly"
