@@ -14,6 +14,9 @@ The InvenTag CLI provides a comprehensive command-line interface for AWS cloud g
 - **📝 Comprehensive Logging**: Account-specific logging with debug capabilities and file output
 - **✅ Validation Framework**: Built-in validation for credentials, configurations, and CLI arguments
 - **🔄 State Management**: Integrated state tracking, delta detection, and change analysis with professional changelog generation
+- **🛡️ Production Safety**: Enterprise-grade security validation and compliance standards
+- **🌐 Advanced Analysis**: Network security analysis, cost optimization, and security posture assessment
+- **🔐 Security Features**: Read-only enforcement, audit logging, and risk assessment capabilities
 
 ### CLI Architecture
 
@@ -28,13 +31,25 @@ The CLI is built on three core components:
 The InvenTag CLI is included with the InvenTag package. Run it using:
 
 ```bash
-python -m inventag.cli.main [options]
+# On Unix/Linux/macOS
+./inventag.sh [options]
+
+# On Windows
+inventag.bat [options]
+
+# Or directly with Python
+python inventag_cli.py [options]
 ```
 
-Or create an alias for convenience:
+For convenience, you can add the script to your PATH or create an alias:
 
 ```bash
-alias inventag="python -m inventag.cli.main"
+# Unix/Linux/macOS
+alias inventag="./inventag.sh"
+inventag [options]
+
+# Windows
+doskey inventag=inventag.bat $*
 inventag [options]
 ```
 
@@ -46,14 +61,103 @@ Generate a BOM for your default AWS account:
 
 ```bash
 # Generate Excel BOM using default AWS credentials
-python -m inventag.cli.main --create-excel
+./inventag.sh --create-excel
 
 # Generate both Word and Excel BOM with verbose logging
-python -m inventag.cli.main --create-word --create-excel --verbose
+./inventag.sh --create-word --create-excel --verbose
 
 # Generate BOM with custom output directory
-python -m inventag.cli.main --create-excel --output-directory my-bom-reports
+./inventag.sh --create-excel --output-directory my-bom-reports
 ```
+
+### Multi-Region Configuration
+
+#### Region Selection Examples
+
+**Default Behavior:** If no regions are specified in account configuration or CLI arguments, InvenTag scans all available AWS regions for comprehensive coverage.
+
+```bash
+# Scan specific regions across all accounts
+./inventag.sh --create-excel \
+  --account-regions us-east-1,us-west-2,ap-southeast-1,ap-north-1
+
+# Asia-Pacific regions only
+./inventag.sh --create-excel \
+  --account-regions ap-southeast-1,ap-southeast-2,ap-north-1,ap-south-1
+
+# US regions with comprehensive analysis
+./inventag.sh --create-excel \
+  --account-regions us-east-1,us-east-2,us-west-1,us-west-2 \
+  --enable-network-analysis --enable-security-analysis
+
+# European regions with GDPR compliance
+./inventag.sh --create-excel \
+  --account-regions eu-west-1,eu-west-2,eu-central-1 \
+  --compliance-standard gdpr
+
+# Global multi-region scan (default behavior - all regions)
+./inventag.sh --create-excel --verbose
+
+# Mixed regional strategy with cost optimization
+./inventag.sh --create-excel \
+  --account-regions us-east-1,ap-southeast-1,eu-west-1 \
+  --enable-cost-analysis --enable-network-analysis
+```
+
+#### Region Configuration in Account Files
+
+```json
+{
+  "accounts": [
+    {
+      "account_id": "123456789012",
+      "account_name": "Global Production",
+      "profile_name": "prod-profile",
+      "regions": ["us-east-1", "us-west-2", "ap-southeast-1", "eu-west-1"]
+    },
+    {
+      "account_id": "123456789013", 
+      "account_name": "APAC Development",
+      "profile_name": "dev-profile",
+      "regions": ["ap-southeast-1", "ap-north-1", "ap-south-1"]
+    },
+    {
+      "account_id": "123456789014",
+      "account_name": "All Regions Account",
+      "profile_name": "global-profile",
+      "regions": []
+    }
+  ]
+}
+```
+
+#### Common AWS Regions Reference
+
+**US Regions:**
+- `us-east-1` (N. Virginia)
+- `us-east-2` (Ohio)
+- `us-west-1` (N. California)
+- `us-west-2` (Oregon)
+
+**Asia Pacific:**
+- `ap-southeast-1` (Singapore)
+- `ap-southeast-2` (Sydney)
+- `ap-north-1` (Mumbai)
+- `ap-south-1` (Mumbai)
+- `ap-northeast-1` (Tokyo)
+- `ap-northeast-2` (Seoul)
+
+**Europe:**
+- `eu-west-1` (Ireland)
+- `eu-west-2` (London)
+- `eu-central-1` (Frankfurt)
+- `eu-north-1` (Stockholm)
+
+**Other Regions:**
+- `ca-central-1` (Canada Central)
+- `sa-east-1` (São Paulo)
+- `af-south-1` (Cape Town)
+- `me-south-1` (Bahrain)
 
 ### Multi-Account BOM Generation
 
@@ -63,40 +167,52 @@ Create an accounts configuration file (JSON or YAML):
 
 ```bash
 # Generate BOM for multiple accounts from configuration file
-python -m inventag.cli.main --accounts-file accounts.json --create-excel --create-word
+./inventag.sh --accounts-file accounts.json --create-excel --create-word
 
 # With S3 upload for CI/CD integration
-python -m inventag.cli.main --accounts-file accounts.yaml --create-excel --s3-bucket my-reports-bucket
+./inventag.sh --accounts-file accounts.yaml --create-excel --s3-bucket my-reports-bucket
+
+# With comprehensive analysis and security validation
+./inventag.sh --accounts-file accounts.json --create-excel \
+  --enable-network-analysis --enable-security-analysis \
+  --enable-cost-analysis --compliance-standard soc2
 ```
 
 #### Interactive Account Setup
 
 ```bash
 # Interactively configure multiple accounts
-python -m inventag.cli.main --accounts-prompt --create-excel --verbose
+./inventag.sh --accounts-prompt --create-excel --verbose
+
+# Interactive setup with Google Docs output
+./inventag.sh --accounts-prompt --create-google-docs --create-excel
 ```
 
 #### Cross-Account Role Assumption
 
 ```bash
 # Use cross-account role for multi-account scanning
-python -m inventag.cli.main --cross-account-role InvenTagRole --create-excel
+./inventag.sh --cross-account-role InvenTagRole --create-excel
+
+# Cross-account with production safety and audit logging
+./inventag.sh --cross-account-role InvenTagRole --create-excel \
+  --enable-production-safety --audit-output security-audit.json
 ```
 
 ### State Management and Change Tracking
 
 ```bash
 # Enable state tracking for change detection
-python -m inventag.cli.main --accounts-file accounts.json --create-excel \
-  --enable-state-tracking --state-dir inventory_states
+./inventag.sh --accounts-file accounts.json --create-excel \
+  --enable-state-management --output-directory inventory_states
 
 # Generate changelog from state changes
-python -m inventag.cli.main --accounts-file accounts.json --create-excel \
-  --enable-state-tracking --generate-changelog --changelog-format markdown
+./inventag.sh --accounts-file accounts.json --create-excel \
+  --enable-state-management --generate-changelog
 
 # State management with custom retention
-python -m inventag.cli.main --create-excel --enable-state-tracking \
-  --state-retention-days 90 --max-state-snapshots 50
+./inventag.sh --create-excel --enable-state-management \
+  --enable-delta-detection --generate-changelog
 ```
 
 ## Command Line Options
@@ -115,6 +231,15 @@ python -m inventag.cli.main --create-excel --enable-state-tracking \
 |--------|-------------|---------|
 | `--create-word` | Generate professional Word document BOM | `--create-word` |
 | `--create-excel` | Generate professional Excel workbook BOM | `--create-excel` |
+| `--create-google-docs` | Generate Google Docs/Sheets BOM | `--create-google-docs` |
+
+### Analysis Options
+
+| Option | Description | Example |
+|--------|-------------|---------|
+| `--enable-network-analysis` | Enable network analysis for VPC, subnets, and network security | `--enable-network-analysis` |
+| `--enable-security-analysis` | Enable security analysis for security groups, NACLs, and security posture | `--enable-security-analysis` |
+| `--enable-cost-analysis` | Enable cost analysis and optimization recommendations | `--enable-cost-analysis` |
 
 ### State Management Options
 
@@ -126,8 +251,6 @@ python -m inventag.cli.main --create-excel --enable-state-tracking \
 | `--changelog-format` | Changelog format (markdown, html, json) | `--changelog-format markdown` |
 | `--state-retention-days` | Days to retain state snapshots | `--state-retention-days 90` |
 | `--max-state-snapshots` | Maximum number of state snapshots to keep | `--max-state-snapshots 50` |
-| `--create-excel` | Generate comprehensive Excel workbook BOM | `--create-excel` |
-| `--create-google-docs` | Generate Google Docs/Sheets BOM | `--create-google-docs` |
 
 ### S3 Upload Options (CI/CD Integration)
 
@@ -140,11 +263,11 @@ python -m inventag.cli.main --create-excel --enable-state-tracking \
 
 ### Account-Specific Configuration Overrides
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| `--account-regions` | Comma-separated list of AWS regions | `--account-regions us-east-1,us-west-2` |
-| `--account-services` | Comma-separated list of AWS services | `--account-services EC2,S3,RDS` |
-| `--account-tags` | JSON string of tag filters | `--account-tags '{"Environment":"prod"}'` |
+| Option | Description | Default | Example |
+|--------|-------------|---------|---------|
+| `--account-regions` | Comma-separated list of AWS regions to scan (overrides account-specific settings) | All available regions | `--account-regions us-east-1,us-west-2,ap-southeast-1,ap-north-1` |
+| `--account-services` | Comma-separated list of AWS services to include (empty means all services) | All services | `--account-services EC2,S3,RDS,Lambda` |
+| `--account-tags` | JSON string of tag filters to apply across all accounts | None | `--account-tags '{"Environment":"prod","Team":"platform"}'` |
 
 ### Parallel Processing Options
 
@@ -190,6 +313,19 @@ python -m inventag.cli.main --create-excel --enable-state-tracking \
 |--------|-------------|---------|---------|
 | `--validate-credentials` | Validate credentials and exit | False | `--validate-credentials` |
 | `--credential-timeout` | Credential validation timeout (seconds) | 30 | `--credential-timeout 60` |
+
+### Production Safety and Security Options
+
+| Option | Description | Default | Example |
+|--------|-------------|---------|---------|
+| `--enable-production-safety` | Enable production safety monitoring and validation | True | `--enable-production-safety` |
+| `--disable-production-safety` | Disable production safety monitoring (not recommended for production use) | False | `--disable-production-safety` |
+| `--enforce-read-only` | Enforce read-only operations only for security | True | `--enforce-read-only` |
+| `--security-validation` | Enable security validation for all AWS operations | True | `--security-validation` |
+| `--compliance-standard` | Compliance standard to enforce (general, soc2, pci, hipaa, gdpr) | general | `--compliance-standard soc2` |
+| `--risk-threshold` | Risk threshold for operation blocking (LOW, MEDIUM, HIGH, CRITICAL) | MEDIUM | `--risk-threshold HIGH` |
+| `--audit-output` | Path to security audit report output file | None | `--audit-output security-audit.json` |
+| `--validate-operations` | Validate specific AWS operations (format: service:operation) | None | `--validate-operations ec2:describe_instances s3:list_buckets` |
 
 ## Configuration Files
 
@@ -307,33 +443,38 @@ Define custom tag attribute mappings:
 
 ```bash
 # Quick BOM generation for development
-python -m inventag.cli.main --create-excel --verbose
+./inventag.sh --create-excel --verbose
 
 # With custom service descriptions
-python -m inventag.cli.main --create-excel --service-descriptions my-services.yaml --verbose
+./inventag.sh --create-excel --service-descriptions my-services.yaml --verbose
 
 # Debug mode with detailed logging
-python -m inventag.cli.main --create-excel --debug --log-file debug.log
+./inventag.sh --create-excel --debug --log-file debug.log
 ```
 
 ### Production Environment
 
 ```bash
-# Multi-account production BOM with S3 upload
-python -m inventag.cli.main \
+# Multi-account production BOM with S3 upload and comprehensive analysis
+./inventag.sh \
   --accounts-file prod-accounts.json \
   --create-excel --create-word \
+  --enable-network-analysis --enable-security-analysis \
+  --enable-cost-analysis \
   --s3-bucket company-compliance-reports \
   --s3-key-prefix bom-reports/$(date +%Y-%m-%d)/ \
+  --compliance-standard soc2 \
   --verbose
 
-# With state management and change tracking
-python -m inventag.cli.main \
+# With state management, change tracking, and security validation
+./inventag.sh \
   --accounts-file accounts.json \
   --create-excel \
   --enable-state-management \
   --enable-delta-detection \
   --generate-changelog \
+  --security-validation \
+  --audit-output security-audit.json \
   --verbose
 ```
 
@@ -341,7 +482,7 @@ python -m inventag.cli.main \
 
 ```bash
 # Automated BOM generation in CI/CD pipeline
-python -m inventag.cli.main \
+./inventag.sh \
   --accounts-file $ACCOUNTS_CONFIG \
   --create-excel \
   --s3-bucket $REPORTS_BUCKET \
@@ -355,13 +496,13 @@ python -m inventag.cli.main \
 
 ```bash
 # Validate all account credentials before processing
-python -m inventag.cli.main \
+./inventag.sh \
   --accounts-file accounts.json \
   --validate-credentials \
   --verbose
 
 # Validate configuration files
-python -m inventag.cli.main \
+./inventag.sh \
   --accounts-file accounts.json \
   --service-descriptions services.yaml \
   --tag-mappings tags.yaml \
@@ -374,29 +515,27 @@ The CLI integrates tag compliance checking with BOM generation for comprehensive
 
 ```bash
 # Generate BOM with integrated compliance checking
-python -m inventag.cli.main \
+./inventag.sh \
   --create-excel --create-word \
-  --tag-mappings config/tag_policy.yaml \
-  --service-descriptions config/service_descriptions.yaml \
-  --enable-compliance-analysis \
+  --tag-mappings examples/tag-mappings-example.yaml \
+  --service-descriptions examples/service-descriptions-example.yaml \
   --output-directory compliance_reports
 
-# Multi-account compliance BOM generation
-python -m inventag.cli.main \
-  --accounts-file accounts.json \
+# Multi-account compliance BOM generation with analysis
+./inventag.sh \
+  --accounts-file examples/accounts-example.json \
   --create-excel \
-  --tag-mappings config/tag_policy.yaml \
-  --enable-compliance-analysis \
+  --enable-network-analysis --enable-security-analysis \
+  --tag-mappings examples/tag-mappings-example.yaml \
   --s3-bucket compliance-reports \
   --s3-key-prefix daily-compliance/$(date +%Y-%m-%d)/
 
-# Compliance-focused reporting with thresholds
-python -m inventag.cli.main \
+# Comprehensive analysis with cost optimization
+./inventag.sh \
   --create-excel \
-  --tag-mappings config/tag_policy.yaml \
-  --enable-compliance-analysis \
-  --compliance-threshold 80 \
-  --fail-on-low-compliance \
+  --enable-network-analysis --enable-security-analysis --enable-cost-analysis \
+  --tag-mappings examples/tag-mappings-example.yaml \
+  --compliance-standard soc2 \
   --verbose
 ```
 
@@ -414,25 +553,25 @@ python -m inventag.cli.main \
 1. **Invalid Credentials**
    ```bash
    # Validate credentials first
-   python -m inventag.cli.main --accounts-file accounts.json --validate-credentials
+   ./inventag.sh --accounts-file accounts.json --validate-credentials
    ```
 
 2. **Configuration File Errors**
    ```bash
    # Validate configuration
-   python -m inventag.cli.main --accounts-file accounts.json --validate-config
+   ./inventag.sh --accounts-file accounts.json --validate-config
    ```
 
 3. **AWS API Rate Limiting**
    ```bash
    # Reduce concurrent processing
-   python -m inventag.cli.main --max-concurrent-accounts 2 --account-processing-timeout 3600
+   ./inventag.sh --max-concurrent-accounts 2 --account-processing-timeout 3600
    ```
 
 4. **Large Account Processing**
    ```bash
    # Increase timeout and enable detailed logging
-   python -m inventag.cli.main --account-processing-timeout 7200 --debug --log-file debug.log
+   ./inventag.sh --account-processing-timeout 7200 --debug --log-file debug.log
    ```
 
 ### Debug Mode
@@ -440,7 +579,7 @@ python -m inventag.cli.main \
 Enable debug mode for detailed troubleshooting:
 
 ```bash
-python -m inventag.cli.main --debug --log-file inventag-debug.log --create-excel
+./inventag.sh --debug --log-file inventag-debug.log --create-excel
 ```
 
 This will provide:
@@ -510,10 +649,10 @@ The unified CLI interface replaces the legacy script-based approach. Here's how 
 
 | Legacy Script | New CLI Command | Notes |
 |---------------|-----------------|-------|
-| `python scripts/aws_resource_inventory.py --export-excel` | `python -m inventag.cli.main --create-excel` | Unified interface with multi-account support |
-| `python scripts/tag_compliance_checker.py --config tags.yaml` | `python -m inventag.cli.main --create-excel --tag-mappings tags.yaml --enable-compliance-analysis` | Integrated compliance checking with BOM generation |
-| `python scripts/bom_converter.py --input data.json --output report.xlsx` | `python -m inventag.cli.main --create-excel` | Direct Excel generation |
-| `python scripts/cicd_bom_generation.py --accounts-file accounts.json` | `python -m inventag.cli.main --accounts-file accounts.json --create-excel` | Enhanced CI/CD integration |
+| `python scripts/aws_resource_inventory.py --export-excel` | `./inventag.sh --create-excel` | Unified interface with multi-account support |
+| `python scripts/tag_compliance_checker.py --config tags.yaml` | `./inventag.sh --create-excel --tag-mappings tags.yaml` | Integrated compliance checking with BOM generation |
+| `python scripts/bom_converter.py --input data.json --output report.xlsx` | `./inventag.sh --create-excel` | Direct Excel generation |
+| `python scripts/cicd_bom_generation.py --accounts-file accounts.json` | `./inventag.sh --accounts-file accounts.json --create-excel` | Enhanced CI/CD integration |
 
 ### Key Advantages of the Unified CLI
 
