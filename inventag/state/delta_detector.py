@@ -198,55 +198,6 @@ class DeltaDetector:
         """
         logger.info(f"Detecting changes between states {state1_id} and {state2_id}")
 
-    def detect_changes_by_state_id(
-        self, 
-        state_manager, 
-        previous_state_id: str, 
-        current_state_id: str
-    ) -> DeltaReport:
-        """
-        Detect changes between two states using state IDs.
-        
-        Args:
-            state_manager: StateManager instance to load states
-            previous_state_id: ID of the previous state
-            current_state_id: ID of the current state
-            
-        Returns:
-            DeltaReport with comprehensive change analysis
-        """
-        # Load the states
-        previous_state = state_manager.load_state(previous_state_id)
-        current_state = state_manager.load_state(current_state_id)
-        
-        if not previous_state or not current_state:
-            logger.warning(f"Could not load states {previous_state_id} or {current_state_id}")
-            # Return empty delta report
-            return DeltaReport(
-                state1_id=previous_state_id,
-                state2_id=current_state_id,
-                comparison_timestamp=datetime.now(timezone.utc).isoformat(),
-                changes_detected=False,
-                change_summary=ChangeSummary(),
-                added_resources=[],
-                removed_resources=[],
-                modified_resources=[],
-                unchanged_resources=[],
-                change_impact={},
-                recommendations=[]
-            )
-        
-        # Extract resources and call the main detect_changes method
-        old_resources = previous_state.resources
-        new_resources = current_state.resources
-        
-        return self.detect_changes(
-            old_resources=old_resources,
-            new_resources=new_resources,
-            state1_id=previous_state_id,
-            state2_id=current_state_id
-        )
-
         # Create resource lookup maps by ARN
         old_resources_map = self._create_resource_map(old_resources)
         new_resources_map = self._create_resource_map(new_resources)
@@ -274,25 +225,16 @@ class DeltaDetector:
 
         # Analyze network changes
         network_changes = self._analyze_network_changes(
-            added_resources + removed_resources + modified_resources
+            added_resources, removed_resources, modified_resources
         )
 
         # Perform impact analysis
         impact_analysis = self._analyze_change_impact(
-            added_resources + removed_resources + modified_resources,
-            old_resources_map,
-            new_resources_map,
+            added_resources, removed_resources, modified_resources
         )
 
-        # Generate statistics
-        change_statistics = self._generate_change_statistics(
-            added_resources, removed_resources, modified_resources, unchanged_resources
-        )
-
-        # Create summary
-        summary = {
-            "total_resources_old": len(old_resources),
-            "total_resources_new": len(new_resources),
+        # Calculate change statistics
+        change_statistics = {
             "added_count": len(added_resources),
             "removed_count": len(removed_resources),
             "modified_count": len(modified_resources),
@@ -306,7 +248,7 @@ class DeltaDetector:
             state1_id=state1_id,
             state2_id=state2_id,
             timestamp=datetime.now(timezone.utc).isoformat(),
-            summary=summary,
+            summary=change_statistics,
             added_resources=added_resources,
             removed_resources=removed_resources,
             modified_resources=modified_resources,
@@ -344,8 +286,9 @@ class DeltaDetector:
             return DeltaReport(
                 state1_id=previous_state_id,
                 state2_id=current_state_id,
-                timestamp=datetime.now(timezone.utc).isoformat(),
-                summary={
+                comparison_timestamp=datetime.now(timezone.utc).isoformat(),
+                changes_detected=False,
+                change_summary={
                     "total_changes": 0,
                     "added": 0,
                     "removed": 0,
@@ -356,11 +299,8 @@ class DeltaDetector:
                 removed_resources=[],
                 modified_resources=[],
                 unchanged_resources=[],
-                compliance_changes={},
-                security_changes={},
-                network_changes={},
-                impact_analysis={},
-                change_statistics={},
+                change_impact={},
+                recommendations=[],
             )
 
         # Extract resources and call the main detect_changes method
