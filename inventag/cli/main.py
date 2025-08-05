@@ -525,9 +525,9 @@ def create_multi_account_config(args) -> MultiAccountConfig:
 
     # Create BOM processing config
     bom_config = BOMProcessingConfig(
-        enable_network_analysis=getattr(args, 'enable_network_analysis', False),
-        enable_security_analysis=getattr(args, 'enable_security_analysis', False),
-        enable_cost_analysis=getattr(args, 'enable_cost_analysis', False),
+        enable_network_analysis=getattr(args, "enable_network_analysis", False),
+        enable_security_analysis=getattr(args, "enable_security_analysis", False),
+        enable_cost_analysis=getattr(args, "enable_cost_analysis", False),
     )
 
     if args.service_descriptions:
