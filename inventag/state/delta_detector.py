@@ -198,6 +198,55 @@ class DeltaDetector:
         """
         logger.info(f"Detecting changes between states {state1_id} and {state2_id}")
 
+    def detect_changes_by_state_id(
+        self, 
+        state_manager, 
+        previous_state_id: str, 
+        current_state_id: str
+    ) -> DeltaReport:
+        """
+        Detect changes between two states using state IDs.
+        
+        Args:
+            state_manager: StateManager instance to load states
+            previous_state_id: ID of the previous state
+            current_state_id: ID of the current state
+            
+        Returns:
+            DeltaReport with comprehensive change analysis
+        """
+        # Load the states
+        previous_state = state_manager.load_state(previous_state_id)
+        current_state = state_manager.load_state(current_state_id)
+        
+        if not previous_state or not current_state:
+            logger.warning(f"Could not load states {previous_state_id} or {current_state_id}")
+            # Return empty delta report
+            return DeltaReport(
+                state1_id=previous_state_id,
+                state2_id=current_state_id,
+                comparison_timestamp=datetime.now(timezone.utc).isoformat(),
+                changes_detected=False,
+                change_summary=ChangeSummary(),
+                added_resources=[],
+                removed_resources=[],
+                modified_resources=[],
+                unchanged_resources=[],
+                change_impact={},
+                recommendations=[]
+            )
+        
+        # Extract resources and call the main detect_changes method
+        old_resources = previous_state.resources
+        new_resources = current_state.resources
+        
+        return self.detect_changes(
+            old_resources=old_resources,
+            new_resources=new_resources,
+            state1_id=previous_state_id,
+            state2_id=current_state_id
+        )
+
         # Create resource lookup maps by ARN
         old_resources_map = self._create_resource_map(old_resources)
         new_resources_map = self._create_resource_map(new_resources)

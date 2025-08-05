@@ -105,6 +105,7 @@ changelog_*.yaml
 changelog_section.md
 
 # BOM output files (generated)
+bom_output/
 bom_*.xlsx
 bom_*.json
 bom_*.csv

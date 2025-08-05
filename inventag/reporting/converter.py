@@ -28,7 +28,10 @@ except ImportError:
 
 class BOMConverter:
     def __init__(
-        self, enrich_vpc_info: bool = True, enable_advanced_analysis: bool = False
+        self, 
+        enrich_vpc_info: bool = True, 
+        enable_advanced_analysis: bool = False,
+        session: Optional[boto3.Session] = None
     ):
         """Initialize the BOM converter."""
         self.data = []
@@ -36,7 +39,7 @@ class BOMConverter:
         self.enrich_vpc_info = enrich_vpc_info
         self.enable_advanced_analysis = enable_advanced_analysis
         self.vpc_cache = {}  # Cache for VPC/subnet name lookups
-        self.session = boto3.Session() if enrich_vpc_info else None
+        self.session = session or (boto3.Session() if enrich_vpc_info else None)
 
         # Advanced analysis components
         self.network_analysis = {}
@@ -930,3 +933,52 @@ class BOMConverter:
                     pass
             adjusted_width = min(max_length + 2, 50)
             ws.column_dimensions[column_letter].width = adjusted_width
+
+    def generate_excel_bom(self, bom_data, filename: str) -> str:
+        """Generate Excel BOM document with provided data."""
+        # Handle both BOMData objects and lists
+        if hasattr(bom_data, 'resources'):
+            # It's a BOMData object
+            resources = bom_data.resources
+        elif isinstance(bom_data, list):
+            # It's a list of resources
+            resources = bom_data
+        else:
+            # Try to iterate over it
+            resources = list(bom_data)
+        
+        # Load the data first
+        self.data = resources
+        self.headers = set()
+        for item in resources:
+            if isinstance(item, dict):
+                self.headers.update(item.keys())
+        
+        self.export_to_excel(filename)
+        return filename
+
+    def generate_word_bom(self, bom_data, filename: str) -> str:
+        """Generate Word BOM document - currently generates Excel as Word support is not implemented."""
+        # For now, generate Excel as Word support is not implemented
+        excel_filename = filename.replace('.docx', '.xlsx').replace('.doc', '.xlsx')
+        
+        # Handle both BOMData objects and lists
+        if hasattr(bom_data, 'resources'):
+            # It's a BOMData object
+            resources = bom_data.resources
+        elif isinstance(bom_data, list):
+            # It's a list of resources
+            resources = bom_data
+        else:
+            # Try to iterate over it
+            resources = list(bom_data)
+        
+        # Load the data first
+        self.data = resources
+        self.headers = set()
+        for item in resources:
+            if isinstance(item, dict):
+                self.headers.update(item.keys())
+        
+        self.export_to_excel(excel_filename)
+        return excel_filename

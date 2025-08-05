@@ -16,12 +16,20 @@ from botocore.exceptions import ClientError, NoCredentialsError
 
 
 class AWSResourceInventory:
-    def __init__(self, regions: Optional[List[str]] = None):
+    def __init__(
+        self, 
+        regions: Optional[List[str]] = None,
+        session: Optional[boto3.Session] = None,
+        services: Optional[List[str]] = None,
+        tag_filters: Optional[Dict[str, Any]] = None
+    ):
         """Initialize the AWS Resource Inventory tool."""
-        self.session = boto3.Session()
+        self.session = session or boto3.Session()
         self.resources = []
         self.logger = self._setup_logging()
         self.regions = regions or self._get_available_regions()
+        self.services = services  # Specific services to scan, None means all
+        self.tag_filters = tag_filters or {}  # Tag filters to apply
 
     def _setup_logging(self) -> logging.Logger:
         """Set up logging configuration with fallback handling."""
@@ -587,3 +595,7 @@ class AWSResourceInventory:
         except ClientError as e:
             self.logger.error(f"Failed to upload to S3: {e}")
             raise
+
+    def discover_all_resources(self) -> List[Dict[str, Any]]:
+        """Alias for discover_resources() for backward compatibility."""
+        return self.discover_resources()

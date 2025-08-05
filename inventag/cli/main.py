@@ -629,39 +629,40 @@ def main():
         # Report results
         logger.info(f"BOM generation completed in {processing_time:.2f} seconds")
 
-        if results.success:
+        if results.get("success", False):
             logger.info("✓ BOM generation successful")
-            logger.info(f"Generated documents: {len(results.generated_files)}")
+            bom_results = results.get("bom_generation", {})
+            generated_files = bom_results.get("generated_files", [])
+            logger.info(f"Generated documents: {len(generated_files)}")
 
-            for file_path in results.generated_files:
+            for file_path in generated_files:
                 logger.info(f"  - {file_path}")
 
-            if results.s3_uploads:
-                logger.info(f"S3 uploads: {len(results.s3_uploads)}")
-                for s3_key in results.s3_uploads:
+            s3_uploads = bom_results.get("s3_uploads", [])
+            if s3_uploads:
+                logger.info(f"S3 uploads: {len(s3_uploads)}")
+                for s3_key in s3_uploads:
                     logger.info(f"  - s3://{args.s3_bucket}/{s3_key}")
 
-            if results.processing_summary:
-                summary = results.processing_summary
+            processing_stats = results.get("processing_statistics", {})
+            if processing_stats:
                 logger.info(f"Processing summary:")
-                logger.info(f"  - Total accounts: {summary.get('total_accounts', 0)}")
-                logger.info(f"  - Total resources: {summary.get('total_resources', 0)}")
-                logger.info(
-                    f"  - Compliant resources: {summary.get('compliant_resources', 0)}"
-                )
-                logger.info(
-                    f"  - Compliance percentage: {summary.get('compliance_percentage', 0):.1f}%"
-                )
+                logger.info(f"  - Total accounts: {processing_stats.get('total_accounts', 0)}")
+                logger.info(f"  - Total resources: {processing_stats.get('total_resources', 0)}")
+                logger.info(f"  - Processing time: {processing_stats.get('processing_time_seconds', 0):.2f}s")
 
         else:
             logger.error("✗ BOM generation failed")
-            if results.error_message:
-                logger.error(f"Error: {results.error_message}")
+            error_message = results.get("error")
+            if error_message:
+                logger.error(f"Error: {error_message}")
 
-            if results.account_errors:
+            account_contexts = results.get("account_contexts", {})
+            if any(ctx.get("error_count", 0) > 0 for ctx in account_contexts.values()):
                 logger.error("Account-specific errors:")
-                for account_id, error in results.account_errors.items():
-                    logger.error(f"  - {account_id}: {error}")
+                for account_id, ctx in account_contexts.items():
+                    if ctx.get("error_count", 0) > 0:
+                        logger.error(f"  - {account_id}: {ctx.get('error_count', 0)} errors")
 
             sys.exit(1)
 
