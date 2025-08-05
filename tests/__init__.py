@@ -1,1 +1,1 @@
-# Test package for InvenTag AWS
+# InvenTag Test Suite
