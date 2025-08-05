@@ -99,6 +99,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-for-release
     if: needs.check-for-release.outputs.should_release == 'true'
+    outputs:
+      new_version: ${{ steps.version.outputs.new_version }}
     
     steps:
     - name: Checkout code
@@ -297,7 +299,7 @@ jobs:
           --enable-cost-analysis --compliance-standard soc2
         
         # Production monitoring and security validation
-        python scripts/production_monitor.py \
+        python scripts/production/production_monitor.py \
           --operations ec2:describe_instances s3:list_buckets \
           --report-output production-compliance.json
         ```
@@ -353,9 +355,9 @@ jobs:
         - `examples/accounts_cicd_environment.json` - CI/CD optimized setup
         
         ### Service & Analysis Configuration
-        - `config/service_descriptions_example.yaml` - Custom service descriptions
-        - `config/tag_mappings_example.yaml` - Tag attribute mappings
-        - `config/complete_configuration_example.yaml` - Comprehensive BOM config
+        - `config/defaults/service_descriptions_example.yaml` - Custom service descriptions
+        - `config/defaults/tag_mappings_example.yaml` - Tag attribute mappings
+        - `config/defaults/complete_configuration_example.yaml` - Comprehensive BOM config
         
         ## 🛡️ Production Safety Features
         
@@ -410,11 +412,11 @@ jobs:
         ## 📚 Documentation
         
         ### Complete Documentation Available
-        - **[CLI User Guide](docs/CLI_USER_GUIDE.md)** - Comprehensive CLI reference
-        - **[Production Safety Guide](docs/PRODUCTION_SAFETY.md)** - Security and compliance
-        - **[Configuration Examples](docs/CONFIGURATION_EXAMPLES.md)** - Setup guidance
-        - **[Troubleshooting Guide](docs/TROUBLESHOOTING_GUIDE.md)** - Common issues
-        - **[Complete CLI Usage](CLI_USAGE_ENHANCED.md)** - All commands and examples
+        - **[CLI User Guide](docs/user-guides/CLI_USER_GUIDE.md)** - Comprehensive CLI reference
+        - **[Production Safety Guide](docs/user-guides/PRODUCTION_SAFETY.md)** - Security and compliance
+        - **[Configuration Examples](docs/user-guides/CONFIGURATION_EXAMPLES.md)** - Setup guidance
+        - **[Troubleshooting Guide](docs/user-guides/TROUBLESHOOTING_GUIDE.md)** - Common issues
+        - **[Complete CLI Usage](docs/user-guides/CLI_USER_GUIDE.md)** - All commands and examples
         
         ## 🏢 Enterprise Support
         
@@ -439,7 +441,7 @@ jobs:
         - **🚀 Quick Start Guide**: [Getting Started](https://github.com/${{ github.repository }}#quick-start)
         - **💼 Enterprise Examples**: [Configuration Templates](https://github.com/${{ github.repository }}/tree/main/examples)
         - **🛠️ Troubleshooting**: [Common Issues](https://github.com/${{ github.repository }}/tree/main/docs)
-        - **📋 CLI Reference**: [Complete Command Guide](https://github.com/${{ github.repository }}/blob/main/CLI_USAGE_ENHANCED.md)
+        - **📋 CLI Reference**: [Complete Command Guide](https://github.com/${{ github.repository }}/blob/main/docs/user-guides/CLI_USER_GUIDE.md)
         
         ## 📈 Full Changelog
         **Full Changelog**: https://github.com/${{ github.repository }}/compare/$LAST_TAG...${{ steps.version.outputs.tag_name }}
@@ -555,28 +557,28 @@ jobs:
     - name: Test production safety scripts
       run: |
         echo "🧪 Testing production safety monitoring..."
-        python scripts/production_monitor.py --help
+        python scripts/production/production_monitor.py --help
         echo "✅ Production monitor works correctly"
         
         echo "🧪 Testing security validator..."
-        python scripts/security_validator.py --help
+        python scripts/production/security_validator.py --help
         echo "✅ Security validator works correctly"
         
         echo "🧪 Testing multi-account scanner..."
-        python scripts/multi_account_scanner.py --help
+        python scripts/production/multi_account_scanner.py --help
         echo "✅ Multi-account scanner works correctly"
 
     - name: Test legacy BOM converter
       run: |
         echo "🧪 Testing legacy BOM converter..."
-        python scripts/bom_converter.py --help
+        python scripts/legacy/bom_converter.py --help
         echo "✅ Legacy BOM converter works correctly"
 
     - name: Test tag compliance checker
       run: |
         echo "🧪 Testing tag compliance checker..."
-        if [ -f scripts/tag_compliance_checker.py ]; then
-          python scripts/tag_compliance_checker.py --help
+        if [ -f scripts/legacy/tag_compliance_checker.py ]; then
+          python scripts/legacy/tag_compliance_checker.py --help
           echo "✅ Tag compliance checker works correctly"
         else
           echo "ℹ️ Tag compliance checker not found - skipping"
@@ -585,8 +587,8 @@ jobs:
     - name: Test AWS resource inventory
       run: |
         echo "🧪 Testing AWS resource inventory..."
-        if [ -f scripts/aws_resource_inventory.py ]; then
-          python scripts/aws_resource_inventory.py --help
+        if [ -f scripts/legacy/aws_resource_inventory.py ]; then
+          python scripts/legacy/aws_resource_inventory.py --help
           echo "✅ AWS resource inventory works correctly"
         else
           echo "ℹ️ AWS resource inventory script not found - skipping"
@@ -595,8 +597,8 @@ jobs:
     - name: Test CI/CD BOM generation
       run: |
         echo "🧪 Testing CI/CD BOM generation..."
-        if [ -f scripts/cicd_bom_generation.py ]; then
-          python scripts/cicd_bom_generation.py --help
+        if [ -f scripts/development/cicd_bom_generation.py ]; then
+          python scripts/development/cicd_bom_generation.py --help
           echo "✅ CI/CD BOM generation works correctly"
         else
           echo "ℹ️ CI/CD BOM generation script not found - skipping"
@@ -611,11 +613,11 @@ jobs:
           echo "✅ Basic account configuration exists"
         fi
         
-        if [ -f config/service_descriptions_example.yaml ]; then
+        if [ -f config/defaults/service_descriptions_example.yaml ]; then
           echo "✅ Service descriptions configuration exists"
         fi
         
-        if [ -f config/tag_mappings_example.yaml ]; then
+        if [ -f config/defaults/tag_mappings_example.yaml ]; then
           echo "✅ Tag mappings configuration exists"
         fi
 

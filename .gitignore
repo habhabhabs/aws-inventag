@@ -1,5 +1,10 @@
 
-setup-branch-protection.md
+# Build outputs and generated files
+build/
+*.xlsx
+*.docx
+*.csv
+temp_*.py
 
 .DS_Store
 
