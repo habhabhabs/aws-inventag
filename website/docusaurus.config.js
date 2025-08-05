@@ -29,9 +29,11 @@ const config = {
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'habhabhabs', // Usually your GitHub org/user name.
   projectName: 'inventag-aws', // Usually your repo name.
+  deploymentBranch: 'gh-pages', // Branch for GitHub Pages deployment
+  trailingSlash: false, // GitHub Pages compatibility
 
-  onBrokenLinks: 'warn', // Temporarily set to warn during initial setup
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenLinks: 'warn', // Allow broken links during migration phase
+  onBrokenMarkdownLinks: 'warn', // Allow some flexibility for markdown links during migration
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -50,10 +52,25 @@ const config = {
           path: '../docs', // Single source of truth - read from root-level docs directory
           routeBasePath: '/', // Serve docs at the root path
           sidebarPath: './sidebars.js',
-          // Edit links point to GitHub repository
+          // Edit links point to GitHub repository for dual-platform compatibility
           editUrl: 'https://github.com/habhabhabs/inventag-aws/edit/main/docs/',
           showLastUpdateTime: true,
           showLastUpdateAuthor: true,
+          // Enhanced GitHub integration
+          editCurrentVersion: true,
+          // Breadcrumbs for better navigation
+          breadcrumbs: true,
+          // Include frontmatter for better GitHub compatibility
+          include: ['**/*.md', '**/*.mdx'],
+          exclude: [
+            '**/_*.{js,jsx,ts,tsx,md,mdx}',
+            '**/_*/**',
+            '**/*.test.{js,jsx,ts,tsx}',
+            '**/__tests__/**',
+            // Temporarily exclude problematic files during migration
+            '**/TEMPLATE_SYSTEM_SUMMARY.md',
+            '**/COMPLETE_README_BACKUP.md',
+          ],
         },
         blog: false, // Disable blog functionality for this documentation site
         theme: {
@@ -63,11 +80,18 @@ const config = {
     ],
   ],
 
+  // Plugins will be configured in later tasks for search functionality
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
-      // Replace with your project's social card
-      image: 'img/docusaurus-social-card.jpg',
+      // Enhanced metadata for better SEO and social sharing
+      metadata: [
+        {name: 'keywords', content: 'aws, cloud-governance, inventory, tagging, compliance, documentation'},
+        {name: 'description', content: 'Professional AWS Cloud Governance Platform - Comprehensive documentation for InvenTag'},
+      ],
+      // Social card for better sharing
+      image: 'img/inventag-social-card.jpg',
       navbar: {
         title: 'InvenTag',
         logo: {
@@ -82,11 +106,17 @@ const config = {
             label: 'Documentation',
           },
           {
+            type: 'search',
+            position: 'right',
+          },
+          {
             href: 'https://github.com/habhabhabs/inventag-aws',
-            label: 'GitHub',
+            className: 'header-github-link',
+            'aria-label': 'GitHub repository',
             position: 'right',
           },
         ],
+        hideOnScroll: true,
       },
       footer: {
         style: 'dark',
@@ -100,11 +130,32 @@ const config = {
               },
               {
                 label: 'User Guides',
-                to: '/user-guides',
+                to: '/user-guides/CLI_USER_GUIDE',
               },
               {
                 label: 'Architecture',
-                to: '/architecture',
+                to: '/architecture/CORE_MODULE_INTEGRATION',
+              },
+              {
+                label: 'Development',
+                to: '/development/CONTRIBUTING',
+              },
+            ],
+          },
+          {
+            title: 'Community',
+            items: [
+              {
+                label: 'GitHub Repository',
+                href: 'https://github.com/habhabhabs/inventag-aws',
+              },
+              {
+                label: 'Issues & Bug Reports',
+                href: 'https://github.com/habhabhabs/inventag-aws/issues',
+              },
+              {
+                label: 'Discussions',
+                href: 'https://github.com/habhabhabs/inventag-aws/discussions',
               },
             ],
           },
@@ -112,21 +163,45 @@ const config = {
             title: 'Resources',
             items: [
               {
-                label: 'GitHub Repository',
-                href: 'https://github.com/habhabhabs/inventag-aws',
+                label: 'Configuration Examples',
+                to: '/user-guides/CONFIGURATION_EXAMPLES',
               },
               {
-                label: 'Issues',
-                href: 'https://github.com/habhabhabs/inventag-aws/issues',
+                label: 'Contributing Guide',
+                to: '/development/CONTRIBUTING',
+              },
+              {
+                label: 'License',
+                href: 'https://github.com/habhabhabs/inventag-aws/blob/main/LICENSE',
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} InvenTag. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} InvenTag Team. Built with Docusaurus. | <a href="https://github.com/habhabhabs/inventag-aws/edit/main/docs/" target="_blank" rel="noopener noreferrer">Edit on GitHub</a>`,
       },
       prism: {
         theme: prismThemes.github,
         darkTheme: prismThemes.dracula,
+        // Enhanced syntax highlighting for AWS and cloud technologies
+        additionalLanguages: ['bash', 'json', 'yaml', 'python', 'javascript', 'typescript'],
+      },
+      // Enhanced color mode configuration
+      colorMode: {
+        defaultMode: 'light',
+        disableSwitch: false,
+        respectPrefersColorScheme: true,
+      },
+      // Table of contents configuration for better navigation
+      tableOfContents: {
+        minHeadingLevel: 2,
+        maxHeadingLevel: 4,
+      },
+      // Docs configuration for better GitHub compatibility
+      docs: {
+        sidebar: {
+          hideable: true,
+          autoCollapseCategories: true,
+        },
       },
     }),
 };
