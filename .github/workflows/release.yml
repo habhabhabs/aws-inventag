@@ -146,17 +146,173 @@ jobs:
         echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
         echo "tag_name=v$NEW_VERSION" >> $GITHUB_OUTPUT
 
-    - name: Update version file
+    - name: Generate comprehensive release notes for version.json
+      id: version_notes
       run: |
-        # Update version.json with new version
+        # Get commits since last tag for version.json release notes
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        
+        if [ -z "$LAST_TAG" ]; then
+          echo "No previous tags found, generating notes from first commit"
+          COMMIT_RANGE="$(git rev-list --max-parents=0 HEAD)..HEAD"
+        else
+          echo "Last tag: $LAST_TAG"
+          COMMIT_RANGE="$LAST_TAG..HEAD"
+        fi
+        
+        # Generate structured release notes for version.json
         python -c "
         import json
+        import subprocess
+        import re
+        from datetime import datetime
+        
+        # Get commit messages
+        result = subprocess.run(['git', 'log', '$COMMIT_RANGE', '--pretty=format:%s', '--no-merges'], 
+                              capture_output=True, text=True)
+        commits = result.stdout.strip().split('\n') if result.stdout.strip() else []
+        
+        # Categorize commits
+        features = []
+        fixes = []
+        docs = []
+        chores = []
+        style = []
+        refactor = []
+        perf = []
+        test = []
+        other = []
+        
+        for commit in commits:
+            if not commit.strip():
+                continue
+            commit_lower = commit.lower()
+            if commit_lower.startswith('feat'):
+                features.append(commit)
+            elif commit_lower.startswith('fix'):
+                fixes.append(commit)
+            elif commit_lower.startswith('docs'):
+                docs.append(commit)
+            elif commit_lower.startswith('chore'):
+                chores.append(commit)
+            elif commit_lower.startswith('style'):
+                style.append(commit)
+            elif commit_lower.startswith('refactor'):
+                refactor.append(commit)
+            elif commit_lower.startswith('perf'):
+                perf.append(commit)
+            elif commit_lower.startswith('test'):
+                test.append(commit)
+            else:
+                other.append(commit)
+        
+        # Build comprehensive release notes
+        notes_parts = []
+        notes_parts.append(f'Release ${{ steps.version.outputs.new_version }} - {datetime.now().strftime(\"%Y-%m-%d\")}')
+        notes_parts.append('')
+        
+        if features:
+            notes_parts.append('✨ New Features:')
+            for feat in features:
+                notes_parts.append(f'  • {feat}')
+            notes_parts.append('')
+        
+        if fixes:
+            notes_parts.append('🐛 Bug Fixes:')
+            for fix in fixes:
+                notes_parts.append(f'  • {fix}')
+            notes_parts.append('')
+        
+        if docs:
+            notes_parts.append('📚 Documentation:')
+            for doc in docs:
+                notes_parts.append(f'  • {doc}')
+            notes_parts.append('')
+        
+        if style:
+            notes_parts.append('💄 Style Changes:')
+            for s in style:
+                notes_parts.append(f'  • {s}')
+            notes_parts.append('')
+        
+        if refactor:
+            notes_parts.append('♻️ Code Refactoring:')
+            for r in refactor:
+                notes_parts.append(f'  • {r}')
+            notes_parts.append('')
+        
+        if perf:
+            notes_parts.append('⚡ Performance Improvements:')
+            for p in perf:
+                notes_parts.append(f'  • {p}')
+            notes_parts.append('')
+        
+        if test:
+            notes_parts.append('✅ Tests:')
+            for t in test:
+                notes_parts.append(f'  • {t}')
+            notes_parts.append('')
+        
+        if chores:
+            notes_parts.append('🔧 Maintenance:')
+            for chore in chores:
+                notes_parts.append(f'  • {chore}')
+            notes_parts.append('')
+        
+        if other:
+            notes_parts.append('📝 Other Changes:')
+            for o in other:
+                notes_parts.append(f'  • {o}')
+            notes_parts.append('')
+        
+        # Add summary statistics
+        total_commits = len([c for c in commits if c.strip()])
+        if total_commits > 0:
+            notes_parts.append(f'📊 Summary: {total_commits} commits in this release')
+            
+            if '${{ needs.check-for-release.outputs.pr_number }}':
+                notes_parts.append(f'🔀 Triggered by PR #${{ needs.check-for-release.outputs.pr_number }}')
+        
+        release_notes = '\n'.join(notes_parts)
+        print('Generated release notes for version.json:')
+        print(release_notes)
+        print('---')
+        
+        # Save release notes to a file for the next step
+        with open('version_release_notes.txt', 'w') as f:
+            f.write(release_notes)
+        "
+
+    - name: Update version file
+      run: |
+        # Update version.json with comprehensive release notes
+        python -c "
+        import json
+        from datetime import datetime
+        
+        # Read the generated release notes
+        with open('version_release_notes.txt', 'r') as f:
+            release_notes = f.read()
+        
+        # Update version.json
         with open('version.json', 'r') as f:
             data = json.load(f)
+        
+        # Update version and release notes
         data['version'] = '${{ steps.version.outputs.new_version }}'
-        data['release_notes'] = 'Release ${{ steps.version.outputs.new_version }}'
+        data['release_notes'] = release_notes
+        data['release_date'] = datetime.now().isoformat()
+        data['previous_version'] = '${{ steps.version.outputs.current_version }}'
+        data['version_bump_type'] = '${{ needs.check-for-release.outputs.version_bump }}'
+        
+        # Add PR information if available
+        if '${{ needs.check-for-release.outputs.pr_number }}':
+            data['triggered_by_pr'] = '${{ needs.check-for-release.outputs.pr_number }}'
+        
         with open('version.json', 'w') as f:
             json.dump(data, f, indent=2)
+        
+        print('Updated version.json with comprehensive release information')
         "
 
     - name: Generate release notes
@@ -252,18 +408,18 @@ jobs:
         pip install -r requirements.txt
         
         # Run AWS resource inventory (if available)
-        if [ -f "scripts/aws_resource_inventory.py" ]; then
-          python scripts/aws_resource_inventory.py --output inventory
+        if [ -f "scripts/legacy/aws_resource_inventory.py" ]; then
+          python scripts/legacy/aws_resource_inventory.py --output inventory
         fi
         
         # Convert to Excel/CSV format
-        python scripts/bom_converter.py --input sample.json --output report.xlsx
+        python scripts/legacy/bom_converter.py --input sample.json --output report.xlsx
         
         # Check tag compliance
-        python scripts/tag_compliance_checker.py --config tag_policy.yaml --input sample.json --output compliance_report
+        python scripts/legacy/tag_compliance_checker.py --config tag_policy.yaml --input sample.json --output compliance_report
         
         # Test CI/CD BOM generation
-        python scripts/cicd_bom_generation.py --help
+        python scripts/development/cicd_bom_generation.py --help
         ```
         
         ### Docker Usage
@@ -369,20 +525,20 @@ jobs:
 
     - name: Test BOM converter
       run: |
-        python scripts/bom_converter.py --help
+        python scripts/legacy/bom_converter.py --help
         echo "✅ BOM converter works correctly"
 
     - name: Test tag compliance checker
       run: |
-        if [ -f scripts/tag_compliance_checker.py ]; then
-          python scripts/tag_compliance_checker.py --help
+        if [ -f scripts/legacy/tag_compliance_checker.py ]; then
+          python scripts/legacy/tag_compliance_checker.py --help
           echo "✅ Tag compliance checker works correctly"
         fi
 
     - name: Test AWS resource inventory
       run: |
-        if [ -f scripts/aws_resource_inventory.py ]; then
-          python scripts/aws_resource_inventory.py --help
+        if [ -f scripts/legacy/aws_resource_inventory.py ]; then
+          python scripts/legacy/aws_resource_inventory.py --help
           echo "✅ AWS resource inventory works correctly"
         else
           echo "ℹ️ AWS resource inventory script not found - skipping"
@@ -390,5 +546,5 @@ jobs:
 
     - name: Test CI/CD BOM generation
       run: |
-        python scripts/cicd_bom_generation.py --help
+        python scripts/development/cicd_bom_generation.py --help
         echo "✅ CI/CD BOM generation works correctly"

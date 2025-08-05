@@ -1,4 +1,7 @@
 {
   "version": "2.1.1",
-  "release_notes": "Release 2.1.1"
+  "release_notes": "Release 2.1.1 - 2025-08-05\n\n🔧 Maintenance:\n  • Project restructuring and workflow improvements\n  • Script path updates for CI/CD compatibility\n  • Enhanced GitHub Actions workflow configurations\n\n📊 Summary: Multiple commits focused on infrastructure improvements",
+  "release_date": "2025-08-05T00:00:00.000000",
+  "previous_version": "2.1.0",
+  "version_bump_type": "patch"
 }
