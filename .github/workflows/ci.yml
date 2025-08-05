@@ -59,15 +59,20 @@ jobs:
           python -m pytest tests/ -v --cov=inventag --cov-report=xml || true
         fi
         
-        # Test all main scripts
-        python scripts/bom_converter.py --help
-        python scripts/tag_compliance_checker.py --help
-        python scripts/cicd_bom_generation.py --help
+        # Test all main scripts - updated paths for new structure
+        python scripts/legacy/bom_converter.py --help
+        python scripts/legacy/tag_compliance_checker.py --help
+        python scripts/development/cicd_bom_generation.py --help
         
         # Test AWS resource inventory if it exists
-        if [ -f "scripts/aws_resource_inventory.py" ]; then
-          python scripts/aws_resource_inventory.py --help
+        if [ -f "scripts/legacy/aws_resource_inventory.py" ]; then
+          python scripts/legacy/aws_resource_inventory.py --help
         fi
+        
+        # Test production scripts
+        python scripts/production/production_monitor.py --help
+        python scripts/production/security_validator.py --help
+        python scripts/production/multi_account_scanner.py --help
         
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -169,7 +174,7 @@ jobs:
 
     - name: Test BOM converter with sample data
       run: |
-        python scripts/bom_converter.py \
+        python scripts/legacy/bom_converter.py \
           --input test-data/sample.json \
           --output test-output.xlsx \
           --no-vpc-enrichment
@@ -178,7 +183,7 @@ jobs:
         ls -la test-output.xlsx
         
         # Test CSV format
-        python scripts/bom_converter.py \
+        python scripts/legacy/bom_converter.py \
           --input test-data/sample.json \
           --output test-output.csv \
           --format csv \
@@ -188,7 +193,7 @@ jobs:
 
     - name: Test tag compliance checker
       run: |
-        python scripts/tag_compliance_checker.py \
+        python scripts/legacy/tag_compliance_checker.py \
           --config test-data/tag_policy.yaml \
           --input test-data/sample.json \
           --output compliance-report \
@@ -216,4 +221,4 @@ jobs:
         EOF
         
         # Test help and configuration validation
-        python scripts/cicd_bom_generation.py --help || true
+        python scripts/development/cicd_bom_generation.py --help || true

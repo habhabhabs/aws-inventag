@@ -269,6 +269,62 @@ class DeltaDetector:
             change_statistics=change_statistics,
         )
 
+    def detect_changes_by_state_id(
+        self, state_manager, previous_state_id: str, current_state_id: str
+    ) -> DeltaReport:
+        """
+        Detect changes between two states using state IDs.
+
+        Args:
+            state_manager: StateManager instance to load states
+            previous_state_id: ID of the previous state
+            current_state_id: ID of the current state
+
+        Returns:
+            DeltaReport with comprehensive change analysis
+        """
+        # Load the states
+        previous_state = state_manager.load_state(previous_state_id)
+        current_state = state_manager.load_state(current_state_id)
+
+        if not previous_state or not current_state:
+            logger.warning(
+                f"Could not load states {previous_state_id} or {current_state_id}"
+            )
+            # Return empty delta report
+            return DeltaReport(
+                state1_id=previous_state_id,
+                state2_id=current_state_id,
+                timestamp=datetime.now(timezone.utc).isoformat(),
+                summary={
+                    "total_changes": 0,
+                    "added": 0,
+                    "removed": 0,
+                    "modified": 0,
+                    "unchanged": 0,
+                },
+                added_resources=[],
+                removed_resources=[],
+                modified_resources=[],
+                unchanged_resources=[],
+                compliance_changes={},
+                security_changes={},
+                network_changes={},
+                impact_analysis={},
+                change_statistics={},
+            )
+
+        # Extract resources and call the main detect_changes method
+        old_resources = previous_state.resources
+        new_resources = current_state.resources
+
+        return self.detect_changes(
+            old_resources=old_resources,
+            new_resources=new_resources,
+            state1_id=previous_state_id,
+            state2_id=current_state_id,
+        )
+
     def _create_resource_map(self, resources: List[Dict]) -> Dict[str, Dict]:
         """Create a map of resources keyed by ARN for efficient lookup"""
         resource_map = {}
