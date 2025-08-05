@@ -10,8 +10,9 @@ import argparse
 import json
 from datetime import datetime
 
-# Add the parent directory to the Python path to import inventag
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the project root to the Python path to import inventag
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, project_root)
 
 from inventag.core import CloudBOMGenerator, MultiAccountConfig
 from inventag.reporting import BOMProcessingConfig
