@@ -1187,50 +1187,54 @@ class BOMConverter:
         doc = Document()
 
         # Add title
-        title = doc.add_heading('AWS Resource Inventory - BOM Report', 0)
+        title = doc.add_heading("AWS Resource Inventory - BOM Report", 0)
         title.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
         # Add generation timestamp
-        doc.add_paragraph(f"Generated on: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+        doc.add_paragraph(
+            f"Generated on: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC"
+        )
 
         # Add executive summary
-        doc.add_heading('Executive Summary', level=1)
+        doc.add_heading("Executive Summary", level=1)
         total_resources = sum(len(resources) for resources in services.values())
         doc.add_paragraph(f"Total Resources: {total_resources}")
         doc.add_paragraph(f"Services Covered: {len(services)}")
-        doc.add_paragraph(f"AWS Regions: {len(set(r.get('region', 'Unknown') for r in self.data))}")
+        doc.add_paragraph(
+            f"AWS Regions: {len(set(r.get('region', 'Unknown') for r in self.data))}"
+        )
 
         # Add service summary table
-        doc.add_heading('Service Summary', level=2)
+        doc.add_heading("Service Summary", level=2)
         table = doc.add_table(rows=1, cols=3)
-        table.style = 'Light Grid Accent 1'
+        table.style = "Light Grid Accent 1"
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
 
         # Add headers
         hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = 'Service'
-        hdr_cells[1].text = 'Resource Count'
-        hdr_cells[2].text = 'Percentage'
+        hdr_cells[0].text = "Service"
+        hdr_cells[1].text = "Resource Count"
+        hdr_cells[2].text = "Percentage"
 
         # Add service data
         for service, resources in sorted(services.items()):
             count = len(resources)
             percentage = (count / total_resources * 100) if total_resources > 0 else 0
-            
+
             row_cells = table.add_row().cells
             row_cells[0].text = service
             row_cells[1].text = str(count)
             row_cells[2].text = f"{percentage:.1f}%"
 
         # Add detailed resource listings by service
-        doc.add_heading('Detailed Resource Inventory', level=1)
+        doc.add_heading("Detailed Resource Inventory", level=1)
 
         for service, resources in sorted(services.items()):
             if not resources:
                 continue
 
             # Service section
-            doc.add_heading(f'{service} Resources ({len(resources)})', level=2)
+            doc.add_heading(f"{service} Resources ({len(resources)})", level=2)
 
             # Get common headers for this service
             service_headers = set()
@@ -1239,61 +1243,86 @@ class BOMConverter:
 
             # Filter and order headers logically
             ordered_headers = self._get_logical_column_order(service_headers)
-            
+
             # Limit to most important columns for Word format (to avoid very wide tables)
             important_headers = []
-            priority_headers = ['name', 'id', 'type', 'region', 'compliance_status', 'tags']
-            
+            priority_headers = [
+                "name",
+                "id",
+                "type",
+                "region",
+                "compliance_status",
+                "tags",
+            ]
+
             for header in priority_headers:
                 if header in ordered_headers:
                     important_headers.append(header)
-            
+
             # Add other important headers up to max of 6 columns total
             max_cols = 6
             for header in ordered_headers:
                 if len(important_headers) >= max_cols:
                     break
-                if header not in important_headers and header not in ['arn', 'account_id', 'source_account_id']:
+                if header not in important_headers and header not in [
+                    "arn",
+                    "account_id",
+                    "source_account_id",
+                ]:
                     important_headers.append(header)
 
             if important_headers:
                 # Create service resource table
                 resource_table = doc.add_table(rows=1, cols=len(important_headers))
-                resource_table.style = 'Light List Accent 1'
+                resource_table.style = "Light List Accent 1"
 
                 # Add headers
                 hdr_cells = resource_table.rows[0].cells
                 for i, header in enumerate(important_headers):
-                    hdr_cells[i].text = header.replace('_', ' ').title()
+                    hdr_cells[i].text = header.replace("_", " ").title()
 
                 # Add resource data (limit to first 50 resources per service for Word format)
                 max_resources = 50
                 for resource in resources[:max_resources]:
                     row_cells = resource_table.add_row().cells
                     for i, header in enumerate(important_headers):
-                        value = resource.get(header, '')
+                        value = resource.get(header, "")
                         # Format complex values
                         if isinstance(value, dict):
-                            if header == 'tags' and value:
+                            if header == "tags" and value:
                                 # Format tags nicely
-                                tag_str = ', '.join([f"{k}={v}" for k, v in value.items()])
-                                row_cells[i].text = tag_str[:100] + ('...' if len(tag_str) > 100 else '')
+                                tag_str = ", ".join(
+                                    [f"{k}={v}" for k, v in value.items()]
+                                )
+                                row_cells[i].text = tag_str[:100] + (
+                                    "..." if len(tag_str) > 100 else ""
+                                )
                             else:
-                                row_cells[i].text = str(value)[:50] + ('...' if len(str(value)) > 50 else '')
+                                row_cells[i].text = str(value)[:50] + (
+                                    "..." if len(str(value)) > 50 else ""
+                                )
                         elif isinstance(value, list):
-                            row_cells[i].text = ', '.join(str(v) for v in value)[:100] + ('...' if len(str(value)) > 100 else '')
+                            row_cells[i].text = ", ".join(str(v) for v in value)[
+                                :100
+                            ] + ("..." if len(str(value)) > 100 else "")
                         else:
                             row_cells[i].text = str(value)
 
                 if len(resources) > max_resources:
-                    doc.add_paragraph(f"Note: Showing first {max_resources} of {len(resources)} {service} resources.")
+                    doc.add_paragraph(
+                        f"Note: Showing first {max_resources} of {len(resources)} {service} resources."
+                    )
 
             doc.add_page_break()
 
         # Add footer information
-        doc.add_heading('Report Information', level=1)
-        doc.add_paragraph("This report was generated using InvenTag - AWS Resource Inventory Tool")
-        doc.add_paragraph("For more information, visit: https://github.com/habhabhabs/inventag-aws")
+        doc.add_heading("Report Information", level=1)
+        doc.add_paragraph(
+            "This report was generated using InvenTag - AWS Resource Inventory Tool"
+        )
+        doc.add_paragraph(
+            "For more information, visit: https://github.com/habhabhabs/inventag-aws"
+        )
 
         # Save the document
         doc.save(filename)

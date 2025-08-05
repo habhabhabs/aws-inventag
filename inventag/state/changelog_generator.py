@@ -121,13 +121,13 @@ class Changelog:
     def to_markdown(self) -> str:
         """Convert changelog to markdown format"""
         lines = []
-        
+
         # Title and header
         lines.append(f"# {self.title}")
         lines.append("")
         lines.append(f"**Generated:** {self.generation_timestamp}")
         lines.append("")
-        
+
         # State comparison
         if self.state_comparison:
             lines.append("## State Comparison")
@@ -135,7 +135,7 @@ class Changelog:
             for key, value in self.state_comparison.items():
                 lines.append(f"- **{key}:** {value}")
             lines.append("")
-        
+
         # Summary
         lines.append("## Summary")
         lines.append("")
@@ -148,7 +148,7 @@ class Changelog:
         lines.append(f"| Compliance Changes | {self.summary.compliance_changes} |")
         lines.append(f"| Network Changes | {self.summary.network_changes} |")
         lines.append("")
-        
+
         # Most impacted services
         if self.summary.most_impacted_services:
             lines.append("**Most Impacted Services:**")
@@ -156,66 +156,74 @@ class Changelog:
                 service_count = self.summary.changes_by_service.get(service, 0)
                 lines.append(f"- {service}: {service_count} changes")
             lines.append("")
-        
+
         # Sections
         for section in self.sections:
             lines.append(f"## {section.title}")
             lines.append("")
-            
+
             if section.description:
                 lines.append(section.description)
                 lines.append("")
-            
+
             for entry in section.entries:
                 lines.append(f"### {entry.summary}")
                 lines.append(f"- **Type:** {entry.change_type.value}")
                 lines.append(f"- **Severity:** {entry.severity.value}")
                 lines.append(f"- **Service:** {entry.service}")
                 lines.append(f"- **Resource:** {entry.resource_id}")
-                
+
                 if entry.impact_assessment:
                     lines.append(f"- **Impact:** {entry.impact_assessment}")
-                
+
                 if entry.description:
                     lines.append(f"- **Description:** {entry.description}")
-                
+
                 if entry.technical_details:
                     lines.append("- **Technical Details:**")
                     # Show first few key technical details
                     for key, value in list(entry.technical_details.items())[:3]:
                         lines.append(f"  - {key}: {value}")
                     if len(entry.technical_details) > 3:
-                        lines.append(f"  - ... and {len(entry.technical_details) - 3} more details")
-                
+                        lines.append(
+                            f"  - ... and {len(entry.technical_details) - 3} more details"
+                        )
+
                 if entry.remediation_steps:
                     lines.append("- **Action Required:**")
                     for step in entry.remediation_steps[:2]:  # Limit to first 2 steps
                         lines.append(f"  - {step}")
                     if len(entry.remediation_steps) > 2:
-                        lines.append(f"  - ... and {len(entry.remediation_steps) - 2} more steps")
-                
+                        lines.append(
+                            f"  - ... and {len(entry.remediation_steps) - 2} more steps"
+                        )
+
                 lines.append("")
-        
+
         # Trend analysis if available
         if self.trend_analysis:
             lines.append("## Trend Analysis")
             lines.append("")
-            lines.append(f"**Change Velocity:** {self.trend_analysis.change_velocity:.2f} changes per day")
-            lines.append(f"**Analysis Period:** {self.trend_analysis.total_periods} periods")
+            lines.append(
+                f"**Change Velocity:** {self.trend_analysis.change_velocity:.2f} changes per day"
+            )
+            lines.append(
+                f"**Analysis Period:** {self.trend_analysis.total_periods} periods"
+            )
             lines.append("")
-            
+
             if self.trend_analysis.most_active_services:
                 lines.append("**Most Active Services:**")
                 for service in self.trend_analysis.most_active_services:
                     lines.append(f"- {service}")
                 lines.append("")
-            
+
             if self.trend_analysis.recommendations:
                 lines.append("**Recommendations:**")
                 for rec in self.trend_analysis.recommendations:
                     lines.append(f"- {rec}")
                 lines.append("")
-        
+
         return "\n".join(lines)
 
 

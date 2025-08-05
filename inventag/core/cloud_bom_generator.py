@@ -302,28 +302,42 @@ class CloudBOMGenerator:
                         f"Account ID mismatch for {credentials.account_id}. "
                         f"Actual: {actual_account_id}"
                     )
-                    
+
                     # If the original account_id was "default", update it with the real account ID
                     if credentials.account_id == "default":
-                        self.logger.info(f"Updating account ID from 'default' to actual account ID: {actual_account_id}")
+                        self.logger.info(
+                            f"Updating account ID from 'default' to actual account ID: {actual_account_id}"
+                        )
                         credentials.account_id = actual_account_id
                         # Also update account name to be more descriptive if it was generic
                         if credentials.account_name == "Default AWS Account":
                             caller_arn = caller_identity.get("Arn", "")
                             if "assumed-role" in caller_arn:
                                 try:
-                                    role_part = caller_arn.split("assumed-role/")[1].split("/")[0]
-                                    credentials.account_name = f"AWS Account {actual_account_id} ({role_part})"
+                                    role_part = caller_arn.split("assumed-role/")[
+                                        1
+                                    ].split("/")[0]
+                                    credentials.account_name = (
+                                        f"AWS Account {actual_account_id} ({role_part})"
+                                    )
                                 except:
-                                    credentials.account_name = f"AWS Account {actual_account_id}"
+                                    credentials.account_name = (
+                                        f"AWS Account {actual_account_id}"
+                                    )
                             elif "user" in caller_arn:
                                 try:
                                     user_part = caller_arn.split("user/")[1]
-                                    credentials.account_name = f"AWS Account {actual_account_id} ({user_part})"
+                                    credentials.account_name = (
+                                        f"AWS Account {actual_account_id} ({user_part})"
+                                    )
                                 except:
-                                    credentials.account_name = f"AWS Account {actual_account_id}"
+                                    credentials.account_name = (
+                                        f"AWS Account {actual_account_id}"
+                                    )
                             else:
-                                credentials.account_name = f"AWS Account {actual_account_id}"
+                                credentials.account_name = (
+                                    f"AWS Account {actual_account_id}"
+                                )
 
                 # Auto-discover regions if none specified
                 target_regions = credentials.regions

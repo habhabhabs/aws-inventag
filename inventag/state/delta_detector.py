@@ -232,7 +232,7 @@ class DeltaDetector:
         impact_analysis = self._analyze_change_impact(
             added_resources + removed_resources + modified_resources,
             old_resources_map,
-            new_resources_map
+            new_resources_map,
         )
 
         # Calculate change statistics

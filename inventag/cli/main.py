@@ -594,12 +594,13 @@ def create_multi_account_config(args) -> MultiAccountConfig:
         # Use default credentials and discover actual account ID
         try:
             import boto3
+
             session = boto3.Session()
             sts = session.client("sts")
             identity = sts.get_caller_identity()
             actual_account_id = identity.get("Account", "unknown")
             account_arn = identity.get("Arn", "")
-            
+
             # Extract a more meaningful account name from ARN if possible
             if "assumed-role" in account_arn:
                 # Extract role name from ARN like: arn:aws:sts::123456789012:assumed-role/RoleName/username
@@ -617,14 +618,14 @@ def create_multi_account_config(args) -> MultiAccountConfig:
                     account_name = f"AWS Account {actual_account_id}"
             else:
                 account_name = f"AWS Account {actual_account_id}"
-            
+
             logger.info(f"Detected AWS account ID: {actual_account_id}")
-            
+
         except Exception as e:
             logger.warning(f"Could not detect AWS account ID: {e}")
             actual_account_id = "default"
             account_name = "Default AWS Account"
-        
+
         account = AccountCredentials(
             account_id=actual_account_id, account_name=account_name
         )

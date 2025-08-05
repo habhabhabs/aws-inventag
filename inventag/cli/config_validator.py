@@ -345,15 +345,19 @@ class ConfigValidator:
             if "tag_mappings" in config:
                 tag_mappings = config["tag_mappings"]
                 if not isinstance(tag_mappings, list):
-                    result.errors.append("'tag_mappings' must be a list of mapping objects")
+                    result.errors.append(
+                        "'tag_mappings' must be a list of mapping objects"
+                    )
                     return result
-                
+
                 # Validate each tag mapping in the list
                 for i, mapping in enumerate(tag_mappings):
                     if not isinstance(mapping, dict):
-                        result.errors.append(f"Tag mapping {i + 1} must be a dictionary")
+                        result.errors.append(
+                            f"Tag mapping {i + 1} must be a dictionary"
+                        )
                         continue
-                    
+
                     required_fields = ["tag", "name"]
                     for field in required_fields:
                         if field not in mapping:
@@ -364,7 +368,7 @@ class ConfigValidator:
                             result.errors.append(
                                 f"Tag mapping {i + 1} field '{field}' must be a string"
                             )
-                    
+
                     optional_fields = ["description", "default_value"]
                     for field in optional_fields:
                         if field in mapping and not isinstance(mapping[field], str):
