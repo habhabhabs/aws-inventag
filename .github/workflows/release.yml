@@ -479,8 +479,9 @@ jobs:
         # Push the version bump branch
         git push origin "$BRANCH_NAME"
         
-        # Create a PR for the version bump (will be auto-merged if possible)
-        gh pr create \
+        # Try to create a PR for the version bump
+        set +e  # Don't fail the workflow if PR creation fails
+        PR_RESULT=$(gh pr create \
           --title "chore: bump version to ${{ steps.version.outputs.new_version }}" \
           --body "$(cat <<'EOFPR'
         ## Automated Version Bump
@@ -497,15 +498,58 @@ jobs:
         ${{ needs.check-for-release.outputs.pr_number != '' && format('- **Source PR**: #{0}', needs.check-for-release.outputs.pr_number) || '' }}
         - **Release Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
-        This PR should be merged automatically to complete the release process.
+        ### Manual Steps Required
+        Since GitHub Actions cannot automatically create PRs, please:
+        1. Visit: https://github.com/${{ github.repository }}/compare/main...$BRANCH_NAME
+        2. Create a pull request from the version bump branch
+        3. Review and merge the version update
 
         🤖 Generated with [Claude Code](https://claude.ai/code)
         EOFPR
         )" \
           --head "$BRANCH_NAME" \
-          --base main
+          --base main 2>&1)
         
-        echo "Created version bump PR for protected branch"
+        PR_EXIT_CODE=$?
+        set -e  # Re-enable exit on error
+        
+        if [ $PR_EXIT_CODE -eq 0 ]; then
+          echo "✅ Created version bump PR: $PR_RESULT"
+        else
+          echo "⚠️ Failed to create PR automatically (GitHub Actions permission restriction)"
+          echo "📋 Version bump branch created: $BRANCH_NAME"
+          echo "🔗 Manual PR creation link: https://github.com/${{ github.repository }}/compare/main...$BRANCH_NAME"
+          echo "📝 PR creation failed with: $PR_RESULT"
+          
+          # Create a workflow summary with instructions
+          cat >> $GITHUB_STEP_SUMMARY << EOFSUMMARY
+        ## ⚠️ Manual Action Required: Version Bump PR
+
+        The automated version bump was prepared but could not create a PR automatically due to GitHub Actions permissions.
+
+        ### 📋 Version Bump Details
+        - **New Version**: ${{ steps.version.outputs.new_version }}
+        - **Previous Version**: ${{ steps.version.outputs.current_version }}
+        - **Bump Type**: ${{ needs.check-for-release.outputs.version_bump }}
+        - **Branch Created**: \`$BRANCH_NAME\`
+
+        ### 🔧 Manual Steps
+        1. **Create PR**: Visit [this link](https://github.com/${{ github.repository }}/compare/main...$BRANCH_NAME) to create the version bump PR
+        2. **Review Changes**: The \`version.json\` file has been updated with comprehensive release notes
+        3. **Merge PR**: Merge the PR to complete the version bump process
+
+        ### 📝 Alternative: Direct Merge
+        If you prefer to skip the PR review, you can merge directly:
+        \`\`\`bash
+        git checkout main
+        git pull origin main
+        git merge origin/$BRANCH_NAME
+        git push origin main
+        \`\`\`
+
+        **Note**: The GitHub release has been created successfully regardless of this version bump PR.
+        EOFSUMMARY
+        fi
         
         # Switch back to main for release creation
         git checkout main
@@ -556,6 +600,9 @@ jobs:
         echo "🚀 Successfully created release ${{ steps.version.outputs.new_version }}"
         echo "📦 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag_name }}"
         echo "📋 Version bumped from ${{ steps.version.outputs.current_version }} to ${{ steps.version.outputs.new_version }} (${{ needs.check-for-release.outputs.version_bump }} release)"
+        echo ""
+        echo "ℹ️  Note: If a version bump branch was created, you may need to manually create and merge the version bump PR."
+        echo "🔗 Check for version bump branch: https://github.com/${{ github.repository }}/branches"
 
   test-release:
     name: Test Release
