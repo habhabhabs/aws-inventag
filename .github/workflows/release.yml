@@ -632,45 +632,28 @@ jobs:
         if git diff --quiet version.json; then
           echo "No changes to version.json - skipping commit"
         else
-          # Create a release branch for the version bump
-          RELEASE_BRANCH="release/v${{ steps.version.outputs.new_version }}"
-          git checkout -b $RELEASE_BRANCH
-          
-          # Add and commit the version.json changes
+          # Add and commit the version.json changes directly to main
           git add version.json
-          git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}"
+          git commit -m "$(cat <<'EOF'
+        chore: bump version to ${{ steps.version.outputs.new_version }}
+
+        🤖 Generated with [Claude Code](https://claude.ai/code)
+
+        Co-Authored-By: Claude <noreply@anthropic.com>
+        EOF
+        )"
           
-          # Push the release branch
-          git push origin $RELEASE_BRANCH
-          echo "✅ Successfully pushed release branch $RELEASE_BRANCH"
-          
-          # Create PR for version bump
-          export GH_TOKEN="${{ secrets.GITHUB_TOKEN }}"
-          
-          gh pr create \
-            --title "chore: bump version to ${{ steps.version.outputs.new_version }}" \
-            --body "Automated version bump for release v${{ steps.version.outputs.new_version }}. This PR contains version bump in version.json and automated release preparation. Auto-merge recommended - this is an automated release process." \
-            --base main \
-            --head $RELEASE_BRANCH \
-            --label "release" \
-            --assignee "${{ github.actor }}"
-          
-          echo "✅ Created PR for version bump"
+          # Push directly to main
+          git push origin main
+          echo "✅ Successfully pushed version bump to main"
         fi
 
     - name: Create Git Tag
       run: |
-        # Create tag from the release branch (after version bump commit)
-        RELEASE_BRANCH="release/v${{ steps.version.outputs.new_version }}"
-        
-        # Check if we're on the release branch
-        if git branch --show-current | grep -q "release/"; then
-          git tag ${{ steps.version.outputs.tag_name }}
-          git push origin ${{ steps.version.outputs.tag_name }}
-          echo "Created and pushed tag ${{ steps.version.outputs.tag_name }} from release branch"
-        else
-          echo "Skipping tag creation - no release branch created (version.json unchanged)"
-        fi
+        # Create tag from main branch (after version bump commit)
+        git tag ${{ steps.version.outputs.tag_name }}
+        git push origin ${{ steps.version.outputs.tag_name }}
+        echo "Created and pushed tag ${{ steps.version.outputs.tag_name }} from main branch"
 
     - name: Create GitHub Release
       env:
