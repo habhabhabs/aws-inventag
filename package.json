@@ -14,6 +14,8 @@
     "docs:validate:strict": "node scripts/validate-docs.js --strict",
     "docs:validate:migration": "node scripts/validate-docs-migration.js",
     "docs:monitor": "node scripts/monitor-docs.js",
+    "docs:monitor:site": "node scripts/monitor-site-performance.js",
+    "docs:monitor:site:verbose": "node scripts/monitor-site-performance.js --verbose",
     "docs:test": "node scripts/test-docs.js",
     "docs:test:quick": "node scripts/test-docs.js --quick",
     "docs:test:verbose": "node scripts/test-docs.js --verbose",

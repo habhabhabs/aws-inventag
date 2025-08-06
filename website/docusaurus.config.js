@@ -76,6 +76,11 @@ const config = {
         theme: {
           customCss: './src/css/custom.css',
         },
+        // Analytics and monitoring configuration
+        gtag: {
+          trackingID: 'G-XXXXXXXXXX', // Replace with actual Google Analytics 4 tracking ID
+          anonymizeIP: true,
+        },
       }),
     ],
   ],
@@ -111,6 +116,7 @@ const config = {
       }),
     ],
   ],
+
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */

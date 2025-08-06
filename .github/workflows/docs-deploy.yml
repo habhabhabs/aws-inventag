@@ -525,6 +525,43 @@ jobs:
             .docs-logs/
           retention-days: 30
 
+      - name: Report build status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.sha;
+            const runId = context.runId;
+            const buildStatus = '${{ job.status }}';
+            
+            const statusEmoji = buildStatus === 'success' ? '✅' : 
+                               buildStatus === 'failure' ? '❌' : 
+                               buildStatus === 'cancelled' ? '⚠️' : '🔄';
+            
+            console.log(`Build Status: ${statusEmoji} ${buildStatus}`);
+            console.log(`Run ID: ${runId}`);
+            console.log(`Commit SHA: ${sha}`);
+            
+            // Create status summary
+            const summary = `
+            ## Documentation Build Report ${statusEmoji}
+            
+            **Status:** ${buildStatus.toUpperCase()}
+            **Commit:** \`${sha.substring(0, 8)}\`
+            **Run ID:** [${runId}](https://github.com/${owner}/${repo}/actions/runs/${runId})
+            **Timestamp:** ${new Date().toISOString()}
+            
+            ${buildStatus === 'failure' ? '### ⚠️ Build Failed\nPlease check the logs for details and resolve any issues.' : ''}
+            ${buildStatus === 'success' ? '### ✅ Build Successful\nDocumentation is ready for deployment.' : ''}
+            `;
+            
+            console.log('Build Summary:', summary);
+            
+            // Set output for downstream jobs
+            core.setOutput('build_status', buildStatus);
+            core.setOutput('build_summary', summary);
+
   # Deployment job (only runs on main branch)
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -537,6 +574,76 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Monitor deployment status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deploymentStatus = '${{ steps.deployment.outcome }}';
+            const deploymentUrl = '${{ steps.deployment.outputs.page_url }}';
+            const { owner, repo } = context.repo;
+            
+            console.log(`Deployment Status: ${deploymentStatus}`);
+            console.log(`Deployment URL: ${deploymentUrl}`);
+            
+            if (deploymentStatus === 'success') {
+              console.log('✅ Deployment successful!');
+              
+              // Test deployment by making a simple request
+              try {
+                const response = await fetch(deploymentUrl);
+                const statusCode = response.status;
+                
+                console.log(`Site response status: ${statusCode}`);
+                
+                if (statusCode === 200) {
+                  console.log('✅ Site is accessible');
+                } else {
+                  console.log(`⚠️ Site returned status ${statusCode}`);
+                }
+              } catch (error) {
+                console.log(`❌ Failed to test site accessibility: ${error.message}`);
+              }
+            } else {
+              console.log(`❌ Deployment failed with status: ${deploymentStatus}`);
+            }
+
+      - name: Performance monitoring post-deployment
+        if: success() && steps.deployment.outputs.page_url
+        run: |
+          echo "Running post-deployment performance checks..."
+          
+          SITE_URL="${{ steps.deployment.outputs.page_url }}"
+          echo "Testing site: $SITE_URL"
+          
+          # Test site accessibility
+          if curl -f "$SITE_URL" -o /dev/null -s; then
+            echo "✅ Site is accessible"
+            
+            # Measure response time
+            response_time=$(curl -o /dev/null -s -w '%{time_total}' "$SITE_URL")
+            echo "Response time: ${response_time}s"
+            
+            # Check if response time is acceptable (< 3 seconds)
+            if (( $(echo "$response_time < 3.0" | bc -l) )); then
+              echo "✅ Response time acceptable"
+            else
+              echo "⚠️ Response time may be slow (${response_time}s)"
+            fi
+            
+            # Test search endpoint
+            if curl -f "${SITE_URL}search-index.json" -o /dev/null -s; then
+              search_size=$(curl -s "${SITE_URL}search-index.json" | wc -c)
+              echo "Search index size: $search_size bytes"
+              echo "✅ Search functionality available"
+            else
+              echo "⚠️ Search index not accessible"
+            fi
+            
+          else
+            echo "❌ Site is not accessible"
+          fi
 
   # Preview job for pull requests
   preview:
