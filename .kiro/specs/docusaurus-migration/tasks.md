@@ -35,7 +35,9 @@
   - Ensure assets are accessible from both GitHub and Docusaurus
   - _Requirements: 2.3, 4.4_
 
-- [ ] 6. Create GitHub Actions workflow for automated deployment
+- [x] 6. Create GitHub Actions workflow for automated deployment
+
+
   - Create `.github/workflows/docs-deploy.yml` workflow file
   - Configure Node.js setup and dependency caching
   - Implement build process that works from `website/` directory

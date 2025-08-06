@@ -1,0 +1,321 @@
+name: Documentation Deployment
+
+"on":
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'website/**'
+      - '.github/workflows/docs-deploy.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'website/**'
+      - '.github/workflows/docs-deploy.yml'
+  workflow_dispatch: # Allow manual triggering
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build job
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history for better git info
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'website/package-lock.json'
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v4
+
+      - name: Install dependencies
+        working-directory: ./website
+        run: |
+          npm ci --prefer-offline --no-audit
+
+      - name: Validate documentation structure
+        run: |
+          echo "Validating documentation structure..."
+          
+          # Check that docs directory exists
+          if [ ! -d "docs" ]; then
+            echo "Error: docs/ directory not found"
+            exit 1
+          fi
+          
+          # Check for required documentation files
+          if [ ! -f "docs/index.md" ]; then
+            echo "Warning: docs/index.md not found - this should be the main documentation entry point"
+          fi
+          
+          # Count markdown files
+          md_count=$(find docs -name "*.md" -type f | wc -l)
+          echo "Found $md_count markdown files in docs/"
+          
+          if [ $md_count -eq 0 ]; then
+            echo "Error: No markdown files found in docs/ directory"
+            exit 1
+          fi
+          
+          echo "Documentation structure validation passed"
+
+      - name: Optional markdown transformation
+        id: transform
+        run: |
+          echo "Checking if markdown transformation is needed..."
+          
+          # Create transformation script if needed
+          cat > transform_docs.js << 'EOF'
+          const fs = require('fs');
+          const path = require('path');
+          
+          // Simple transformation function
+          function transformMarkdown(content, filePath) {
+            let transformed = content;
+            let hasChanges = false;
+            
+            // Example transformations (add more as needed):
+            
+            // 1. Fix relative links for Docusaurus routing
+            // Convert [text](../other-file.md) to [text](../other-file)
+            const linkRegex = /\[([^\]]+)\]\(([^)]+\.md)(#[^)]+)?\)/g;
+            transformed = transformed.replace(linkRegex, (match, text, link, anchor) => {
+              if (link.startsWith('http') || link.startsWith('mailto:')) {
+                return match; // Don't transform external links
+              }
+              hasChanges = true;
+              const newLink = link.replace(/\.md$/, '');
+              return `[${text}](${newLink}${anchor || ''})`;
+            });
+            
+            // 2. Ensure frontmatter exists for better Docusaurus integration
+            if (!transformed.startsWith('---')) {
+              const fileName = path.basename(filePath, '.md');
+              const title = fileName.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+              const frontmatter = `---
+          title: ${title}
+          ---
+          
+          `;
+              transformed = frontmatter + transformed;
+              hasChanges = true;
+            }
+            
+            return { content: transformed, hasChanges };
+          }
+          
+          // Find all markdown files using simple file system traversal
+          function findMarkdownFiles(dir) {
+            const files = [];
+            const items = fs.readdirSync(dir);
+            
+            for (const item of items) {
+              const fullPath = path.join(dir, item);
+              const stat = fs.statSync(fullPath);
+              
+              if (stat.isDirectory()) {
+                files.push(...findMarkdownFiles(fullPath));
+              } else if (item.endsWith('.md')) {
+                files.push(fullPath);
+              }
+            }
+            
+            return files;
+          }
+          
+          // Find all markdown files
+          const markdownFiles = findMarkdownFiles('docs');
+          let totalTransformed = 0;
+          
+          console.log(`Found ${markdownFiles.length} markdown files to check`);
+          
+          markdownFiles.forEach(filePath => {
+            try {
+              const content = fs.readFileSync(filePath, 'utf8');
+              const result = transformMarkdown(content, filePath);
+              
+              if (result.hasChanges) {
+                // Create backup
+                const backupPath = filePath + '.backup';
+                fs.writeFileSync(backupPath, content);
+                
+                // Write transformed content
+                fs.writeFileSync(filePath, result.content);
+                console.log(`Transformed: ${filePath}`);
+                totalTransformed++;
+              }
+            } catch (error) {
+              console.error(`Error processing ${filePath}:`, error.message);
+            }
+          });
+          
+          console.log(`Transformation complete: ${totalTransformed} files modified`);
+          EOF
+          
+          # Run transformation
+          echo "Running markdown transformations..."
+          node transform_docs.js
+          
+          echo "transformation_completed=true" >> $GITHUB_OUTPUT
+
+      - name: Build documentation site
+        working-directory: ./website
+        run: |
+          echo "Building Docusaurus documentation site..."
+          
+          # Set environment variables for build
+          export NODE_ENV=production
+          export DOCUSAURUS_SSR_CONCURRENCY=2
+          
+          # Build the site
+          npm run build
+          
+          echo "Build completed successfully"
+          
+          # Verify build output
+          if [ ! -d "build" ]; then
+            echo "Error: Build directory not found"
+            exit 1
+          fi
+          
+          # Check build size
+          build_size=$(du -sh build | cut -f1)
+          echo "Build size: $build_size"
+          
+          # List key files
+          echo "Build contents:"
+          ls -la build/
+
+      - name: Validate build output
+        working-directory: ./website
+        run: |
+          echo "Validating build output..."
+          
+          # Check for essential files
+          essential_files=("build/index.html" "build/404.html")
+          
+          for file in "${essential_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "Error: Essential file missing: $file"
+              exit 1
+            else
+              echo "Found: $file"
+            fi
+          done
+          
+          # Check for assets
+          if [ ! -d "build/assets" ]; then
+            echo "Warning: No assets directory found"
+          else
+            asset_count=$(find build/assets -type f | wc -l)
+            echo "Found $asset_count asset files"
+          fi
+          
+          # Validate HTML structure of index page
+          if command -v grep > /dev/null; then
+            if grep -q "<title>" build/index.html; then
+              echo "HTML structure looks valid"
+            else
+              echo "Warning: HTML structure may be incomplete"
+            fi
+          fi
+          
+          echo "Build validation completed"
+
+      - name: Upload build artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./website/build
+
+  # Deployment job (only runs on main branch)
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Preview job for pull requests
+  preview:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Comment PR with preview info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo, number } = context.issue;
+            
+            const comment = `## Documentation Preview
+            
+            The documentation build completed successfully! 
+            
+            **Build Summary:**
+            - Documentation files validated
+            - Docusaurus build successful
+            - Output validation passed
+            
+            **Note:** This is a pull request preview. The documentation will be deployed to GitHub Pages when merged to main.
+            
+            **Preview locally:**
+            \`\`\`bash
+            cd website
+            npm install
+            npm start
+            \`\`\`
+            
+            ---
+            *This comment was automatically generated by the documentation deployment workflow.*`;
+            
+            // Check if we already commented
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number: number,
+            });
+            
+            const existingComment = comments.data.find(comment => 
+              comment.body.includes('Documentation Preview')
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existingComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: number,
+                body: comment
+              });
+            }
