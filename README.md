@@ -3,6 +3,7 @@
 > **Professional AWS™ Cloud Governance Platform - Comprehensive resource inventory, compliance checking, and BOM generation**
 
 [![Automated Release](https://github.com/habhabhabs/inventag-aws/workflows/Automated%20Release/badge.svg)](https://github.com/habhabhabs/inventag-aws/actions)
+[![Documentation](https://github.com/habhabhabs/inventag-aws/workflows/Documentation%20Deployment/badge.svg)](https://habhabhabs.github.io/inventag-aws/)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -33,13 +34,26 @@ pip install -r requirements.txt
 
 ## 📖 Documentation
 
-- **[📖 Complete User Guide](docs/user-guides/CLI_USER_GUIDE.md)** - Comprehensive CLI reference and examples
-- **[🚀 Quick Start Guide](QUICKSTART.md)** - Get started in minutes
-- **[📋 Configuration Examples](examples/)** - Working configuration examples  
-- **[🛡️ Production Safety Guide](docs/user-guides/PRODUCTION_SAFETY.md)** - Security and compliance features
-- **[⚙️ Configuration Guide](docs/user-guides/CONFIGURATION_EXAMPLES.md)** - Setup and customization
-- **[🔧 Troubleshooting](docs/user-guides/TROUBLESHOOTING_GUIDE.md)** - Common issues and solutions
-- **[📚 All Documentation](docs/README.md)** - Complete documentation index
+> **🌟 NEW: [Visit our comprehensive documentation site →](https://habhabhabs.github.io/inventag-aws/)**
+>
+> We've migrated to a modern documentation platform with enhanced search, mobile-responsive design, and improved navigation. The documentation is automatically deployed from the `docs/` directory and stays synchronized with GitHub.
+
+### Quick Links
+
+- **[📖 User Guides](https://habhabhabs.github.io/inventag-aws/user-guides/cli-user-guide)** - CLI reference and examples
+- **[🚀 Getting Started](https://habhabhabs.github.io/inventag-aws/getting-started/quick-start)** - Installation and quick start
+- **[📋 Configuration Examples](https://habhabhabs.github.io/inventag-aws/user-guides/configuration-examples)** - Working configuration examples
+- **[🛡️ Production Safety](https://habhabhabs.github.io/inventag-aws/user-guides/production-safety)** - Security and compliance features
+- **[🏗️ Architecture](https://habhabhabs.github.io/inventag-aws/architecture/core-module-integration)** - System architecture and design
+- **[🔧 Development](https://habhabhabs.github.io/inventag-aws/development/CONTRIBUTING)** - Contributing guide
+
+### Legacy Documentation
+
+For offline reference, documentation is also available in the `docs/` directory:
+
+- **[CLI User Guide](docs/user-guides/cli-user-guide.md)** - Local CLI reference
+- **[Quick Start Guide](docs/getting-started/quick-start.md)** - Local installation guide
+- **[All Local Documentation](docs/)** - Complete documentation directory
 
 ## 💼 Enterprise Examples
 
@@ -99,7 +113,7 @@ InvenTag includes enterprise-grade security features:
 - **Risk Assessment** - Automated security risk evaluation
 - **Production Safety** - Real-time monitoring and validation
 
-See [Production Safety Guide](docs/user-guides/PRODUCTION_SAFETY.md) for complete details.
+See [Production Safety Guide](https://habhabhabs.github.io/inventag-aws/user-guides/production-safety) for complete details.
 
 ## 🔗 Support & Community
 
