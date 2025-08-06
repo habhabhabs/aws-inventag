@@ -80,7 +80,37 @@ const config = {
     ],
   ],
 
-  // Plugins will be configured in later tasks for search functionality
+  // Plugins for enhanced functionality
+  plugins: [
+    [
+      '@easyops-cn/docusaurus-search-local',
+      /** @type {any} */
+      ({
+        // Whether to index docs pages
+        indexDocs: true,
+        // Whether to index blog posts  
+        indexBlog: false,
+        // Whether to index static pages
+        indexPages: false,
+        // Language of the documentation
+        language: 'en',
+        // Enable search bar keyboard shortcuts
+        searchBarShortcut: true,
+        searchBarShortcutHint: true,
+        // Highlight search terms on target page
+        highlightSearchTermsOnTargetPage: true,
+        // Search result limits and context - optimized for technical docs
+        searchResultLimits: 12,
+        searchResultContextMaxLength: 80,
+        // Remove default stopwords for better AWS/technical term search
+        removeDefaultStopWordFilter: true,
+        // Set docs route base path
+        docsRouteBasePath: '/',
+        // Include more context in search results
+        explicitSearchResultPath: true,
+      }),
+    ],
+  ],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
