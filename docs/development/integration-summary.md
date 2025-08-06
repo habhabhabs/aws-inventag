@@ -134,7 +134,7 @@ python bom_converter.py --input inventory.json --output report.xlsx --enable-adv
 
 ### Demo Scripts ✅
 - `test_integration.py`: Automated integration testing
-- `demo_integration_workflow.py`: Interactive demonstration
+- `examples/demo_integration_workflow.py`: Interactive demonstration
 - Real-world scenario simulation with sample data
 
 ## Documentation Created
