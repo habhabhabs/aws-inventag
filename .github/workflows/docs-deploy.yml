@@ -79,106 +79,68 @@ jobs:
           
           echo "Documentation structure validation passed"
 
-      - name: Optional markdown transformation
+      - name: Run documentation transformation pipeline
         id: transform
         run: |
-          echo "Checking if markdown transformation is needed..."
+          echo "Running comprehensive documentation transformation pipeline..."
           
-          # Create transformation script if needed
-          cat > transform_docs.js << 'EOF'
-          const fs = require('fs');
-          const path = require('path');
+          # Set environment variables for transformation
+          export VERBOSE=true
+          export DRY_RUN=false
           
-          // Simple transformation function
-          function transformMarkdown(content, filePath) {
-            let transformed = content;
-            let hasChanges = false;
-            
-            // Example transformations (add more as needed):
-            
-            // 1. Fix relative links for Docusaurus routing
-            // Convert [text](../other-file.md) to [text](../other-file)
-            const linkRegex = /\[([^\]]+)\]\(([^)]+\.md)(#[^)]+)?\)/g;
-            transformed = transformed.replace(linkRegex, (match, text, link, anchor) => {
-              if (link.startsWith('http') || link.startsWith('mailto:')) {
-                return match; // Don't transform external links
-              }
-              hasChanges = true;
-              const newLink = link.replace(/\.md$/, '');
-              return `[${text}](${newLink}${anchor || ''})`;
-            });
-            
-            // 2. Ensure frontmatter exists for better Docusaurus integration
-            if (!transformed.startsWith('---')) {
-              const fileName = path.basename(filePath, '.md');
-              const title = fileName.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-              const frontmatter = `---
-          title: ${title}
-          ---
+          # Run the transformation pipeline
+          node scripts/transform-docs.js
           
-          `;
-              transformed = frontmatter + transformed;
-              hasChanges = true;
-            }
-            
-            return { content: transformed, hasChanges };
-          }
+          # Check if any files were transformed
+          if [ -f "transform.log" ]; then
+            echo "Transformation log created"
+            if grep -q "files transformed:" transform.log; then
+              transformed_count=$(grep "files transformed:" transform.log | grep -o '[0-9]\+' | head -1)
+              echo "transformation_count=$transformed_count" >> $GITHUB_OUTPUT
+              echo "transformation_completed=true" >> $GITHUB_OUTPUT
+            else
+              echo "transformation_count=0" >> $GITHUB_OUTPUT
+              echo "transformation_completed=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "transformation_count=0" >> $GITHUB_OUTPUT
+            echo "transformation_completed=false" >> $GITHUB_OUTPUT
+          fi
           
-          // Find all markdown files using simple file system traversal
-          function findMarkdownFiles(dir) {
-            const files = [];
-            const items = fs.readdirSync(dir);
-            
-            for (const item of items) {
-              const fullPath = path.join(dir, item);
-              const stat = fs.statSync(fullPath);
-              
-              if (stat.isDirectory()) {
-                files.push(...findMarkdownFiles(fullPath));
-              } else if (item.endsWith('.md')) {
-                files.push(fullPath);
-              }
-            }
-            
-            return files;
-          }
-          
-          // Find all markdown files
-          const markdownFiles = findMarkdownFiles('docs');
-          let totalTransformed = 0;
-          
-          console.log(`Found ${markdownFiles.length} markdown files to check`);
-          
-          markdownFiles.forEach(filePath => {
-            try {
-              const content = fs.readFileSync(filePath, 'utf8');
-              const result = transformMarkdown(content, filePath);
-              
-              if (result.hasChanges) {
-                // Create backup
-                const backupPath = filePath + '.backup';
-                fs.writeFileSync(backupPath, content);
-                
-                // Write transformed content
-                fs.writeFileSync(filePath, result.content);
-                console.log(`Transformed: ${filePath}`);
-                totalTransformed++;
-              }
-            } catch (error) {
-              console.error(`Error processing ${filePath}:`, error.message);
-            }
-          });
-          
-          console.log(`Transformation complete: ${totalTransformed} files modified`);
-          EOF
-          
-          # Run transformation
-          echo "Running markdown transformations..."
-          node transform_docs.js
-          
-          echo "transformation_completed=true" >> $GITHUB_OUTPUT
+          # Display transformation summary
+          if [ -f "transform.log" ]; then
+            echo "=== Transformation Summary ==="
+            tail -20 transform.log
+          fi
 
-      - name: Build documentation site
+      - name: Validate transformed documentation
+        run: |
+          echo "Validating documentation structure and content..."
+          
+          # Run migration-friendly validation (tolerant of expected migration issues)
+          export VERBOSE=true
+          node scripts/validate-docs-migration.js
+          
+          # Check validation results
+          validation_exit_code=$?
+          
+          if [ $validation_exit_code -eq 0 ]; then
+            echo "✅ Documentation validation passed"
+            echo "validation_passed=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Documentation validation failed with critical errors"
+            echo "validation_passed=false" >> $GITHUB_OUTPUT
+            
+            # In non-strict mode, continue with warnings for PR preview
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              echo "⚠️ Continuing with validation warnings for PR preview"
+            else
+              echo "🛑 Stopping deployment due to critical validation errors"
+              exit 1
+            fi
+          fi
+
+      - name: Build documentation site with fallback
         working-directory: ./website
         run: |
           echo "Building Docusaurus documentation site..."
@@ -187,8 +149,49 @@ jobs:
           export NODE_ENV=production
           export DOCUSAURUS_SSR_CONCURRENCY=2
           
-          # Build the site
-          npm run build
+          # Attempt to build the site
+          build_success=false
+          
+          echo "Attempting primary build..."
+          if npm run build; then
+            echo "✅ Primary build successful"
+            build_success=true
+          else
+            echo "❌ Primary build failed, attempting fallback..."
+            
+            # Fallback strategy: restore from backups if they exist
+            if [ -d "../.docs-backup" ]; then
+              echo "Restoring documentation from backup..."
+              
+              # Restore files from backup
+              find ../.docs-backup -name "*.md" -type f | while read backup_file; do
+                relative_path=${backup_file#../.docs-backup/}
+                original_path="../docs/$relative_path"
+                
+                if [ -f "$backup_file" ]; then
+                  mkdir -p "$(dirname "$original_path")"
+                  cp "$backup_file" "$original_path"
+                  echo "Restored: $original_path"
+                fi
+              done
+              
+              echo "Attempting build with restored files..."
+              if npm run build; then
+                echo "✅ Fallback build successful"
+                build_success=true
+              else
+                echo "❌ Fallback build also failed"
+              fi
+            else
+              echo "No backup available for fallback"
+            fi
+          fi
+          
+          # Check if build was successful
+          if [ "$build_success" = false ]; then
+            echo "🛑 All build attempts failed"
+            exit 1
+          fi
           
           echo "Build completed successfully"
           
@@ -242,10 +245,36 @@ jobs:
           
           echo "Build validation completed"
 
+      - name: Run documentation health monitoring
+        run: |
+          echo "Running comprehensive documentation health monitoring..."
+          
+          # Set environment variables
+          export VERBOSE=true
+          
+          # Run health monitoring
+          node scripts/monitor-docs.js
+          
+          # Upload monitoring results as artifacts
+          if [ -d ".docs-logs" ]; then
+            echo "Monitoring logs created"
+            ls -la .docs-logs/
+          fi
+
       - name: Upload build artifacts
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./website/build
+
+      - name: Upload monitoring logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-logs
+          path: |
+            transform.log
+            .docs-logs/
+          retention-days: 30
 
   # Deployment job (only runs on main branch)
   deploy:

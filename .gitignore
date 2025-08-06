@@ -134,6 +134,11 @@ export_*.yaml
 logs/
 log/
 
+# Documentation transformation pipeline files (temporary)
+.docs-backup/
+.docs-logs/
+transform.log
+
 # Backup files
 *.bak
 *.backup
