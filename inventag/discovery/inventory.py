@@ -85,17 +85,30 @@ class AWSResourceInventory:
         if self.enable_billing_validation:
             self._validate_discovery_with_billing()
         
-        # Step 4: Fallback to legacy service-specific discovery if needed
-        if rgt_resource_count < 10:  # If RGT API found very few resources, use fallback
-            self.logger.warning("ResourceGroupsTagging API found few resources. Using fallback service-specific discovery.")
-            self._discover_legacy_service_resources()
-        else:
-            # Step 4a: Enhance existing resources with service-specific details
-            self._discover_service_specific_resources()
+        # Step 4: Dynamic discovery based on billing validation
+        discovered_service_names = set(resource.get("service", "").upper() for resource in self.resources)
         
-        # Step 5: Fill gaps using billing-validated services
-        if self.enable_billing_validation:
-            self._discover_missing_billing_services()
+        # For services with billing usage but no discovered resources, try dynamic discovery
+        if self.enable_billing_validation and hasattr(self, 'billing_spend_by_service'):
+            undiscovered_services = set(self.billing_spend_by_service.keys()) - discovered_service_names
+            if undiscovered_services:
+                self.logger.info(f"Attempting dynamic discovery for {len(undiscovered_services)} services with billing usage")
+                for service_name in list(undiscovered_services)[:10]:  # Limit to avoid too many API calls
+                    try:
+                        self._discover_service_by_name(service_name)
+                    except Exception as e:
+                        self.logger.warning(f"Dynamic discovery failed for {service_name}: {e}")
+        
+        # Step 5: If still very few resources, try basic service discovery
+        total_resources_after_dynamic = len(self.resources)
+        if total_resources_after_dynamic < 10:
+            self.logger.warning("Still few resources after dynamic discovery. Trying basic services.")
+            basic_services = ['EC2', 'S3', 'RDS', 'Lambda', 'CloudWatch', 'IAM']
+            for service in basic_services:
+                try:
+                    self._discover_service_by_name(service)
+                except Exception as e:
+                    self.logger.debug(f"Basic discovery failed for {service}: {e}")
         
         # Step 6: Remove duplicates based on ARN
         self._deduplicate_resources()
@@ -338,38 +351,23 @@ class AWSResourceInventory:
                 self.logger.warning(f"Failed to discover resources for {service}: {e}")
 
     def _discover_service_by_name(self, service_name: str):
-        """Attempt to discover resources for a specific service by name."""
-        service_upper = service_name.upper()
+        """Dynamically discover resources for a service using generic AWS API calls."""
+        service_normalized = self._normalize_service_name(service_name.lower())
         
-        # Map service names to discovery methods
-        service_discovery_methods = {
-            'RDS': self._discover_rds_comprehensive,
-            'DYNAMODB': self._discover_dynamodb_resources,
-            'ELASTICACHE': self._discover_elasticache_resources,
-            'REDSHIFT': self._discover_redshift_resources,
-            'ELB': self._discover_elb_resources,
-            'ALB': self._discover_elb_resources,
-            'NLB': self._discover_elb_resources,
-            'APIGATEWAY': self._discover_apigateway_resources,
-            'SNS': self._discover_sns_resources,
-            'SQS': self._discover_sqs_resources,
-            'KINESIS': self._discover_kinesis_resources,
-            'STEPFUNCTIONS': self._discover_stepfunctions_resources,
-            'SECRETSMANAGER': self._discover_secretsmanager_resources,
-            'SSM': self._discover_ssm_resources,
-            'ROUTE53': self._discover_route53_resources,
-            'CLOUDFRONT': self._discover_cloudfront_resources,
-            'ACM': self._discover_acm_resources,
-            'WAF': self._discover_waf_resources,
-        }
+        # Get the AWS service client name from the service name
+        service_client_name = self._get_service_client_name(service_name)
         
-        if service_upper in service_discovery_methods:
-            method = service_discovery_methods[service_upper]
-            for region in self.regions:
-                try:
-                    method(region)
-                except Exception as e:
-                    self.logger.warning(f"Failed to discover {service_name} in {region}: {e}")
+        if not service_client_name:
+            self.logger.debug(f"No client mapping found for service: {service_name}")
+            return
+            
+        self.logger.info(f"Attempting dynamic discovery for service: {service_normalized} (client: {service_client_name})")
+        
+        for region in self.regions:
+            try:
+                self._discover_service_dynamically(service_client_name, service_normalized, region)
+            except Exception as e:
+                self.logger.warning(f"Dynamic discovery failed for {service_name} in {region}: {e}")
 
     def _get_discovered_services(self) -> Set[str]:
         """Get set of services that have been discovered."""
@@ -427,9 +425,10 @@ class AWSResourceInventory:
                                     for tag in resource.get("Tags", [])
                                 }
                                 
-                                # Create resource entry
+                                # Create resource entry with normalized service name
+                                normalized_service = self._normalize_service_name(service)
                                 resource_entry = {
-                                    "service": service.upper(),
+                                    "service": normalized_service,
                                     "type": self._normalize_resource_type(service, resource_type),
                                     "region": region_from_arn,
                                     "id": resource_id,
@@ -466,6 +465,403 @@ class AWSResourceInventory:
                     self.logger.warning(f"ResourceGroupsTagging API failed in region {region}: {e}")
             except Exception as e:
                 self.logger.warning(f"ResourceGroupsTagging API failed in region {region}: {e}")
+
+    def _normalize_service_name(self, service: str) -> str:
+        """Normalize service names for consistent display across discovery methods."""
+        # Mapping from AWS service identifiers to consistent display names
+        service_normalizations = {
+            # Compute
+            'ec2': 'EC2',
+            'lambda': 'Lambda',
+            'ecs': 'ECS',
+            'eks': 'EKS',
+            'batch': 'Batch',
+            'elasticbeanstalk': 'Elastic Beanstalk',
+            
+            # Storage
+            's3': 'S3',
+            'ebs': 'EBS',
+            'efs': 'EFS',
+            'fsx': 'FSx',
+            
+            # Database
+            'rds': 'RDS',
+            'dynamodb': 'DynamoDB',
+            'elasticache': 'ElastiCache',
+            'redshift': 'Redshift',
+            'neptune': 'Neptune',
+            'documentdb': 'DocumentDB',
+            
+            # Networking
+            'vpc': 'VPC',
+            'elb': 'ELB',
+            'elbv2': 'ELB',
+            'cloudfront': 'CloudFront',
+            'route53': 'Route 53',
+            'directconnect': 'Direct Connect',
+            'apigateway': 'API Gateway',
+            'apigatewayv2': 'API Gateway',
+            
+            # Security & Identity
+            'iam': 'IAM',
+            'cognito-idp': 'Cognito',
+            'cognito-identity': 'Cognito',
+            'secretsmanager': 'Secrets Manager',
+            'acm': 'ACM',
+            'kms': 'KMS',
+            'keymanagementservice': 'KMS',
+            'waf': 'WAF',
+            'wafv2': 'WAF',
+            'shield': 'Shield',
+            
+            # Management & Governance  
+            'cloudwatch': 'CloudWatch',
+            'amazoncloudwatch': 'CloudWatch',
+            'cloudwatchevents': 'CloudWatch Events',
+            'cloudformation': 'CloudFormation',
+            'cloudtrail': 'CloudTrail',
+            'config': 'Config',
+            'organizations': 'Organizations',
+            'ssm': 'Systems Manager',
+            
+            # Developer Tools
+            'codecommit': 'CodeCommit',
+            'codebuild': 'CodeBuild',
+            'codepipeline': 'CodePipeline',
+            'codedeploy': 'CodeDeploy',
+            
+            # Application Integration
+            'sns': 'SNS',
+            'sqs': 'SQS',
+            'kinesis': 'Kinesis',
+            'stepfunctions': 'Step Functions',
+            
+            # Analytics
+            'glue': 'Glue',
+            'athena': 'Athena',
+            'quicksight': 'QuickSight',
+            'elasticsearch': 'Elasticsearch',
+            
+            # Machine Learning
+            'sagemaker': 'SageMaker',
+            'rekognition': 'Rekognition',
+            'comprehend': 'Comprehend',
+            'translate': 'Translate',
+        }
+        
+        service_lower = service.lower()
+        return service_normalizations.get(service_lower, service.upper())
+
+    def _get_service_client_name(self, service_name: str) -> Optional[str]:
+        """Map service names to boto3 client names for dynamic discovery."""
+        service_lower = service_name.lower()
+        
+        # Mapping from service identifiers to boto3 client names
+        service_client_mapping = {
+            # Core services
+            'ec2': 'ec2',
+            'lambda': 'lambda',
+            's3': 's3',
+            'rds': 'rds',
+            'dynamodb': 'dynamodb',
+            'iam': 'iam',
+            'vpc': 'ec2',
+            
+            # Management & Governance
+            'cloudwatch': 'cloudwatch',
+            'amazoncloudwatch': 'cloudwatch',
+            'cloudwatchevents': 'events',
+            'cloudtrail': 'cloudtrail', 
+            'cloudformation': 'cloudformation',
+            'config': 'config',
+            'ssm': 'ssm',
+            'organizations': 'organizations',
+            
+            # Security & Identity
+            'acm': 'acm',
+            'kms': 'kms',
+            'keymanagementservice': 'kms',
+            'secretsmanager': 'secretsmanager',
+            'waf': 'waf',
+            'wafv2': 'wafv2',
+            'shield': 'shield',
+            
+            # Storage
+            'efs': 'efs',
+            'fsx': 'fsx',
+            'backup': 'backup',
+            
+            # Database
+            'elasticache': 'elasticache',
+            'redshift': 'redshift',
+            'neptune': 'neptune',
+            'docdb': 'docdb',
+            'documentdb': 'docdb',
+            
+            # Networking
+            'elb': 'elbv2',
+            'elbv2': 'elbv2',
+            'route53': 'route53',
+            'cloudfront': 'cloudfront',
+            'directconnect': 'directconnect',
+            'apigateway': 'apigateway',
+            'apigatewayv2': 'apigatewayv2',
+            
+            # Application Integration
+            'sns': 'sns',
+            'sqs': 'sqs',
+            'kinesis': 'kinesis',
+            'stepfunctions': 'stepfunctions',
+            
+            # Analytics
+            'glue': 'glue',
+            'athena': 'athena',
+            'quicksight': 'quicksight',
+            'elasticsearch': 'es',
+            'opensearch': 'opensearch',
+            
+            # Compute
+            'ecs': 'ecs',
+            'eks': 'eks',
+            'batch': 'batch',
+            'elasticbeanstalk': 'elasticbeanstalk',
+            
+            # Machine Learning
+            'sagemaker': 'sagemaker',
+            'rekognition': 'rekognition',
+            'comprehend': 'comprehend',
+            'translate': 'translate',
+            
+            # Developer Tools
+            'codecommit': 'codecommit',
+            'codebuild': 'codebuild',
+            'codepipeline': 'codepipeline',
+            'codedeploy': 'codedeploy',
+            
+            # Business Applications
+            'workmail': 'workmail',
+            'amazonworkmail': 'workmail',
+            'connect': 'connect',
+            'chime': 'chime',
+            
+            # Other
+            'support': 'support',
+            'trustedadvisor': 'support',
+        }
+        
+        return service_client_mapping.get(service_lower)
+
+    def _discover_service_dynamically(self, client_name: str, service_display_name: str, region: str):
+        """Dynamically discover resources for a service using its AWS API."""
+        try:
+            client = self.session.client(client_name, region_name=region)
+            
+            # Get all available operations for this client
+            available_operations = client._service_model.operation_names
+            
+            # Common list operations that typically return resources
+            list_operations = [
+                op for op in available_operations 
+                if op.startswith(('List', 'Describe', 'Get')) and 
+                not any(skip in op for skip in ['Policy', 'Version', 'Status', 'Health', 'Metrics'])
+            ]
+            
+            # Priority list operations (most likely to return actual resources)
+            priority_operations = [
+                op for op in list_operations
+                if any(keyword in op for keyword in [
+                    'List', 'DescribeInstances', 'DescribeVolumes', 'DescribeClusters',
+                    'DescribeServices', 'DescribeTables', 'DescribeBuckets', 'DescribeFunctions',
+                    'DescribeStacks', 'DescribeAlarms', 'DescribeRules', 'DescribeKeys',
+                    'DescribeCertificates', 'DescribeQueues', 'DescribeTopics'
+                ])
+            ]
+            
+            operations_to_try = priority_operations[:5] if priority_operations else list_operations[:3]
+            
+            self.logger.debug(f"Trying {len(operations_to_try)} operations for {service_display_name} in {region}")
+            
+            for operation_name in operations_to_try:
+                try:
+                    self._call_operation_and_extract_resources(
+                        client, operation_name, service_display_name, region
+                    )
+                except Exception as e:
+                    self.logger.debug(f"Operation {operation_name} failed for {service_display_name}: {e}")
+                    continue
+                    
+        except Exception as e:
+            self.logger.warning(f"Failed to create client for {client_name} in {region}: {e}")
+
+    def _call_operation_and_extract_resources(self, client, operation_name: str, service_name: str, region: str):
+        """Call an AWS API operation and generically extract resource information."""
+        try:
+            # Get the operation model to understand parameters
+            operation_model = client._service_model.operation_model(operation_name)
+            
+            # For now, try calling with no parameters (most list operations don't require them)
+            operation = getattr(client, operation_name)
+            
+            # Handle paginated operations
+            if hasattr(client, 'get_paginator'):
+                try:
+                    paginator = client.get_paginator(operation_name)
+                    response_data = []
+                    for page in paginator.paginate():
+                        response_data.append(page)
+                except:
+                    # Fallback to direct call
+                    response_data = [operation()]
+            else:
+                response_data = [operation()]
+            
+            # Extract resources from the response
+            for response in response_data:
+                self._extract_resources_from_response(response, service_name, region, operation_name)
+                
+        except Exception as e:
+            # Don't log every failed operation as it's expected for some services
+            raise
+
+    def _extract_resources_from_response(self, response: dict, service_name: str, region: str, operation_name: str):
+        """Extract resource information from AWS API response generically."""
+        if not isinstance(response, dict):
+            return
+            
+        # Common response keys that contain resource lists
+        resource_list_keys = [
+            # Generic patterns
+            key for key in response.keys() 
+            if any(pattern in key for pattern in [
+                'List', 'Items', 'Resources', 'Results', 'Stacks', 'Instances', 
+                'Volumes', 'Buckets', 'Functions', 'Tables', 'Clusters', 'Services',
+                'Alarms', 'Rules', 'Keys', 'Certificates', 'Queues', 'Topics',
+                'Databases', 'Snapshots', 'Images', 'Groups', 'Policies'
+            ])
+        ]
+        
+        for key in resource_list_keys:
+            resource_list = response.get(key, [])
+            if isinstance(resource_list, list):
+                for resource_data in resource_list:
+                    if isinstance(resource_data, dict):
+                        self._create_resource_from_api_data(
+                            resource_data, service_name, region, operation_name, key
+                        )
+
+    def _create_resource_from_api_data(self, resource_data: dict, service_name: str, region: str, operation_name: str, list_key: str):
+        """Create a standardized resource entry from AWS API data."""
+        try:
+            # Extract common fields that most AWS resources have
+            resource_id = self._extract_resource_id(resource_data)
+            resource_name = self._extract_resource_name(resource_data)
+            resource_arn = resource_data.get('Arn') or resource_data.get('ARN') or ''
+            
+            if not resource_id:
+                return  # Skip if we can't identify the resource
+            
+            # Determine resource type from the operation name and data
+            resource_type = self._determine_resource_type(operation_name, list_key, resource_data)
+            
+            # Extract tags if present
+            tags = self._extract_tags(resource_data)
+            
+            # Create the standardized resource entry
+            resource_entry = {
+                'service': service_name,
+                'type': resource_type,
+                'region': region,
+                'id': resource_id,
+                'name': resource_name or resource_id,
+                'arn': resource_arn,
+                'tags': tags,
+                'discovered_via': 'DynamicDiscovery',
+                'api_operation': operation_name,
+                'discovered_at': datetime.utcnow().isoformat(),
+                'raw_data': resource_data  # Include raw data for debugging/enhancement
+            }
+            
+            self.resources.append(resource_entry)
+            
+        except Exception as e:
+            self.logger.debug(f"Failed to create resource from API data: {e}")
+
+    def _extract_resource_id(self, resource_data: dict) -> Optional[str]:
+        """Extract resource ID from AWS API response data."""
+        # Common ID fields in AWS API responses
+        id_fields = [
+            'Id', 'ResourceId', 'InstanceId', 'VolumeId', 'ClusterId', 'ServiceName',
+            'FunctionName', 'TableName', 'BucketName', 'StackName', 'AlarmName',
+            'RuleName', 'KeyId', 'CertificateArn', 'QueueUrl', 'TopicArn', 'Name',
+            'DBInstanceIdentifier', 'DBClusterIdentifier', 'UserPoolId', 'RestApiId'
+        ]
+        
+        for field in id_fields:
+            if field in resource_data and resource_data[field]:
+                return str(resource_data[field])
+        
+        # Fallback: use the first string field as ID
+        for key, value in resource_data.items():
+            if isinstance(value, str) and len(value) > 0 and len(value) < 200:
+                return value
+                
+        return None
+
+    def _extract_resource_name(self, resource_data: dict) -> Optional[str]:
+        """Extract resource name from AWS API response data."""
+        name_fields = ['Name', 'ResourceName', 'DisplayName', 'Title', 'Label']
+        
+        for field in name_fields:
+            if field in resource_data and resource_data[field]:
+                return str(resource_data[field])
+        
+        return None
+
+    def _determine_resource_type(self, operation_name: str, list_key: str, resource_data: dict) -> str:
+        """Determine resource type from operation name and response data."""
+        # Extract type from operation name
+        if operation_name.startswith('Describe'):
+            type_from_op = operation_name[8:]  # Remove 'Describe'
+        elif operation_name.startswith('List'):
+            type_from_op = operation_name[4:]   # Remove 'List'
+        elif operation_name.startswith('Get'):
+            type_from_op = operation_name[3:]   # Remove 'Get'
+        else:
+            type_from_op = operation_name
+        
+        # Clean up the type name
+        type_from_op = type_from_op.rstrip('s')  # Remove plural 's'
+        
+        # Check if resource_data has a Type field
+        if 'Type' in resource_data:
+            return resource_data['Type']
+        elif 'ResourceType' in resource_data:
+            return resource_data['ResourceType']
+        
+        return type_from_op
+
+    def _extract_tags(self, resource_data: dict) -> dict:
+        """Extract tags from AWS API response data."""
+        tags = {}
+        
+        # Different tag formats in AWS APIs
+        if 'Tags' in resource_data:
+            tag_data = resource_data['Tags']
+            if isinstance(tag_data, list):
+                # List of {"Key": "key", "Value": "value"} format
+                for tag in tag_data:
+                    if isinstance(tag, dict) and 'Key' in tag and 'Value' in tag:
+                        tags[tag['Key']] = tag['Value']
+            elif isinstance(tag_data, dict):
+                # Direct key-value mapping
+                tags.update(tag_data)
+        
+        elif 'TagList' in resource_data:
+            for tag in resource_data.get('TagList', []):
+                if isinstance(tag, dict) and 'Key' in tag and 'Value' in tag:
+                    tags[tag['Key']] = tag['Value']
+        
+        return tags
 
     def _normalize_resource_type(self, service: str, resource_type: str) -> str:
         """Normalize resource type names for consistent display."""
@@ -588,7 +984,7 @@ class AWSResourceInventory:
             if "EKS" in discovered_services:
                 self._enhance_eks_resources(region)
             if "CLOUDWATCH" in discovered_services:
-                self._enhance_cloudwatch_resources(region)
+                self._discover_cloudwatch_resources(region)
 
     def _deduplicate_resources(self):
         """Remove duplicate resources based on ARN."""
@@ -649,7 +1045,7 @@ class AWSResourceInventory:
         
     def _discover_cloudwatch_resources_legacy(self, region: str):
         """Legacy CloudWatch resource discovery method."""
-        return self._enhance_cloudwatch_resources(region)
+        return self._discover_cloudwatch_resources(region)
 
     # Additional service discovery methods for billing-validated services
     def _discover_rds_comprehensive(self, region: str):
@@ -1479,8 +1875,8 @@ class AWSResourceInventory:
         except ClientError as e:
             self.logger.warning(f"Failed to discover EKS resources in {region}: {e}")
 
-    def _enhance_cloudwatch_resources(self, region: str):
-        """Enhance CloudWatch resources with additional details from CloudWatch API."""
+    def _discover_cloudwatch_resources(self, region: str):
+        """Discover CloudWatch resources using CloudWatch API."""
         try:
             cw = self.session.client("cloudwatch", region_name=region)
 
@@ -1513,6 +1909,163 @@ class AWSResourceInventory:
             if tag["Key"] == key:
                 return tag["Value"]
         return None
+
+    def _discover_cloudtrail_resources(self, region: str):
+        """Discover CloudTrail resources."""
+        try:
+            client = self.session.client('cloudtrail', region_name=region)
+            
+            # CloudTrail trails
+            trails_response = client.describe_trails()
+            for trail in trails_response['trailList']:
+                self.resources.append({
+                    'service': 'CloudTrail',
+                    'type': 'Trail',
+                    'region': region,
+                    'id': trail['Name'],
+                    'name': trail['Name'],
+                    'arn': trail.get('TrailARN', ''),
+                    'home_region': trail.get('HomeRegion', ''),
+                    'is_multi_region': trail.get('IncludeGlobalServiceEvents', False),
+                    'discovered_at': datetime.utcnow().isoformat(),
+                })
+                
+        except ClientError as e:
+            self.logger.warning(f"Failed to discover CloudTrail resources in {region}: {e}")
+
+    def _discover_kms_resources(self, region: str):
+        """Discover KMS resources."""
+        try:
+            client = self.session.client('kms', region_name=region)
+            
+            # KMS keys
+            keys_response = client.list_keys()
+            for key in keys_response['Keys']:
+                try:
+                    key_details = client.describe_key(KeyId=key['KeyId'])
+                    key_metadata = key_details['KeyMetadata']
+                    
+                    self.resources.append({
+                        'service': 'KMS',
+                        'type': 'Key',
+                        'region': region,
+                        'id': key['KeyId'],
+                        'name': key_metadata.get('Description', ''),
+                        'arn': key_metadata.get('Arn', ''),
+                        'key_usage': key_metadata.get('KeyUsage', ''),
+                        'key_state': key_metadata.get('KeyState', ''),
+                        'discovered_at': datetime.utcnow().isoformat(),
+                    })
+                except ClientError as key_error:
+                    # Skip keys we can't access
+                    continue
+                    
+        except ClientError as e:
+            self.logger.warning(f"Failed to discover KMS resources in {region}: {e}")
+
+    def _discover_glue_resources(self, region: str):
+        """Discover Glue resources."""
+        try:
+            client = self.session.client('glue', region_name=region)
+            
+            # Glue databases
+            try:
+                databases_response = client.get_databases()
+                for database in databases_response['DatabaseList']:
+                    self.resources.append({
+                        'service': 'Glue',
+                        'type': 'Database',
+                        'region': region,
+                        'id': database['Name'],
+                        'name': database['Name'],
+                        'description': database.get('Description', ''),
+                        'discovered_at': datetime.utcnow().isoformat(),
+                    })
+            except ClientError:
+                pass  # Skip if no permissions
+                
+            # Glue tables
+            try:
+                tables_response = client.get_tables()
+                for table in tables_response['TableList']:
+                    self.resources.append({
+                        'service': 'Glue',
+                        'type': 'Table',
+                        'region': region,
+                        'id': table['Name'],
+                        'name': table['Name'],
+                        'database': table.get('DatabaseName', ''),
+                        'discovered_at': datetime.utcnow().isoformat(),
+                    })
+            except ClientError:
+                pass  # Skip if no permissions
+                
+        except ClientError as e:
+            self.logger.warning(f"Failed to discover Glue resources in {region}: {e}")
+
+    def _discover_cloudwatch_events_resources(self, region: str):
+        """Discover CloudWatch Events resources."""
+        try:
+            client = self.session.client('events', region_name=region)
+            
+            # EventBridge rules
+            rules_response = client.list_rules()
+            for rule in rules_response['Rules']:
+                self.resources.append({
+                    'service': 'CloudWatch Events',
+                    'type': 'Rule',
+                    'region': region,
+                    'id': rule['Name'],
+                    'name': rule['Name'],
+                    'arn': rule.get('Arn', ''),
+                    'state': rule.get('State', ''),
+                    'description': rule.get('Description', ''),
+                    'discovered_at': datetime.utcnow().isoformat(),
+                })
+                
+            # Event buses
+            buses_response = client.list_event_buses()
+            for bus in buses_response['EventBuses']:
+                self.resources.append({
+                    'service': 'CloudWatch Events',
+                    'type': 'Event Bus',
+                    'region': region,
+                    'id': bus['Name'],
+                    'name': bus['Name'],
+                    'arn': bus.get('Arn', ''),
+                    'discovered_at': datetime.utcnow().isoformat(),
+                })
+                
+        except ClientError as e:
+            self.logger.warning(f"Failed to discover CloudWatch Events resources in {region}: {e}")
+
+    def _discover_workmail_resources(self, region: str):
+        """Discover WorkMail resources."""
+        try:
+            client = self.session.client('workmail', region_name=region)
+            
+            # WorkMail organizations
+            try:
+                orgs_response = client.list_organizations()
+                for org in orgs_response['OrganizationSummaries']:
+                    self.resources.append({
+                        'service': 'WorkMail',
+                        'type': 'Organization',
+                        'region': region,
+                        'id': org['OrganizationId'],
+                        'name': org.get('Alias', org['OrganizationId']),
+                        'state': org.get('State', ''),
+                        'discovered_at': datetime.utcnow().isoformat(),
+                    })
+            except ClientError as e:
+                if e.response.get('Error', {}).get('Code') == 'OrganizationNotFoundException':
+                    # No WorkMail organizations in this region
+                    pass
+                else:
+                    raise
+                    
+        except ClientError as e:
+            self.logger.warning(f"Failed to discover WorkMail resources in {region}: {e}")
 
     def save_to_file(self, filename: str, format_type: str = "json"):
         """Save resources to file."""
