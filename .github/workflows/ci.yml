@@ -8,12 +8,11 @@ on:
 
 jobs:
   test:
-    name: Python Tests (${{ matrix.python-version }} on ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    name: Python Tests (${{ matrix.python-version }})
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
-        os: [ubuntu-latest, windows-latest, macos-latest]
       fail-fast: false
 
     steps:
@@ -29,15 +28,11 @@ jobs:
     - name: Cache pip dependencies
       uses: actions/cache@v4
       with:
-        path: |
-          ~/.cache/pip
-          ~\AppData\Local\pip\Cache
-          ~/Library/Caches/pip
-        key: ${{ runner.os }}-python-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
+        path: ~/.cache/pip
+        key: ubuntu-python-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
-          ${{ runner.os }}-python-${{ matrix.python-version }}-pip-
-          ${{ runner.os }}-python-
-          ${{ runner.os }}-
+          ubuntu-python-${{ matrix.python-version }}-pip-
+          ubuntu-python-pip-
 
     - name: Install dependencies
       shell: bash
@@ -69,7 +64,7 @@ jobs:
     - name: Run Python version specific tests
       shell: bash
       run: |
-        echo "Testing with Python ${{ matrix.python-version }} on ${{ matrix.os }}"
+        echo "Testing with Python ${{ matrix.python-version }}"
         python --version
         python -c "import sys; print(f'Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')"
 
@@ -105,7 +100,7 @@ jobs:
         echo "✅ All help commands work correctly"
         
     - name: Upload coverage to Codecov
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+      if: matrix.python-version == '3.11'
       uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml

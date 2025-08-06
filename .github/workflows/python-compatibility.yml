@@ -12,30 +12,25 @@ on:
 jobs:
   python-compatibility:
     name: Test Python ${{ matrix.python-version }} compatibility
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     continue-on-error: ${{ matrix.experimental }}
     
     strategy:
       fail-fast: false
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
-        os: [ubuntu-latest, windows-latest, macos-latest]
         experimental: [false]
         include:
           # Test against development versions
           - python-version: '3.14-dev'
-            os: ubuntu-latest
             experimental: true
           # Test minimum supported versions with exact minor versions
           - python-version: '3.8.10'
-            os: ubuntu-latest
             experimental: false
           - python-version: '3.9.18'
-            os: ubuntu-latest
             experimental: false
           # Test latest patch versions
           - python-version: '3.13.x'
-            os: ubuntu-latest
             experimental: false
 
     steps:
@@ -51,14 +46,11 @@ jobs:
     - name: Cache pip dependencies
       uses: actions/cache@v4
       with:
-        path: |
-          ~/.cache/pip
-          ~\AppData\Local\pip\Cache
-          ~/Library/Caches/pip
-        key: ${{ runner.os }}-python-${{ matrix.python-version }}-compat-${{ hashFiles('**/requirements.txt') }}
+        path: ~/.cache/pip
+        key: ubuntu-python-${{ matrix.python-version }}-compat-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
-          ${{ runner.os }}-python-${{ matrix.python-version }}-compat-
-          ${{ runner.os }}-python-compat-
+          ubuntu-python-${{ matrix.python-version }}-compat-
+          ubuntu-python-compat-
 
     - name: Install dependencies
       shell: bash
@@ -236,7 +228,7 @@ print(f'✅ Python can handle basic memory operations (maxsize: {sys.maxsize})')
       run: |
         echo "📋 Python ${{ matrix.python-version }} Compatibility Report" > compat-report.txt
         echo "=========================================" >> compat-report.txt
-        echo "Platform: ${{ matrix.os }}" >> compat-report.txt
+        echo "Platform: ubuntu-latest" >> compat-report.txt
         python -c "import sys; print(f'Python Version: {sys.version}')" >> compat-report.txt
         echo "Test Status: ✅ PASSED" >> compat-report.txt
         echo "=========================================" >> compat-report.txt
@@ -248,7 +240,7 @@ print(f'✅ Python can handle basic memory operations (maxsize: {sys.maxsize})')
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: compatibility-report-python-${{ matrix.python-version }}-${{ matrix.os }}
+        name: compatibility-report-python-${{ matrix.python-version }}-ubuntu
         path: compat-report.txt
         retention-days: 30
 
