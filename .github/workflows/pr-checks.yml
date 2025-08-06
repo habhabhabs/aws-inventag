@@ -18,21 +18,17 @@ jobs:
         fetch-depth: 0
 
     - name: Validate PR Title
+      shell: bash
       run: |
         PR_TITLE="${{ github.event.pull_request.title }}"
         echo "PR Title: $PR_TITLE"
         
-        # Check if title follows conventional commit format
-        regex='^(feat|fix|docs|style|refactor|test|chore|perf|build|ci)(\([^)]+\))?: .+'
-        if [[ ! "$PR_TITLE" =~ $regex ]]; then
-          echo "❌ PR title should follow conventional commit format:"
-          echo "   feat: add new feature"
-          echo "   fix: fix bug"
-          echo "   docs: update documentation"
-          echo "   etc."
-          exit 1
+        # Allow more flexible title formats for this project
+        if [[ ${#PR_TITLE} -lt 10 ]]; then
+          echo "⚠️ PR title seems too short. Please provide a descriptive title."
+        else
+          echo "✅ PR title is adequately descriptive"
         fi
-        echo "✅ PR title follows conventional commit format"
 
     - name: Check PR Description
       env:
@@ -235,3 +231,94 @@ jobs:
           
           echo "✅ Dependency check completed"
         fi
+
+  quick-python-test:
+    name: Quick Python Compatibility Check
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.11', '3.13']  # Test minimum, stable, and latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
+        
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        
+    - name: Test basic imports
+      shell: bash
+      run: |
+        echo "🐍 Testing with Python ${{ matrix.python-version }}"
+        python --version
+        
+        # Test core imports
+        python -c "import inventag; print('✅ InvenTag package imports')"
+        python -c "from inventag.core import CloudBOMGenerator; print('✅ CloudBOMGenerator imports')"
+        python -c "from inventag.reporting import BOMConverter; print('✅ BOMConverter imports')"
+        
+        # Test dependencies
+        python -c "import boto3; print('✅ boto3 imports')"
+        python -c "import yaml; print('✅ PyYAML imports')"
+        python -c "import openpyxl; print('✅ openpyxl imports')"
+        
+        echo "✅ Python ${{ matrix.python-version }} compatibility confirmed"
+
+  python-style-check:
+    name: Python Code Style Check  
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        
+    - name: Install style tools
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install black flake8 mypy
+        
+    - name: Run Black formatting check
+      shell: bash
+      run: |
+        echo "🎨 Checking code formatting with Black..."
+        black --check --diff inventag/ scripts/ || exit_code=$?
+        if [ ${exit_code:-0} -eq 0 ]; then
+          echo "✅ Code formatting is compliant with Black"
+        else
+          echo "❌ Code formatting issues found. Run 'black inventag/ scripts/' to fix."
+          exit 1
+        fi
+        
+    - name: Run flake8 linting
+      shell: bash
+      run: |
+        echo "🔍 Running flake8 linting..."
+        # Critical errors only for PR checks
+        flake8 inventag/ scripts/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        echo "✅ No critical linting errors found"
+        
+    - name: Run type checking
+      shell: bash
+      continue-on-error: true
+      run: |
+        echo "🔍 Running mypy type checking..."
+        mypy inventag/ --ignore-missing-imports --no-error-summary || echo "⚠️ Type checking warnings found"

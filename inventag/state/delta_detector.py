@@ -225,12 +225,14 @@ class DeltaDetector:
 
         # Analyze network changes
         network_changes = self._analyze_network_changes(
-            added_resources, removed_resources, modified_resources
+            added_resources + removed_resources + modified_resources
         )
 
         # Perform impact analysis
         impact_analysis = self._analyze_change_impact(
-            added_resources, removed_resources, modified_resources
+            added_resources + removed_resources + modified_resources,
+            old_resources_map,
+            new_resources_map,
         )
 
         # Calculate change statistics

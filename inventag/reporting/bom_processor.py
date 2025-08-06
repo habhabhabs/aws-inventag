@@ -410,17 +410,38 @@ class BOMDataProcessor:
     ) -> List[Dict[str, Any]]:
         """Extract and set account_id from ARN for resources missing this field."""
         fixed_count = 0
+        source_account_fixed = 0
+
         for resource in resources:
-            if not resource.get("account_id"):
-                arn = resource.get("arn", "")
-                if arn:
-                    arn_parts = arn.split(":")
-                    if len(arn_parts) >= 5:
-                        resource["account_id"] = arn_parts[4]
-                        fixed_count += 1
+            arn = resource.get("arn", "")
+            account_from_arn = None
+
+            # Extract account ID from ARN if available
+            if arn:
+                arn_parts = arn.split(":")
+                if len(arn_parts) >= 5:
+                    account_from_arn = arn_parts[4]
+
+            # Fix account_id field if missing
+            if not resource.get("account_id") and account_from_arn:
+                resource["account_id"] = account_from_arn
+                fixed_count += 1
+
+            # Fix source_account_id if it's still "default" but we have real account ID from ARN
+            if (
+                resource.get("source_account_id") == "default"
+                and account_from_arn
+                and account_from_arn != "default"
+            ):
+                resource["source_account_id"] = account_from_arn
+                source_account_fixed += 1
 
         if fixed_count > 0:
             self.logger.info(f"Fixed {fixed_count} account IDs from ARNs")
+        if source_account_fixed > 0:
+            self.logger.info(
+                f"Fixed {source_account_fixed} source_account_id fields from 'default' to actual account ID"
+            )
 
         return resources
 

@@ -1,3 +1,9 @@
+---
+title: Contributing Guide
+description: Development setup and guidelines for contributing to InvenTag
+sidebar_position: 1
+---
+
 # Contributing to InvenTag
 
 Thank you for your interest in contributing to **InvenTag**! This document provides guidelines and information for contributors.
@@ -223,19 +229,103 @@ Include:
 
 ## 📖 Documentation
 
+InvenTag uses a dual-platform documentation system with both GitHub-compatible markdown and a Docusaurus-powered documentation site.
+
+### Documentation Structure
+
+```
+docs/
+├── architecture/           # System architecture docs
+├── development/           # Developer documentation
+├── examples/             # Configuration examples
+├── getting-started/      # Installation and quick start
+└── user-guides/         # User guides and tutorials
+```
+
+### Documentation Workflow
+
+#### 1. **Editing Documentation**
+
+All documentation source files are in the `docs/` directory:
+
+```bash
+# Edit documentation files directly
+vim docs/user-guides/cli-user-guide.md
+vim docs/architecture/core-module-integration.md
+```
+
+#### 2. **Local Testing**
+
+Test documentation changes locally using the Docusaurus development server:
+
+```bash
+# Start local documentation server
+npm run docs:start
+
+# Or test the full pipeline
+npm run docs:pipeline:test
+```
+
+#### 3. **Documentation Standards**
+
+- **Frontmatter**: All documentation files must include YAML frontmatter:
+  ```yaml
+  ---
+  title: Page Title
+  description: Brief description of the page content
+  sidebar_position: 1
+  ---
+  ```
+
+- **GitHub Compatibility**: Use relative links that work in both GitHub and Docusaurus:
+  ```markdown
+  # Good - works in both platforms
+  [Configuration Guide](../user-guides/configuration-examples.md)
+  
+  # Avoid - absolute GitHub links
+  [Guide](https://github.com/habhabhabs/inventag-aws/blob/main/docs/guide.md)
+  ```
+
+- **Asset Management**: Place images and files in `docs/assets/`:
+  ```markdown
+  ![Architecture Diagram](assets/architecture-overview.png)
+  ```
+
+#### 4. **Testing Documentation Changes**
+
+Before submitting documentation PRs:
+
+```bash
+# Run comprehensive documentation tests
+npm run docs:test
+
+# Quick validation
+npm run docs:test:quick
+
+# Build and validate
+npm run docs:build
+```
+
+#### 5. **Documentation Site**
+
+The documentation is automatically deployed to [https://habhabhabs.github.io/inventag-aws/](https://habhabhabs.github.io/inventag-aws/) when changes are merged to the main branch.
+
 ### Code Documentation
 
-- Write clear docstrings
-- Comment complex logic
-- Include usage examples
-- Document parameters and return values
+- Write clear docstrings for all functions and classes
+- Comment complex logic and algorithms
+- Include usage examples in docstrings
+- Document parameters, return values, and exceptions
 
-### README Updates
+### Contributing to Documentation
 
-- Keep installation instructions current
-- Update usage examples
-- Document new features
-- Include troubleshooting info
+When contributing documentation changes:
+
+1. **Update Both Platforms**: Ensure changes work on both GitHub and the documentation site
+2. **Test Locally**: Always test using `npm run docs:start` before submitting
+3. **Check Links**: Verify all internal links work correctly
+4. **Follow Conventions**: Use consistent formatting and structure
+5. **Add to Navigation**: Update `website/sidebars.js` if adding new pages
 
 ## 🔒 Security
 

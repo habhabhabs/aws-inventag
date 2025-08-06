@@ -137,8 +137,8 @@ jobs:
         
         python inventag_cli.py \
           --accounts-file ${{ github.event.inputs.accounts_config || 'config/accounts.json' }} \
-          --service-descriptions config/service_descriptions_example.yaml \
-          --tag-mappings config/tag_mappings_example.yaml \
+          --service-descriptions config/defaults/services/service_descriptions_example.yaml \
+          --tag-mappings config/defaults/mappings/tag_to_column_mappings_example.yaml \
           ${{ steps.formats.outputs.excel_flag }} \
           ${{ steps.formats.outputs.word_flag }} \
           $s3_options \

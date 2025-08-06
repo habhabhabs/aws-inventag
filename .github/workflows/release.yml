@@ -446,8 +446,8 @@ jobs:
         - `examples/accounts_cicd_environment.json` - CI/CD optimized setup
         
         ### Service & Analysis Configuration
-        - `config/defaults/service_descriptions_example.yaml` - Custom service descriptions
-        - `config/defaults/tag_mappings_example.yaml` - Tag attribute mappings
+        - `config/defaults/services/service_descriptions_example.yaml` - Custom service descriptions
+        - `config/defaults/mappings/tag_to_column_mappings_example.yaml` - Tag attribute mappings
         - `config/defaults/complete_configuration_example.yaml` - Comprehensive BOM config
         
         ## 🛡️ Production Safety Features
@@ -547,18 +547,71 @@ jobs:
         echo "Comprehensive release notes generated:"
         echo "Length: $(wc -l < release_notes.md) lines"
 
-    - name: Prepare release information
+    - name: Update version.json with new version
       run: |
-        # Just save the version info - no need to commit anything to protected branch
-        echo "Version info saved for release creation"
-        echo "New version: ${{ steps.version.outputs.new_version }}"
-        echo "Previous version: ${{ steps.version.outputs.current_version }}"
-        echo "Release notes available in version_release_notes.txt"
+        # Read version release notes from file
+        VERSION_NOTES=$(cat version_release_notes.txt | sed 's/"/\\"/g' | tr '\n' '\\n')
+        
+        # Update version.json with comprehensive information
+        python -c "
+        import json
+        import sys
+        from datetime import datetime
+        
+        # Load current version.json
+        with open('version.json', 'r') as f:
+            version_data = json.load(f)
+        
+        # Update with new version information
+        version_data['previous_version'] = version_data['version']
+        version_data['version'] = '${{ steps.version.outputs.new_version }}'
+        version_data['release_date'] = datetime.now().isoformat()
+        version_data['version_bump_type'] = '${{ needs.check-for-release.outputs.version_bump }}'
+        version_data['release_notes'] = '''$VERSION_NOTES'''
+        
+        # Add additional metadata
+        version_data['git_tag'] = '${{ steps.version.outputs.tag_name }}'
+        version_data['github_release_url'] = 'https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag_name }}'
+        
+        if '${{ needs.check-for-release.outputs.pr_number }}':
+            version_data['triggered_by_pr'] = '${{ needs.check-for-release.outputs.pr_number }}'
+            version_data['pr_url'] = 'https://github.com/${{ github.repository }}/pull/${{ needs.check-for-release.outputs.pr_number }}'
+        
+        # Write updated version.json
+        with open('version.json', 'w') as f:
+            json.dump(version_data, f, indent=2, ensure_ascii=False)
+        
+        print('✅ Updated version.json with new version ${{ steps.version.outputs.new_version }}')
+        "
+        
+        echo "Version.json updated with:"
+        echo "  - New version: ${{ steps.version.outputs.new_version }}"
+        echo "  - Previous version: ${{ steps.version.outputs.current_version }}"
+        echo "  - Bump type: ${{ needs.check-for-release.outputs.version_bump }}"
+        echo "  - Git tag: ${{ steps.version.outputs.tag_name }}"
+
+    - name: Commit and push version.json changes
+      run: |
+        # Configure git user for the commit
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Check if version.json has actually changed
+        if git diff --quiet version.json; then
+          echo "No changes to version.json - skipping commit"
+        else
+          # Add and commit the version.json changes
+          git add version.json
+          git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}" \
+          
+          # Push the changes back to main
+          git push origin main
+          echo "✅ Successfully pushed version.json changes to main branch"
+        fi
 
     - name: Create Git Tag
       run: |
-        # Create tag from the current HEAD on main (before version bump)
-        # This allows the release to be created even with protected branches
+        # Create tag from the current HEAD (after version bump commit)
         git tag ${{ steps.version.outputs.tag_name }}
         git push origin ${{ steps.version.outputs.tag_name }}
         echo "Created and pushed tag ${{ steps.version.outputs.tag_name }}"
@@ -601,7 +654,8 @@ jobs:
         echo "🚀 Successfully created InvenTag release ${{ steps.version.outputs.new_version }}"
         echo "📦 Release URL: https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag_name }}"
         echo "📋 Release created for version ${{ steps.version.outputs.new_version }} (${{ needs.check-for-release.outputs.version_bump }} release)"
-        echo "✅ No version bump commits needed - release created directly from current HEAD"
+        echo "✅ Version.json updated and committed to main branch"
+        echo "🏷️ Git tag ${{ steps.version.outputs.tag_name }} created and pushed"
 
   test-release:
     name: Test Release Functionality

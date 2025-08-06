@@ -27,7 +27,7 @@ class AWSResourceInventory:
         self.session = session or boto3.Session()
         self.resources = []
         self.logger = self._setup_logging()
-        self.regions = regions or self._get_available_regions()
+        self.regions = regions if regions is not None else self._get_available_regions()
         self.services = services  # Specific services to scan, None means all
         self.tag_filters = tag_filters or {}  # Tag filters to apply
 

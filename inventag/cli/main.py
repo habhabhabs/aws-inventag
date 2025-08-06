@@ -11,9 +11,11 @@ import sys
 import json
 import yaml
 import logging
+import boto3
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+from botocore.exceptions import ClientError, NoCredentialsError
 
 # InvenTag imports
 from ..core import (
@@ -25,6 +27,83 @@ from ..core import (
 from ..reporting import BOMProcessingConfig
 from .config_validator import ConfigValidator
 from .logging_setup import setup_logging, LoggingContext
+
+
+def _validate_specific_configs(args, logger):
+    """Validate only the configuration files specified in CLI arguments."""
+    validator = ConfigValidator()
+    all_valid = True
+
+    # Validate tag mappings if specified
+    if args.tag_mappings:
+        logger.info(f"Validating tag mappings: {args.tag_mappings}")
+        result = validator.validate_tag_mappings_file(args.tag_mappings)
+        if result.is_valid:
+            logger.info("✅ Tag mappings configuration is valid")
+        else:
+            logger.error("❌ Tag mappings configuration is invalid:")
+            for error in result.errors:
+                logger.error(f"   - {error}")
+            all_valid = False
+
+    # Validate service descriptions if specified
+    if args.service_descriptions:
+        logger.info(f"Validating service descriptions: {args.service_descriptions}")
+        result = validator.validate_service_descriptions_file(args.service_descriptions)
+        if result.is_valid:
+            logger.info("✅ Service descriptions configuration is valid")
+        else:
+            logger.error("❌ Service descriptions configuration is invalid:")
+            for error in result.errors:
+                logger.error(f"   - {error}")
+            all_valid = False
+
+    # Validate accounts file if specified
+    if args.accounts_file:
+        logger.info(f"Validating accounts file: {args.accounts_file}")
+        result = validator.validate_accounts_file(args.accounts_file)
+        if result.is_valid:
+            logger.info("✅ Accounts configuration is valid")
+        else:
+            logger.error("❌ Accounts configuration is invalid:")
+            for error in result.errors:
+                logger.error(f"   - {error}")
+            all_valid = False
+
+    if all_valid:
+        logger.info("🎉 All specified configuration files are valid!")
+
+        # Also validate AWS credentials if not skipped
+        if not args.skip_credential_validation:
+            logger.info("🔐 Also checking AWS credentials...")
+            if validate_aws_credentials_early():
+                logger.info("🎉 AWS credentials are also valid!")
+            else:
+                logger.error(
+                    "❌ Configuration files are valid but AWS credentials have issues"
+                )
+                sys.exit(1)
+    else:
+        logger.error("❌ Some configuration files have validation errors")
+        sys.exit(1)
+
+
+def get_all_aws_regions(session: Optional[boto3.Session] = None) -> List[str]:
+    """Get all available AWS regions with fallback."""
+    try:
+        session = session or boto3.Session()
+        ec2 = session.client("ec2", region_name="us-east-1")
+        regions = ec2.describe_regions()["Regions"]
+        region_list = [region["RegionName"] for region in regions]
+        logger = logging.getLogger(__name__)
+        logger.info(f"Auto-discovered {len(region_list)} AWS regions")
+        return region_list
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to auto-discover regions: {e}")
+        logger.info("Falling back to default regions")
+        # Common regions fallback
+        return ["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1"]
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -45,14 +124,17 @@ Examples:
   # Interactive multi-account setup
   inventag --accounts-prompt --create-word --create-excel --verbose
   
-  # Cross-account role assumption
-  inventag --cross-account-role InvenTagRole --account-regions us-east-1,us-west-2
+  # Cross-account role assumption (auto-discovers all regions)
+  inventag --cross-account-role InvenTagRole
   
   # CI/CD integration with S3 upload
   inventag --accounts-file accounts.json --create-excel --s3-bucket reports-bucket --s3-key-prefix bom-reports/
   
   # Debug mode with comprehensive logging
   inventag --debug --log-file inventag-debug.log --create-excel
+  
+  # Validate AWS credentials only
+  inventag --validate-credentials
         """,
     )
 
@@ -141,7 +223,7 @@ Examples:
     override_group.add_argument(
         "--account-regions",
         type=str,
-        help="Comma-separated list of AWS regions to scan (overrides account-specific settings)",
+        help="Comma-separated list of AWS regions to scan (default: auto-discover all regions)",
     )
     override_group.add_argument(
         "--account-services",
@@ -194,7 +276,12 @@ Examples:
     config_group.add_argument(
         "--validate-config",
         action="store_true",
-        help="Validate configuration files and exit (no BOM generation)",
+        help="Validate all configuration files and exit (no BOM generation)",
+    )
+    config_group.add_argument(
+        "--validate-config-only",
+        action="store_true",
+        help="Only validate specific config files without running full validation",
     )
 
     # Output and state management
@@ -272,6 +359,11 @@ Examples:
         type=int,
         default=30,
         help="Timeout in seconds for credential validation (default: 30)",
+    )
+    cred_group.add_argument(
+        "--skip-credential-validation",
+        action="store_true",
+        help="Skip early AWS credential validation (not recommended)",
     )
 
     # Production Safety and Security options
@@ -417,9 +509,14 @@ def create_accounts_from_prompt() -> List[AccountCredentials]:
                     account.external_id = external_id
 
         # Optional settings
-        regions_input = input("Regions (comma-separated, default: us-east-1): ").strip()
+        regions_input = input(
+            "Regions (comma-separated, empty for all regions): "
+        ).strip()
         if regions_input:
             account.regions = [r.strip() for r in regions_input.split(",")]
+        else:
+            # Auto-discover all regions
+            account.regions = get_all_aws_regions()
 
         services_input = input(
             "Services to include (comma-separated, empty for all): "
@@ -456,7 +553,7 @@ def create_multi_account_config(args) -> MultiAccountConfig:
                 profile_name=account_data.get("profile_name"),
                 role_arn=account_data.get("role_arn"),
                 external_id=account_data.get("external_id"),
-                regions=account_data.get("regions", ["us-east-1"]),
+                regions=account_data.get("regions") or get_all_aws_regions(),
                 services=account_data.get("services", []),
                 tags=account_data.get("tags", {}),
             )
@@ -494,9 +591,43 @@ def create_multi_account_config(args) -> MultiAccountConfig:
 
     else:
         logger.info("Using default AWS credentials")
-        # Use default credentials
+        # Use default credentials and discover actual account ID
+        try:
+            import boto3
+
+            session = boto3.Session()
+            sts = session.client("sts")
+            identity = sts.get_caller_identity()
+            actual_account_id = identity.get("Account", "unknown")
+            account_arn = identity.get("Arn", "")
+
+            # Extract a more meaningful account name from ARN if possible
+            if "assumed-role" in account_arn:
+                # Extract role name from ARN like: arn:aws:sts::123456789012:assumed-role/RoleName/username
+                try:
+                    role_part = account_arn.split("assumed-role/")[1].split("/")[0]
+                    account_name = f"AWS Account {actual_account_id} ({role_part})"
+                except:
+                    account_name = f"AWS Account {actual_account_id}"
+            elif "user" in account_arn:
+                # Extract user name from ARN like: arn:aws:iam::123456789012:user/username
+                try:
+                    user_part = account_arn.split("user/")[1]
+                    account_name = f"AWS Account {actual_account_id} ({user_part})"
+                except:
+                    account_name = f"AWS Account {actual_account_id}"
+            else:
+                account_name = f"AWS Account {actual_account_id}"
+
+            logger.info(f"Detected AWS account ID: {actual_account_id}")
+
+        except Exception as e:
+            logger.warning(f"Could not detect AWS account ID: {e}")
+            actual_account_id = "default"
+            account_name = "Default AWS Account"
+
         account = AccountCredentials(
-            account_id="default", account_name="Default AWS Account"
+            account_id=actual_account_id, account_name=account_name
         )
         accounts = [account]
         max_concurrent = args.max_concurrent_accounts
@@ -531,13 +662,11 @@ def create_multi_account_config(args) -> MultiAccountConfig:
     )
 
     if args.service_descriptions:
-        service_desc_config = load_configuration_file(
-            args.service_descriptions, "service_descriptions"
-        )
+        load_configuration_file(args.service_descriptions, "service_descriptions")
         bom_config.service_descriptions_config = args.service_descriptions
 
     if args.tag_mappings:
-        tag_mappings_config = load_configuration_file(args.tag_mappings, "tag_mappings")
+        load_configuration_file(args.tag_mappings, "tag_mappings")
         bom_config.tag_mappings_config = args.tag_mappings
 
     if args.bom_config:
@@ -567,6 +696,96 @@ def create_multi_account_config(args) -> MultiAccountConfig:
     )
 
     return config
+
+
+def validate_aws_credentials_early() -> bool:
+    """
+    Validate AWS credentials early before any BOM processing.
+    Provides clear error messages for common credential issues.
+    """
+    logger = logging.getLogger(__name__)
+
+    logger.info("🔐 Validating AWS credentials...")
+
+    try:
+        # Test default session first
+        session = boto3.Session()
+        sts = session.client("sts")
+
+        # Try to get caller identity
+        identity = sts.get_caller_identity()
+
+        logger.info("✅ AWS credentials are valid!")
+        logger.info(f"   Account: {identity.get('Account', 'Unknown')}")
+        logger.info(f"   User/Role: {identity.get('Arn', 'Unknown')}")
+
+        return True
+
+    except ClientError as e:
+        error_code = e.response.get("Error", {}).get("Code", "")
+        error_message = e.response.get("Error", {}).get("Message", str(e))
+
+        logger.error("❌ AWS credential validation failed!")
+
+        if error_code == "InvalidClientTokenId":
+            logger.error("   Issue: Invalid or expired security token")
+            logger.error("   Solutions:")
+            logger.error("   1. Run 'aws configure' to set up credentials")
+            logger.error("   2. Check if your access keys are correct")
+            logger.error("   3. If using temporary credentials, they may have expired")
+            logger.error("   4. If using AWS SSO, run 'aws sso login'")
+
+        elif error_code == "SignatureDoesNotMatch":
+            logger.error("   Issue: Invalid AWS Secret Access Key")
+            logger.error("   Solutions:")
+            logger.error("   1. Run 'aws configure' and double-check your secret key")
+            logger.error("   2. Ensure no extra spaces in credentials")
+
+        elif error_code == "AccessDenied":
+            logger.error("   Issue: Credentials don't have sufficient permissions")
+            logger.error("   Solutions:")
+            logger.error("   1. Ensure your IAM user/role has read permissions")
+            logger.error(
+                "   2. Check the IAM policy in config/defaults/iam-policy-read-only.json"
+            )
+
+        elif error_code == "TokenRefreshRequired":
+            logger.error("   Issue: AWS SSO token needs refresh")
+            logger.error("   Solutions:")
+            logger.error("   1. Run 'aws sso login --profile your-profile'")
+            logger.error("   2. Set AWS_PROFILE environment variable")
+
+        else:
+            logger.error(f"   Error Code: {error_code}")
+            logger.error(f"   Error Message: {error_message}")
+            logger.error("   Solutions:")
+            logger.error("   1. Run 'aws sts get-caller-identity' to test credentials")
+            logger.error("   2. Check AWS CLI configuration with 'aws configure list'")
+
+        logger.error("")
+        logger.error("💡 Quick diagnostic commands:")
+        logger.error("   aws configure list          # Show current config")
+        logger.error("   aws sts get-caller-identity # Test credentials")
+        logger.error("   aws configure               # Set up new credentials")
+
+        return False
+
+    except NoCredentialsError:
+        logger.error("❌ No AWS credentials found!")
+        logger.error("   Solutions:")
+        logger.error("   1. Run 'aws configure' to set up credentials")
+        logger.error("   2. Set AWS environment variables:")
+        logger.error("      export AWS_ACCESS_KEY_ID=your-key")
+        logger.error("      export AWS_SECRET_ACCESS_KEY=your-secret")
+        logger.error("   3. Use IAM roles if running on EC2/ECS/Lambda")
+        logger.error("   4. Use --accounts-prompt for interactive setup")
+
+        return False
+
+    except Exception as e:
+        logger.error(f"❌ Unexpected error validating credentials: {e}")
+        logger.error("   Try running 'aws sts get-caller-identity' manually")
+        return False
 
 
 def validate_credentials_only(config: MultiAccountConfig) -> bool:
@@ -640,12 +859,33 @@ def main():
             logger.warning(f"  - {warning}")
 
     try:
+        # Early AWS credential validation (unless skipped or using interactive prompt)
+        if (
+            not args.skip_credential_validation
+            and not args.accounts_prompt
+            and not args.accounts_file
+        ):
+            if not validate_aws_credentials_early():
+                logger.error("❌ Cannot proceed with invalid AWS credentials")
+                logger.error(
+                    "💡 Use --accounts-prompt for interactive credential setup"
+                )
+                logger.error(
+                    "💡 Or use --skip-credential-validation to bypass this check"
+                )
+                sys.exit(1)
+
         # Create multi-account configuration
         config = create_multi_account_config(args)
 
         logger.info(f"Configured {len(config.accounts)} account(s) for processing")
 
-        # Configuration validation mode
+        # Configuration validation modes
+        if args.validate_config_only:
+            logger.info("Running configuration file validation only...")
+            _validate_specific_configs(args, logger)
+            sys.exit(0)
+
         if args.validate_config:
             logger.info("Configuration validation completed successfully")
             sys.exit(0)

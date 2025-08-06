@@ -1,3 +1,7 @@
+---
+title: Release
+---
+
 # Release Management Guide
 
 This repository uses automated semantic versioning for releases. This document explains how the release system works and how to trigger releases.

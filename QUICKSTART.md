@@ -15,14 +15,14 @@ Get up and running with InvenTag in minutes!
 Generate a basic Excel BOM for your default AWS account:
 
 ```bash
-# Unix/Linux/macOS
+# Unix/Linux/macOS (auto-detects python3/python)
 ./inventag.sh --create-excel
 
-# Windows
+# Windows (auto-detects python3/python/py)
 inventag.bat --create-excel
 
-# Direct Python
-python inventag_cli.py --create-excel
+# Direct Python (use python3 if available)
+python3 -m inventag_cli --create-excel
 ```
 
 ### 2. Multi-Format Output
@@ -30,7 +30,7 @@ python inventag_cli.py --create-excel
 Generate Excel, Word, and Google Docs reports:
 
 ```bash
-# Excel and Word documents
+# Excel and Word documents (scripts auto-detect Python)
 ./inventag.sh --create-excel --create-word --verbose
 
 # All formats including Google Docs (requires Google API credentials)
@@ -148,6 +148,10 @@ S3:
 
 Use with:
 ```bash
+# Using the provided example
+./inventag.sh --create-excel --service-descriptions config/defaults/services/service_descriptions_example.yaml
+
+# Or create your own
 ./inventag.sh --create-excel --service-descriptions service-descriptions.yaml
 ```
 
@@ -157,17 +161,22 @@ Map AWS tags to custom BOM columns:
 
 ```yaml
 # tag-mappings.yaml
-"Environment":
+Environment:
   column_name: "Environment"
-  default_value: "Unknown"
 
-"inventag:owner":
+Owner:
   column_name: "Resource Owner"
-  default_value: "Unassigned"
+
+CostCenter:
+  column_name: "Cost Center"
 ```
 
 Use with:
 ```bash
+# Using the provided example
+./inventag.sh --create-excel --tag-mappings config/defaults/mappings/tag_to_column_mappings_example.yaml
+
+# Or create your own
 ./inventag.sh --create-excel --tag-mappings tag-mappings.yaml
 ```
 

@@ -8,36 +8,43 @@ on:
 
 jobs:
   test:
-    name: Python Tests
+    name: Python Tests (${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9, '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+      fail-fast: false
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
 
     - name: Cache pip dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        key: ubuntu-python-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
-          ${{ runner.os }}-pip-
+          ubuntu-python-${{ matrix.python-version }}-pip-
+          ubuntu-python-pip-
 
     - name: Install dependencies
+      shell: bash
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install pytest pytest-cov flake8 black mypy
+        # Install additional testing dependencies
+        pip install pytest-xdist pytest-timeout pytest-mock
 
     - name: Run linting with flake8
+      shell: bash
       run: |
         # Stop the build if there are Python syntax errors or undefined names
         flake8 scripts/ inventag/ --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -45,21 +52,37 @@ jobs:
         flake8 scripts/ inventag/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
     - name: Check code formatting with black
+      shell: bash
       run: |
         black --check scripts/ inventag/
 
     - name: Type checking with mypy
+      shell: bash
       run: |
         mypy scripts/ inventag/ --ignore-missing-imports || true
 
+    - name: Run Python version specific tests
+      shell: bash
+      run: |
+        echo "Testing with Python ${{ matrix.python-version }}"
+        python --version
+        python -c "import sys; print(f'Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')"
+
     - name: Test core functionality
+      shell: bash
       run: |
         # Run test suite if tests directory exists
         if [ -d "tests" ]; then
-          python -m pytest tests/ -v --cov=inventag --cov-report=xml || true
+          python -m pytest tests/ -v --cov=inventag --cov-report=xml --timeout=300 || true
         fi
         
+        # Test basic imports work across Python versions
+        python -c "import inventag; print('✅ InvenTag package imports successfully')"
+        python -c "from inventag.core import CloudBOMGenerator; print('✅ CloudBOMGenerator imports successfully')"
+        python -c "from inventag.reporting import BOMConverter; print('✅ BOMConverter imports successfully')"
+        
         # Test all main scripts - updated paths for new structure
+        echo "🧪 Testing script help commands..."
         python scripts/legacy/bom_converter.py --help
         python scripts/legacy/tag_compliance_checker.py --help
         python scripts/development/cicd_bom_generation.py --help
@@ -74,8 +97,11 @@ jobs:
         python scripts/production/security_validator.py --help
         python scripts/production/multi_account_scanner.py --help
         
+        echo "✅ All help commands work correctly"
+        
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      if: matrix.python-version == '3.11'
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
@@ -91,23 +117,34 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.12'
         
     - name: Install security tools
+      shell: bash
       run: |
         python -m pip install --upgrade pip
-        pip install bandit safety
+        pip install bandit safety semgrep
 
     - name: Run Bandit security scan
+      shell: bash
       run: |
-        bandit -r scripts/ -f json -o bandit-report.json || true
-        bandit -r scripts/ || true
+        echo "🔒 Running Bandit security scan..."
+        bandit -r scripts/ inventag/ -f json -o bandit-report.json || true
+        bandit -r scripts/ inventag/ || true
 
     - name: Check for known vulnerabilities
+      shell: bash
       run: |
+        echo "🔍 Checking for known vulnerabilities..."
         safety check || true
+
+    - name: Run Semgrep security scan
+      shell: bash
+      run: |
+        echo "🛡️ Running Semgrep security scan..."
+        semgrep --config=auto scripts/ inventag/ || true
 
   integration-tests:
     name: Integration Tests
@@ -118,16 +155,18 @@ jobs:
       uses: actions/checkout@v4
       
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.12'
         
     - name: Install dependencies
+      shell: bash
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Create sample test data
+      shell: bash
       run: |
         mkdir -p test-data
         cat > test-data/sample.json << 'EOF'
@@ -173,6 +212,7 @@ jobs:
         EOF
 
     - name: Test BOM converter with sample data
+      shell: bash
       run: |
         python scripts/legacy/bom_converter.py \
           --input test-data/sample.json \
@@ -192,6 +232,7 @@ jobs:
         ls -la test-output.csv
 
     - name: Test tag compliance checker
+      shell: bash
       run: |
         python scripts/legacy/tag_compliance_checker.py \
           --config test-data/tag_policy.yaml \
@@ -204,6 +245,7 @@ jobs:
         echo "✅ Tag compliance checker works correctly"
 
     - name: Test CI/CD BOM generation
+      shell: bash
       run: |
         # Create a simple accounts configuration
         cat > test-data/accounts.json << 'EOF'

@@ -116,6 +116,9 @@ bom_*.json
 bom_*.csv
 *_bom_document.*
 
+# Compliance report output directory
+compliance_reports/
+
 # Temporary export files
 *_export.json
 *_export.xlsx
@@ -130,6 +133,11 @@ export_*.yaml
 *.log
 logs/
 log/
+
+# Documentation transformation pipeline files (temporary)
+.docs-backup/
+.docs-logs/
+transform.log
 
 # Backup files
 *.bak
