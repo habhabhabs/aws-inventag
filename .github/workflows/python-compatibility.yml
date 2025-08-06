@@ -69,6 +69,14 @@ jobs:
           ubuntu-python-${{ matrix.python-version }}-compat-
           ubuntu-python-compat-
 
+    - name: Install system dependencies for Python 3.14-dev
+      if: steps.setup-python.outcome == 'success' && matrix.python-version == '3.14-dev'
+      shell: bash
+      run: |
+        echo "🔧 Installing system dependencies for Python 3.14-dev..."
+        sudo apt-get update
+        sudo apt-get install -y libxml2-dev libxslt-dev python3-dev build-essential
+
     - name: Install dependencies
       if: steps.setup-python.outcome == 'success'
       shell: bash
