@@ -21,27 +21,44 @@ jobs:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
         experimental: [false]
         include:
-          # Test against development versions
-          - python-version: '3.14-dev'
-            experimental: true
-          # Test minimum supported versions with exact minor versions
-          - python-version: '3.8.10'
+          # Test latest patch versions (more reliable than exact versions)
+          - python-version: '3.8.x'
             experimental: false
-          - python-version: '3.9.18'
+          - python-version: '3.9.x'
             experimental: false
-          # Test latest patch versions
           - python-version: '3.13.x'
             experimental: false
+          # Test against development versions (experimental)
+          - python-version: '3.14-dev'
+            experimental: true
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
+      id: setup-python
       uses: actions/setup-python@v5
+      continue-on-error: ${{ matrix.experimental }}
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
+        check-latest: true
+        
+    - name: Verify Python setup
+      if: always()
+      run: |
+        if [ "${{ steps.setup-python.outcome }}" = "success" ]; then
+          echo "✅ Python ${{ matrix.python-version }} setup successful"
+          python --version
+          python -c "import sys; print(f'Full version: {sys.version}')"
+        else
+          echo "❌ Python ${{ matrix.python-version }} setup failed"
+          echo "This version may not be available on ubuntu-latest (Ubuntu 24.04)"
+          if [ "${{ matrix.experimental }}" = "true" ]; then
+            echo "ℹ️ This is an experimental version - failure is expected"
+          fi
+        fi
 
     - name: Cache pip dependencies
       uses: actions/cache@v4
@@ -53,6 +70,7 @@ jobs:
           ubuntu-python-compat-
 
     - name: Install dependencies
+      if: steps.setup-python.outcome == 'success'
       shell: bash
       run: |
         python -m pip install --upgrade pip
@@ -81,6 +99,7 @@ jobs:
         python -c "import yaml; print(f'PyYAML: {yaml.__version__}')" || echo "PyYAML not available"
 
     - name: Test Python version specific features
+      if: steps.setup-python.outcome == 'success'
       shell: bash
       run: |
         echo "🧪 Testing Python version specific features..."
@@ -104,6 +123,7 @@ jobs:
         fi
 
     - name: Test core InvenTag imports
+      if: steps.setup-python.outcome == 'success'
       shell: bash
       run: |
         echo "🔍 Testing InvenTag package imports..."
@@ -121,6 +141,7 @@ jobs:
         python -c "from inventag.compliance import ComprehensiveTagComplianceChecker; print('✅ ComplianceChecker imports')"
 
     - name: Test AWS dependencies compatibility
+      if: steps.setup-python.outcome == 'success'
       shell: bash
       run: |
         echo "☁️ Testing AWS SDK compatibility..."
@@ -129,6 +150,7 @@ jobs:
         python -c "import boto3; from botocore.exceptions import NoCredentialsError; print('✅ boto3 imports successfully'); session = boto3.Session(); print('✅ boto3.Session() creates successfully')" || echo "⚠️ boto3 test failed"
 
     - name: Test data processing dependencies
+      if: steps.setup-python.outcome == 'success'
       shell: bash
       run: |
         echo "📊 Testing data processing dependencies..."
@@ -143,6 +165,7 @@ jobs:
         python -c "import yaml; data = {'test': 'InvenTag', 'version': 1.0}; yaml_str = yaml.dump(data); parsed = yaml.safe_load(yaml_str); print('✅ PyYAML processing works')" || echo "⚠️ PyYAML test failed"
 
     - name: Test script execution compatibility
+      if: steps.setup-python.outcome == 'success'
       shell: bash
       run: |
         echo "📜 Testing script execution compatibility..."
@@ -151,6 +174,7 @@ jobs:
         python -c "import sys; sys.path.append('scripts/legacy'); import bom_converter; print('✅ bom_converter script can be imported')" || echo "⚠️ bom_converter import failed"
 
     - name: Test error handling and edge cases
+      if: steps.setup-python.outcome == 'success'
       shell: bash
       run: |
         echo "🚨 Testing error handling and edge cases..."
@@ -162,17 +186,39 @@ jobs:
         python -c "import sys; print(f'✅ Python can handle basic memory operations (maxsize: {sys.maxsize})')"
 
     - name: Generate compatibility report
+      if: always()
       shell: bash
       run: |
+        # Determine test status based on previous step outcomes
+        if [ "${{ job.status }}" = "success" ]; then
+          STATUS="✅ PASSED"
+        else
+          STATUS="❌ FAILED"
+        fi
+        
         echo "📋 Python ${{ matrix.python-version }} Compatibility Report" > compat-report.txt
         echo "=========================================" >> compat-report.txt
         echo "Platform: ubuntu-latest" >> compat-report.txt
-        python -c "import sys; print(f'Python Version: {sys.version}')" >> compat-report.txt
-        echo "Test Status: ✅ PASSED" >> compat-report.txt
+        echo "Matrix Experimental: ${{ matrix.experimental }}" >> compat-report.txt
+        
+        # Add Python version info (with error handling)
+        if python --version >> compat-report.txt 2>&1; then
+          python -c "import sys; print(f'Python Full Version: {sys.version}')" >> compat-report.txt 2>&1 || echo "Python version info unavailable" >> compat-report.txt
+        else
+          echo "Python installation failed or unavailable" >> compat-report.txt
+        fi
+        
+        echo "Test Status: $STATUS" >> compat-report.txt
+        echo "Job Status: ${{ job.status }}" >> compat-report.txt
         echo "=========================================" >> compat-report.txt
         
         cat compat-report.txt
-        echo "✅ Python ${{ matrix.python-version }} compatibility confirmed!"
+        
+        if [ "$STATUS" = "✅ PASSED" ]; then
+          echo "✅ Python ${{ matrix.python-version }} compatibility confirmed!"
+        else
+          echo "❌ Python ${{ matrix.python-version }} compatibility issues detected"
+        fi
 
     - name: Upload compatibility report
       uses: actions/upload-artifact@v4
