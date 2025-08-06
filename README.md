@@ -7,6 +7,16 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+---
+
+## 📚 **[→ Visit Complete Documentation Site ←](https://habhabhabs.github.io/inventag-aws/)**
+
+**Modern Documentation Platform** with advanced search, mobile-responsive design, and comprehensive guides.
+
+[![Documentation Preview](https://img.shields.io/badge/📖_Documentation-Live_Site-blue?style=for-the-badge)](https://habhabhabs.github.io/inventag-aws/)
+
+---
+
 ## 🚀 Quick Start
 
 ```bash
@@ -32,20 +42,28 @@ pip install -r requirements.txt
 - 🚀 **CI/CD Ready** - Easy integration with automated workflows and S3 upload support
 - ⚡ **Flexible Deployment** - Cross-account roles, interactive setup, and comprehensive credential management
 
-## 📖 Documentation
+## 📖 **Complete Documentation Portal**
 
-> **🌟 NEW: [Visit our comprehensive documentation site →](https://habhabhabs.github.io/inventag-aws/)**
->
-> We've migrated to a modern documentation platform with enhanced search, mobile-responsive design, and improved navigation. The documentation is automatically deployed from the `docs/` directory and stays synchronized with GitHub.
+### **🌟 [Interactive Documentation Site](https://habhabhabs.github.io/inventag-aws/)** 
+**Powered by Docusaurus** - Professional documentation platform with:
 
-### Quick Links
+- 🔍 **Advanced Search** - Instant results across all content
+- 📱 **Mobile Responsive** - Perfect on any device  
+- 🌙 **Dark/Light Themes** - Customizable viewing experience
+- 📊 **Interactive Navigation** - Collapsible sidebar with breadcrumbs
+- 🚀 **Fast Loading** - Optimized performance and caching
+- 📝 **GitHub Integration** - Direct editing links for contributors
 
-- **[📖 User Guides](https://habhabhabs.github.io/inventag-aws/user-guides/cli-user-guide)** - CLI reference and examples
-- **[🚀 Getting Started](https://habhabhabs.github.io/inventag-aws/getting-started/quick-start)** - Installation and quick start
-- **[📋 Configuration Examples](https://habhabhabs.github.io/inventag-aws/user-guides/configuration-examples)** - Working configuration examples
-- **[🛡️ Production Safety](https://habhabhabs.github.io/inventag-aws/user-guides/production-safety)** - Security and compliance features
-- **[🏗️ Architecture](https://habhabhabs.github.io/inventag-aws/architecture/core-module-integration)** - System architecture and design
-- **[🔧 Development](https://habhabhabs.github.io/inventag-aws/development/CONTRIBUTING)** - Contributing guide
+### **📋 Quick Access Links**
+
+| Section | Description | Link |
+|---------|-------------|------|
+| 🚀 **Getting Started** | Installation and quick start guide | **[Start Here →](https://habhabhabs.github.io/inventag-aws/getting-started/quick-start)** |
+| 📖 **User Guides** | Comprehensive CLI reference | **[CLI Guide →](https://habhabhabs.github.io/inventag-aws/user-guides/cli-user-guide)** |
+| 📋 **Configuration** | Working configuration examples | **[Examples →](https://habhabhabs.github.io/inventag-aws/user-guides/configuration-examples)** |
+| 🛡️ **Production Safety** | Security and compliance features | **[Security →](https://habhabhabs.github.io/inventag-aws/user-guides/production-safety)** |
+| 🏗️ **Architecture** | System architecture and design | **[Architecture →](https://habhabhabs.github.io/inventag-aws/architecture/core-module-integration)** |
+| 🔧 **Development** | Contributing and development guide | **[Contribute →](https://habhabhabs.github.io/inventag-aws/development/CONTRIBUTING)** |
 
 ### Legacy Documentation
 
@@ -117,13 +135,28 @@ See [Production Safety Guide](https://habhabhabs.github.io/inventag-aws/user-gui
 
 ## 🔗 Support & Community
 
+- **[📖 Complete Documentation](https://habhabhabs.github.io/inventag-aws/)** - Comprehensive guides and references
 - **[🐛 Issues](https://github.com/habhabhabs/inventag-aws/issues)** - Bug reports and feature requests
 - **[💬 Discussions](https://github.com/habhabhabs/inventag-aws/discussions)** - Community Q&A
-- **[📋 Wiki](https://github.com/habhabhabs/inventag-aws/wiki)** - Additional resources
+- **[📋 Additional Resources](https://habhabhabs.github.io/inventag-aws/examples/)** - Configuration examples and tutorials
 
 ## 📄 License
 
 MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## 🌐 **Documentation Platform**
+
+This project uses **[Docusaurus](https://docusaurus.io/)** for its documentation site, providing:
+
+- **Professional Documentation Experience** - Modern, fast, and user-friendly
+- **Automated Deployment** - Documentation automatically deployed from `docs/` directory  
+- **Developer-Friendly** - Easy to contribute with Markdown and GitHub integration
+- **Mobile-First Design** - Responsive layout for all devices
+- **Search-Optimized** - Full-text search across all documentation
+
+**📖 Experience it yourself:** **[habhabhabs.github.io/inventag-aws](https://habhabhabs.github.io/inventag-aws/)**
 
 ---
 

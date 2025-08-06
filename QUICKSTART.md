@@ -2,6 +2,8 @@
 
 Get up and running with InvenTag in minutes!
 
+> **📖 For complete documentation:** **[Visit our Docusaurus site →](https://habhabhabs.github.io/inventag-aws/)**
+
 ## Prerequisites
 
 - Python 3.8+
