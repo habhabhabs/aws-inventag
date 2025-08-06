@@ -13,7 +13,7 @@ slug: /
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-![InvenTag Logo](assets/images/inventag-logo-placeholder.svg)
+![InvenTag Logo](assets/inventag-logo-placeholder.svg)
 
 ## 🚀 Quick Start
 
@@ -98,65 +98,65 @@ InvenTag includes enterprise-grade security features:
 - **Risk Assessment** - Automated security risk evaluation
 - **Production Safety** - Real-time monitoring and validation
 
-See [Production Safety Guide](user-guides/production-safety.md) for complete details.
+See [Production Safety Guide](user-guides/production-safety) for complete details.
 
 ## 🚀 Getting Started
 
 New to InvenTag? Start here to get up and running quickly.
 
-- **[Introduction](getting-started/introduction.md)** - Overview of InvenTag and its key features
-- **[Installation](getting-started/installation.md)** - How to install and set up InvenTag
-- **[Quick Start Guide](getting-started/quick-start.md)** - Get started in minutes with basic examples
+- **[Introduction](getting-started/introduction)** - Overview of InvenTag and its key features
+- **[Installation](getting-started/installation)** - How to install and set up InvenTag
+- **[Quick Start Guide](getting-started/quick-start)** - Get started in minutes with basic examples
 
 ## 📖 User Guides
 
 Comprehensive guides for using InvenTag in different scenarios.
 
-- **[CLI User Guide](user-guides/cli-user-guide.md)** - Comprehensive CLI reference and usage examples
-- **[Configuration Examples](user-guides/configuration-examples.md)** - Setup and configuration guidance
-- **[Production Safety Guide](user-guides/production-safety.md)** - Security, compliance, and safety features
-- **[Troubleshooting Guide](user-guides/troubleshooting-guide.md)** - Common issues and solutions
+- **[CLI User Guide](user-guides/cli-user-guide)** - Comprehensive CLI reference and usage examples
+- **[Configuration Examples](user-guides/configuration-examples)** - Setup and configuration guidance
+- **[Production Safety Guide](user-guides/production-safety)** - Security, compliance, and safety features
+- **[Troubleshooting Guide](user-guides/troubleshooting-guide)** - Common issues and solutions
 
 ## 🏗️ Architecture & Technical Design
 
 Technical documentation for developers and system architects.
 
-- **[Core Module Integration](architecture/core-module-integration.md)** - System architecture overview
-- **[State Management](architecture/state-management.md)** - Change tracking and delta detection
-- **[Template Framework](architecture/template-framework.md)** - Document generation system
-- **[Service Enrichment](architecture/service-enrichment.md)** - AWS service attribute enhancement
-- **[BOM Data Processor](architecture/bom-data-processor.md)** - Data processing pipeline
-- **[Network Analysis](architecture/network-analysis.md)** - VPC and network analysis capabilities
-- **[Cost Analysis](architecture/cost-analysis.md)** - Cost estimation and optimization
-- **[Tag Compliance](architecture/tag-compliance.md)** - Compliance checking framework
+- **[Core Module Integration](architecture/core-module-integration)** - System architecture overview
+- **[State Management](architecture/state-management)** - Change tracking and delta detection
+- **[Template Framework](architecture/template-framework)** - Document generation system
+- **[Service Enrichment](architecture/service-enrichment)** - AWS service attribute enhancement
+- **[BOM Data Processor](architecture/bom-data-processor)** - Data processing pipeline
+- **[Network Analysis](architecture/network-analysis)** - VPC and network analysis capabilities
+- **[Cost Analysis](architecture/cost-analysis)** - Cost estimation and optimization
+- **[Tag Compliance](architecture/tag-compliance)** - Compliance checking framework
 
 ## 🛠️ Development & Deployment
 
 Resources for developers contributing to InvenTag or deploying it in production.
 
-- **[Contributing Guide](development/contributing.md)** - Development setup and guidelines
-- **[Deployment Guide](development/deployment.md)** - Production deployment instructions
-- **[CI/CD Integration](development/cicd-integration.md)** - Pipeline integration examples
-- **[Security Guide](development/security.md)** - Security best practices
-- **[Backward Compatibility](development/backward-compatibility.md)** - Version compatibility matrix
-- **[Migration Guide](development/bom-migration-guide.md)** - Upgrade and migration procedures
+- **[Contributing Guide](development/contributing)** - Development setup and guidelines
+- **[Deployment Guide](development/deployment)** - Production deployment instructions
+- **[CI/CD Integration](development/cicd-integration)** - Pipeline integration examples
+- **[Security Guide](development/security)** - Security best practices
+- **[Backward Compatibility](development/backward-compatibility)** - Version compatibility matrix
+- **[Migration Guide](development/bom-migration-guide)** - Upgrade and migration procedures
 
 ## 📖 Documentation
 
-- **[📖 Complete User Guide](user-guides/cli-user-guide.md)** - Comprehensive CLI reference and examples
-- **[🚀 Quick Start Guide](getting-started/quick-start.md)** - Get started in minutes
+- **[📖 Complete User Guide](user-guides/cli-user-guide)** - Comprehensive CLI reference and examples
+- **[🚀 Quick Start Guide](getting-started/quick-start)** - Get started in minutes
 - **[📋 Configuration Examples](examples/)** - Working configuration examples  
-- **[🛡️ Production Safety Guide](user-guides/production-safety.md)** - Security and compliance features
-- **[⚙️ Configuration Guide](user-guides/configuration-examples.md)** - Setup and customization
-- **[🔧 Troubleshooting](user-guides/troubleshooting-guide.md)** - Common issues and solutions
+- **[🛡️ Production Safety Guide](user-guides/production-safety)** - Security and compliance features
+- **[⚙️ Configuration Guide](user-guides/configuration-examples)** - Setup and customization
+- **[🔧 Troubleshooting](user-guides/troubleshooting-guide)** - Common issues and solutions
 
 ## 🚀 Quick Navigation
 
-- **New User?** Start with [Introduction](getting-started/introduction.md) and [Quick Start Guide](getting-started/quick-start.md)
-- **Setting Up?** Check [Installation](getting-started/installation.md) and [Configuration Examples](user-guides/configuration-examples.md)  
-- **Production Deployment?** See [Production Safety Guide](user-guides/production-safety.md) and [Deployment Guide](development/deployment.md)
-- **Having Issues?** Visit [Troubleshooting Guide](user-guides/troubleshooting-guide.md)
-- **Developer?** Read [Contributing Guide](development/contributing.md)
+- **New User?** Start with [Introduction](getting-started/introduction) and [Quick Start Guide](getting-started/quick-start)
+- **Setting Up?** Check [Installation](getting-started/installation) and [Configuration Examples](user-guides/configuration-examples)  
+- **Production Deployment?** See [Production Safety Guide](user-guides/production-safety) and [Deployment Guide](development/deployment)
+- **Having Issues?** Visit [Troubleshooting Guide](user-guides/troubleshooting-guide)
+- **Developer?** Read [Contributing Guide](development/contributing)
 
 ## 🔗 Support & Community
 

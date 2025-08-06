@@ -1,3 +1,7 @@
+---
+title: Project Description
+---
+
 # 🏷️ InvenTag - Project Description
 
 ## Tagline

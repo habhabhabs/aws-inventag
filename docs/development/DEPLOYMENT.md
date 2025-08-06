@@ -989,8 +989,8 @@ strategy:
 ## 📞 Support
 
 - **Issues**: Create GitHub/GitLab issues in your repository
-- **Documentation**: Refer to [`README.md`](../../README.md) and [`RELEASE.md`](RELEASE.md)
-- **Security**: See [`docs/SECURITY.md`](docs/SECURITY.md) for security guidelines
+- **Documentation**: Refer to [`README.md`](../../README) and [`RELEASE.md`](RELEASE)
+- **Security**: See [`docs/SECURITY.md`](docs/SECURITY) for security guidelines
 
 ---
 

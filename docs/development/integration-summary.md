@@ -1,3 +1,7 @@
+---
+title: Integration Summary
+---
+
 # InvenTag Integration Summary
 
 ## Task 14: Integration with existing InvenTag workflow - COMPLETED ✅

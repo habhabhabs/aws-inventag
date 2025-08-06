@@ -222,13 +222,13 @@ InvenTag generates files in the `bom_output` directory (or your specified output
 
 ## Next Steps
 
-- Read the [Complete CLI User Guide](../user-guides/cli-user-guide.md)
-- Check out [Configuration Examples](../user-guides/configuration-examples.md)
-- Learn about [Production Safety](../user-guides/production-safety.md)
-- See [Troubleshooting Guide](../user-guides/troubleshooting-guide.md)
+- Read the [Complete CLI User Guide](../user-guides/cli-user-guide)
+- Check out [Configuration Examples](../user-guides/configuration-examples)
+- Learn about [Production Safety](../user-guides/production-safety)
+- See [Troubleshooting Guide](../user-guides/troubleshooting-guide)
 
 ## Need Help?
 
 - Use `./inventag.sh --help` for command-line help
 - Enable `--debug` for detailed logging
-- Check the [documentation](../index.md) for comprehensive guides
+- Check the [documentation](../index) for comprehensive guides

@@ -1,3 +1,7 @@
+---
+title: Setup Branch Protection
+---
+
 # InvenTag - Branch Protection Setup Guide
 
 **Part of InvenTag**: Python tool to check on AWS™ cloud inventory and tagging.

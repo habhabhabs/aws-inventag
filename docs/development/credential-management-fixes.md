@@ -1,3 +1,7 @@
+---
+title: Credential Management Fixes
+---
+
 # Credential Management Fixes - Documentation Sync with Business Logic
 
 ## 🚨 Issues Identified and Fixed

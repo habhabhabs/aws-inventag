@@ -648,10 +648,10 @@ template_manager.clear_cache()
 
 ## 🔗 Related Documentation
 
-- [Branding System Guide](BRANDING_SYSTEM.md)
-- [Configuration Management](CONFIGURATION_MANAGEMENT.md)
-- [Document Generation](DOCUMENT_GENERATION.md)
-- [Production Safety](PRODUCTION_SAFETY.md)
+- [Branding System Guide](BRANDING_SYSTEM)
+- [Configuration Management](CONFIGURATION_MANAGEMENT)
+- [Document Generation](DOCUMENT_GENERATION)
+- [Production Safety](PRODUCTION_SAFETY)
 
 ## 📞 Support
 

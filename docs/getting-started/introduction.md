@@ -91,7 +91,7 @@ InvenTag includes enterprise-grade security features:
 - **Risk Assessment** - Automated security risk evaluation
 - **Production Safety** - Real-time monitoring and validation
 
-See [Production Safety Guide](../user-guides/production-safety.md) for complete details.
+See [Production Safety Guide](../user-guides/production-safety) for complete details.
 
 ## 🔗 Support & Community
 

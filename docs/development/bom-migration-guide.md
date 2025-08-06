@@ -243,9 +243,9 @@ diff old_report.xlsx new_report.xlsx
 
 ### Getting Help
 
-- Check the [Troubleshooting Guide](TROUBLESHOOTING_GUIDE.md)
-- Review [Configuration Examples](CONFIGURATION_EXAMPLES.md)
-- See [CLI User Guide](CLI_USER_GUIDE.md) for detailed command reference
+- Check the [Troubleshooting Guide](TROUBLESHOOTING_GUIDE)
+- Review [Configuration Examples](CONFIGURATION_EXAMPLES)
+- See [CLI User Guide](CLI_USER_GUIDE) for detailed command reference
 
 ## Summary
 

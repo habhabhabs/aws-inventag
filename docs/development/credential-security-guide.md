@@ -1,3 +1,7 @@
+---
+title: Credential Security Guide
+---
+
 # InvenTag Credential Security Guide
 
 This guide provides comprehensive security best practices for managing AWS credentials across different environments when using InvenTag for multi-account BOM generation.

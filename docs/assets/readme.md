@@ -1,3 +1,7 @@
+---
+title: Readme
+---
+
 # Documentation Assets
 
 This directory contains all images, diagrams, and other static assets used in the InvenTag documentation.
@@ -14,7 +18,7 @@ This directory contains all images, diagrams, and other static assets used in th
 1. Place images in the appropriate subdirectory under `images/`
 2. Use descriptive filenames (e.g., `cli-output-example.png`, `architecture-diagram.svg`)
 3. Optimize images for web viewing (reasonable file sizes)
-4. Use relative paths in markdown: `![Alt text](assets/images/filename.png)`
+4. Use relative paths in markdown: `![Alt text](../assets/filename.png)`
 
 ### Supported Formats
 
@@ -63,9 +67,9 @@ To verify that all assets are accessible from both GitHub and Docusaurus:
 
 ```markdown
 # In any documentation file
-![InvenTag Logo](assets/images/inventag-logo-placeholder.svg)
-![CLI Output Example](assets/images/cli-output.png)
-![Architecture Diagram](assets/images/architecture-overview.svg)
+![InvenTag Logo](../assets/inventag-logo-placeholder.svg)
+![CLI Output Example](../assets/cli-output.png)
+![Architecture Diagram](../assets/architecture-overview.svg)
 
 [Download Excel Template](assets/files/default_excel_template.json)
 [Download Word Template](assets/files/default_word_template.yaml)

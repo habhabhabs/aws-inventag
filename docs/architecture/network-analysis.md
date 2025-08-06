@@ -491,7 +491,7 @@ vpc_analysis = analyzer.analyze_vpc_resources(resources)
 
 ## 📚 Related Documentation
 
-- [Service Enrichment Guide](SERVICE_ENRICHMENT.md) - Deep service attribute extraction
-- [State Management Guide](STATE_MANAGEMENT.md) - Tracking changes over time
-- [Security Guide](SECURITY.md) - Security considerations and permissions
-- [CLI User Guide](../user-guides/CLI_USER_GUIDE.md) - Professional reporting integration
+- [Service Enrichment Guide](SERVICE_ENRICHMENT) - Deep service attribute extraction
+- [State Management Guide](STATE_MANAGEMENT) - Tracking changes over time
+- [Security Guide](SECURITY) - Security considerations and permissions
+- [CLI User Guide](../user-guides/CLI_USER_GUIDE) - Professional reporting integration
