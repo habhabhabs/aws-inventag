@@ -122,10 +122,22 @@ jobs:
 
     - name: Calculate new version
       id: version
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        # Read current version
-        CURRENT_VERSION=$(python -c "import json; print(json.load(open('version.json'))['version'])")
-        echo "Current version: $CURRENT_VERSION"
+        # Get the latest release from GitHub
+        echo "Fetching latest release from GitHub..."
+        LATEST_RELEASE=$(gh release list --limit 1 --json tagName,isLatest --jq '.[0].tagName // "v0.0.0"')
+        
+        # Remove 'v' prefix if present
+        CURRENT_VERSION=${LATEST_RELEASE#v}
+        echo "Current version from GitHub releases: $CURRENT_VERSION"
+        
+        # If no releases exist, start with 0.0.0
+        if [ "$CURRENT_VERSION" = "" ] || [ "$CURRENT_VERSION" = "null" ]; then
+          CURRENT_VERSION="0.0.0"
+          echo "No existing releases found, starting with version 0.0.0"
+        fi
         
         # Calculate new version based on bump type
         BUMP_TYPE="${{ needs.check-for-release.outputs.version_bump }}"
@@ -133,17 +145,33 @@ jobs:
         
         NEW_VERSION=$(python -c "
         import semver
-        version = '$CURRENT_VERSION'
-        if '$BUMP_TYPE' == 'major':
-            new_ver = semver.VersionInfo.parse(version).bump_major()
-        elif '$BUMP_TYPE' == 'minor':
-            new_ver = semver.VersionInfo.parse(version).bump_minor()
-        else:
-            new_ver = semver.VersionInfo.parse(version).bump_patch()
-        print(str(new_ver))
+        try:
+            version = '$CURRENT_VERSION'
+            if '$BUMP_TYPE' == 'major':
+                new_ver = semver.VersionInfo.parse(version).bump_major()
+            elif '$BUMP_TYPE' == 'minor':
+                new_ver = semver.VersionInfo.parse(version).bump_minor()
+            else:
+                new_ver = semver.VersionInfo.parse(version).bump_patch()
+            print(str(new_ver))
+        except Exception as e:
+            print('Error parsing version:', e)
+            # Fallback to simple increment
+            if '$BUMP_TYPE' == 'major':
+                print('1.0.0')
+            elif '$BUMP_TYPE' == 'minor':
+                print('0.1.0')  
+            else:
+                print('0.0.1')
         ")
         
-        echo "New version: $NEW_VERSION"
+        echo "✅ Version calculation complete:"
+        echo "  📋 Source: GitHub Releases API"
+        echo "  📌 Current: $CURRENT_VERSION"  
+        echo "  🚀 New: $NEW_VERSION"
+        echo "  🏷️ Tag: v$NEW_VERSION"
+        echo "  📈 Bump: $BUMP_TYPE"
+        
         echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
         echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
         echo "tag_name=v$NEW_VERSION" >> $GITHUB_OUTPUT
@@ -558,12 +586,16 @@ jobs:
         import sys
         from datetime import datetime
         
-        # Load current version.json
-        with open('version.json', 'r') as f:
-            version_data = json.load(f)
+        # Load current version.json or create new one
+        try:
+            with open('version.json', 'r') as f:
+                version_data = json.load(f)
+        except FileNotFoundError:
+            # Create new version.json if it doesn't exist
+            version_data = {}
         
-        # Update with new version information
-        version_data['previous_version'] = version_data['version']
+        # Update with new version information  
+        version_data['previous_version'] = '${{ steps.version.outputs.current_version }}'
         version_data['version'] = '${{ steps.version.outputs.new_version }}'
         version_data['release_date'] = datetime.now().isoformat()
         version_data['version_bump_type'] = '${{ needs.check-for-release.outputs.version_bump }}'
