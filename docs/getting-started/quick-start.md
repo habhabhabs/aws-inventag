@@ -21,14 +21,14 @@ Get up and running with InvenTag in minutes!
 Generate a basic Excel BOM for your default AWS account:
 
 ```bash
-# Unix/Linux/macOS
+# Unix/Linux/macOS (auto-detects python3/python)
 ./inventag.sh --create-excel
 
-# Windows
+# Windows (auto-detects python3/python/py)
 inventag.bat --create-excel
 
-# Direct Python
-python inventag_cli.py --create-excel
+# Direct Python (use python3 if available)
+python3 -m inventag_cli --create-excel
 ```
 
 ### 2. Multi-Format Output
@@ -36,7 +36,7 @@ python inventag_cli.py --create-excel
 Generate Excel, Word, and Google Docs reports:
 
 ```bash
-# Excel and Word documents
+# Excel and Word documents (scripts auto-detect Python)
 ./inventag.sh --create-excel --create-word --verbose
 
 # All formats including Google Docs (requires Google API credentials)
@@ -154,6 +154,10 @@ S3:
 
 Use with:
 ```bash
+# Using the provided example
+./inventag.sh --create-excel --service-descriptions config/defaults/services/service_descriptions_example.yaml
+
+# Or create your own
 ./inventag.sh --create-excel --service-descriptions service-descriptions.yaml
 ```
 
@@ -174,6 +178,10 @@ Map AWS tags to custom BOM columns:
 
 Use with:
 ```bash
+# Using the provided example
+./inventag.sh --create-excel --tag-mappings config/defaults/mappings/tag_to_column_mappings_example.yaml
+
+# Or create your own
 ./inventag.sh --create-excel --tag-mappings tag-mappings.yaml
 ```
 
@@ -214,10 +222,10 @@ InvenTag generates files in the `bom_output` directory (or your specified output
 
 ## Next Steps
 
-- Read the [Complete CLI User Guide](../user-guides/CLI_USER_GUIDE.md)
-- Check out [Configuration Examples](../user-guides/CONFIGURATION_EXAMPLES.md)
-- Learn about [Production Safety](../user-guides/PRODUCTION_SAFETY.md)
-- See [Troubleshooting Guide](../user-guides/TROUBLESHOOTING_GUIDE.md)
+- Read the [Complete CLI User Guide](../user-guides/cli-user-guide.md)
+- Check out [Configuration Examples](../user-guides/configuration-examples.md)
+- Learn about [Production Safety](../user-guides/production-safety.md)
+- See [Troubleshooting Guide](../user-guides/troubleshooting-guide.md)
 
 ## Need Help?
 

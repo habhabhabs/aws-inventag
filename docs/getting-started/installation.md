@@ -155,5 +155,5 @@ pip install -r requirements.txt --force-reinstall
 ## Next Steps
 
 - Follow the [Quick Start Guide](quick-start.md) to generate your first BOM
-- Read the [CLI User Guide](../user-guides/CLI_USER_GUIDE.md) for comprehensive usage
-- Check [Configuration Examples](../user-guides/CONFIGURATION_EXAMPLES.md) for advanced setups
+- Read the [CLI User Guide](../user-guides/cli-user-guide.md) for comprehensive usage
+- Check [Configuration Examples](../user-guides/configuration-examples.md) for advanced setups

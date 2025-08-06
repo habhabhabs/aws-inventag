@@ -73,17 +73,17 @@ for check in permissions_result['permission_checks']:
 # Generate comprehensive compliance report
 compliance_report = validator.generate_compliance_report()
 
-print(f"Compliance Score: {gcc_report.compliance_score}%")
-print(f"Total Operations: {gcc_report.total_operations}")
-print(f"Read-Only Operations: {gcc_report.read_only_operations}")
-print(f"Blocked Operations: {gcc_report.mutating_operations_blocked}")
+print(f"Compliance Score: {compliance_report.compliance_score}%")
+print(f"Total Operations: {compliance_report.total_operations}")
+print(f"Read-Only Operations: {compliance_report.read_only_operations}")
+print(f"Blocked Operations: {compliance_report.mutating_operations_blocked}")
 
 # Security findings
-for finding in gcc_report.security_findings:
+for finding in compliance_report.security_findings:
     print(f"  {finding['severity']}: {finding['title']}")
 
 # Save report to file
-validator.save_compliance_report(gcc_report, "gcc20_compliance_report.json")
+validator.save_compliance_report(compliance_report, "compliance_report.json")
 ```
 
 ### Supported Compliance Standards

@@ -31,7 +31,7 @@ if not result.is_valid:
     # Operation is prevented from executing
 
 # Generate compliance report for credential usage
-compliance_report = validator.generate_gcc20_compliance_report()
+compliance_report = validator.generate_compliance_report()
 print(f"Credential usage compliance: {compliance_report.compliance_score}%")
 ```
 

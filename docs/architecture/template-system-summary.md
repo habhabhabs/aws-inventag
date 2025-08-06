@@ -114,14 +114,14 @@ All requirements have been successfully implemented and integrated into the Inve
 
 ## Template Examples Created
 
-### 1. Professional Word Template (`templates/default_word_template.yaml`)
+### 1. Professional Word Template ([`assets/files/default_word_template.yaml`](../assets/files/default_word_template.yaml))
 - Complete document structure with cover page, TOC, sections
 - Template variables with formatting options
 - Branding configuration with colors and fonts
 - Header/footer templates with logo placement
 - Page layout settings
 
-### 2. Professional Excel Template (`templates/default_excel_template.json`)
+### 2. Professional Excel Template ([`assets/files/default_excel_template.json`](../assets/files/default_excel_template.json))
 - Multi-worksheet structure with dashboard, compliance, services
 - Chart configurations with brand colors
 - Conditional formatting themes
