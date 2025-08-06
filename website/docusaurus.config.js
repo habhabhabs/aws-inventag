@@ -77,11 +77,12 @@ const config = {
         theme: {
           customCss: './src/css/custom.css',
         },
-        // Analytics and monitoring configuration
-        gtag: {
-          trackingID: 'G-XXXXXXXXXX', // Replace with actual Google Analytics 4 tracking ID
-          anonymizeIP: true,
-        },
+        // Analytics configuration - disabled until real tracking ID is provided
+        // To enable: Add gtag configuration with a valid Google Analytics 4 tracking ID
+        // gtag: {
+        //   trackingID: 'G-YOUR-TRACKING-ID',
+        //   anonymizeIP: true,
+        // },
       }),
     ],
   ],
