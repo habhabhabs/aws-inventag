@@ -226,6 +226,6 @@ For interactive account configuration:
 
 ## See Also
 
-- [CLI User Guide](../user-guides/CLI_USER_GUIDE) - Complete CLI reference
-- [Configuration Examples](../user-guides/CONFIGURATION_EXAMPLES) - Additional configuration patterns
-- [Production Safety Guide](../user-guides/PRODUCTION_SAFETY) - Security and compliance features
+- [CLI User Guide](../user-guides/cli-user-guide) - Complete CLI reference
+- [Configuration Examples](../user-guides/configuration-examples) - Additional configuration patterns
+- [Production Safety Guide](../user-guides/production-safety) - Security and compliance features

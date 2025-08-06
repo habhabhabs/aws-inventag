@@ -527,6 +527,6 @@ result = generator.generate_comprehensive_bom(
 ```
 
 For more detailed information, see:
-- [State Management Documentation](STATE_MANAGEMENT)
-- [CI/CD Integration Guide](CICD_INTEGRATION)
-- [CLI User Guide](CLI_USER_GUIDE)
+- [State Management Documentation](state-management)
+- [CI/CD Integration Guide](../development/cicd-integration)
+- [CLI User Guide](../user-guides/cli-user-guide)

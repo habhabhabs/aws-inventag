@@ -648,10 +648,10 @@ template_manager.clear_cache()
 
 ## 🔗 Related Documentation
 
-- [Branding System Guide](BRANDING_SYSTEM)
-- [Configuration Management](CONFIGURATION_MANAGEMENT)
-- [Document Generation](DOCUMENT_GENERATION)
-- [Production Safety](PRODUCTION_SAFETY)
+- [User Guides](../user-guides/cli-user-guide) - CLI usage and examples
+- [Configuration Examples](../user-guides/configuration-examples) - Configuration management
+- [Getting Started](../getting-started/quick-start) - Document generation workflow
+- [Production Safety](../user-guides/production-safety) - Production safety guidelines
 
 ## 📞 Support
 

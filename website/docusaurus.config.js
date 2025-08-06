@@ -34,6 +34,7 @@ const config = {
 
   onBrokenLinks: 'warn', // Allow broken links during migration phase
   onBrokenMarkdownLinks: 'warn', // Allow some flexibility for markdown links during migration
+  onBrokenAnchors: 'warn', // Allow broken anchors during migration phase
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -166,11 +167,11 @@ const config = {
               },
               {
                 label: 'User Guides',
-                to: '/user-guides/CLI_USER_GUIDE',
+                to: '/user-guides/cli-user-guide',
               },
               {
                 label: 'Architecture',
-                to: '/architecture/CORE_MODULE_INTEGRATION',
+                to: '/architecture/core-module-integration',
               },
               {
                 label: 'Development',
@@ -200,7 +201,7 @@ const config = {
             items: [
               {
                 label: 'Configuration Examples',
-                to: '/user-guides/CONFIGURATION_EXAMPLES',
+                to: '/user-guides/configuration-examples',
               },
               {
                 label: 'Contributing Guide',

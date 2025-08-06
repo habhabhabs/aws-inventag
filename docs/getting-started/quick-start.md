@@ -231,4 +231,4 @@ InvenTag generates files in the `bom_output` directory (or your specified output
 
 - Use `./inventag.sh --help` for command-line help
 - Enable `--debug` for detailed logging
-- Check the [documentation](../index) for comprehensive guides
+- Check the [documentation](/) for comprehensive guides

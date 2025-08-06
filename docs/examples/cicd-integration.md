@@ -439,6 +439,6 @@ fi
 
 ## See Also
 
-- [CLI User Guide](../user-guides/CLI_USER_GUIDE) - Complete CLI reference
-- [Production Safety Guide](../user-guides/PRODUCTION_SAFETY) - Security and compliance
+- [CLI User Guide](../user-guides/cli-user-guide) - Complete CLI reference
+- [Production Safety Guide](../user-guides/production-safety) - Security and compliance
 - [Deployment Guide](../development/DEPLOYMENT) - Production deployment instructions

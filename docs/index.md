@@ -2,7 +2,6 @@
 title: InvenTag Documentation
 description: Complete documentation for InvenTag AWS Cloud Governance Platform
 sidebar_position: 1
-slug: /
 ---
 
 # 🏷️ InvenTag
@@ -134,10 +133,10 @@ Technical documentation for developers and system architects.
 
 Resources for developers contributing to InvenTag or deploying it in production.
 
-- **[Contributing Guide](development/contributing)** - Development setup and guidelines
-- **[Deployment Guide](development/deployment)** - Production deployment instructions
+- **[Contributing Guide](development/CONTRIBUTING)** - Development setup and guidelines
+- **[Deployment Guide](development/DEPLOYMENT)** - Production deployment instructions
 - **[CI/CD Integration](development/cicd-integration)** - Pipeline integration examples
-- **[Security Guide](development/security)** - Security best practices
+- **[Security Guide](development/SECURITY)** - Security best practices
 - **[Backward Compatibility](development/backward-compatibility)** - Version compatibility matrix
 - **[Migration Guide](development/bom-migration-guide)** - Upgrade and migration procedures
 
@@ -154,9 +153,9 @@ Resources for developers contributing to InvenTag or deploying it in production.
 
 - **New User?** Start with [Introduction](getting-started/introduction) and [Quick Start Guide](getting-started/quick-start)
 - **Setting Up?** Check [Installation](getting-started/installation) and [Configuration Examples](user-guides/configuration-examples)  
-- **Production Deployment?** See [Production Safety Guide](user-guides/production-safety) and [Deployment Guide](development/deployment)
+- **Production Deployment?** See [Production Safety Guide](user-guides/production-safety) and [Deployment Guide](development/DEPLOYMENT)
 - **Having Issues?** Visit [Troubleshooting Guide](user-guides/troubleshooting-guide)
-- **Developer?** Read [Contributing Guide](development/contributing)
+- **Developer?** Read [Contributing Guide](development/CONTRIBUTING)
 
 ## 🔗 Support & Community
 
@@ -166,7 +165,7 @@ Resources for developers contributing to InvenTag or deploying it in production.
 
 ## 📄 License
 
-MIT License - see [LICENSE](../LICENSE) file for details.
+MIT License - see the [LICENSE](https://github.com/habhabhabs/inventag-aws/blob/main/LICENSE) file for details.
 
 ---
 

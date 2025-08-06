@@ -101,7 +101,7 @@ See [Production Safety Guide](../user-guides/production-safety) for complete det
 
 ## 📄 License
 
-MIT License - see [LICENSE](../../LICENSE) file for details.
+MIT License - see the [LICENSE](https://github.com/habhabhabs/inventag-aws/blob/main/LICENSE) file for details.
 
 ---
 
