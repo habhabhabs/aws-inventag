@@ -1,49 +1,105 @@
 import clsx from 'clsx';
 import Heading from '@theme/Heading';
+import Link from '@docusaurus/Link';
 import styles from './styles.module.css';
 
 const FeatureList = [
   {
-    title: 'Easy to Use',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    title: '🛡️ Production Safety & Security',
+    icon: '🛡️',
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Enterprise-grade security validation with built-in compliance standards 
+        (SOC 2, PCI, HIPAA, GDPR). Read-only enforcement, audit logging, and 
+        real-time risk assessment ensure your AWS environment stays secure.
       </>
     ),
+    link: '/user-guides/production-safety',
+    linkText: 'Security Guide'
   },
   {
-    title: 'Focus on What Matters',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    title: '📊 Professional BOM Generation',
+    icon: '📊',
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Generate comprehensive Bill of Materials reports in Excel, Word, and Google Docs 
+        formats. Logical column ordering, service-specific sheets, and professional 
+        formatting for enterprise reporting needs.
       </>
     ),
+    link: '/user-guides/cli-user-guide',
+    linkText: 'BOM Guide'
   },
   {
-    title: 'Powered by React',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    title: '🔍 Multi-Account Discovery',
+    icon: '🔍',
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Comprehensive resource scanning across multiple AWS accounts with parallel 
+        processing. Cross-account roles, interactive setup, and flexible credential 
+        management for complex enterprise environments.
       </>
     ),
+    link: '/examples/accounts-setup',
+    linkText: 'Setup Guide'
+  },
+  {
+    title: '🌐 Advanced Analysis Suite',
+    icon: '🌐',
+    description: (
+      <>
+        Network security analysis, cost optimization insights, and security posture 
+        assessment. Automated tag compliance checking and comprehensive change tracking 
+        with delta detection.
+      </>
+    ),
+    link: '/user-guides/configuration-examples',
+    linkText: 'Analysis Features'
+  },
+  {
+    title: '🏷️ Tag Compliance Checking',
+    icon: '🏷️',
+    description: (
+      <>
+        Automated validation against organizational tagging policies. Custom tag 
+        mappings, compliance reporting, and governance enforcement to maintain 
+        consistent resource organization.
+      </>
+    ),
+    link: '/architecture/tag-compliance',
+    linkText: 'Tag Compliance'
+  },
+  {
+    title: '⚡ CI/CD Ready',
+    icon: '⚡',
+    description: (
+      <>
+        Easy integration with automated workflows, S3 upload support, and 
+        comprehensive API for custom integrations. Built for modern DevOps 
+        and infrastructure-as-code practices.
+      </>
+    ),
+    link: '/examples/cicd-integration',
+    linkText: 'CI/CD Examples'
   },
 ];
 
-function Feature({Svg, title, description}) {
+function Feature({icon, title, description, link, linkText}) {
   return (
     <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
-      </div>
-      <div className="text--center padding-horiz--md">
-        <Heading as="h3">{title}</Heading>
-        <p>{description}</p>
+      <div className={styles.featureCard}>
+        <div className={styles.featureIcon}>
+          <span className={styles.iconEmoji}>{icon}</span>
+        </div>
+        <div className={styles.featureContent}>
+          <Heading as="h3" className={styles.featureTitle}>{title}</Heading>
+          <p className={styles.featureDescription}>{description}</p>
+          <Link
+            className={clsx('button button--outline button--primary', styles.featureLink)}
+            to={link}>
+            {linkText} →
+          </Link>
+        </div>
       </div>
     </div>
   );

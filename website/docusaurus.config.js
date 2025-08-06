@@ -12,7 +12,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 const config = {
   title: 'InvenTag Documentation',
   tagline: 'Professional AWS Cloud Governance Platform',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.svg',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
@@ -68,8 +68,8 @@ const config = {
             '**/*.test.{js,jsx,ts,tsx}',
             '**/__tests__/**',
             // Temporarily exclude problematic files during migration
-            '**/TEMPLATE_SYSTEM_SUMMARY.md',
-            '**/COMPLETE_README_BACKUP.md',
+            '**/template-system-summary.md',
+            '**/complete-readme-backup.md',
           ],
         },
         blog: false, // Disable blog functionality for this documentation site
@@ -91,7 +91,7 @@ const config = {
         {name: 'description', content: 'Professional AWS Cloud Governance Platform - Comprehensive documentation for InvenTag'},
       ],
       // Social card for better sharing
-      image: 'img/inventag-social-card.jpg',
+      image: 'img/inventag-social-card.svg',
       navbar: {
         title: 'InvenTag',
         logo: {
@@ -183,7 +183,37 @@ const config = {
         theme: prismThemes.github,
         darkTheme: prismThemes.dracula,
         // Enhanced syntax highlighting for AWS and cloud technologies
-        additionalLanguages: ['bash', 'json', 'yaml', 'python', 'javascript', 'typescript'],
+        additionalLanguages: [
+          'bash',
+          'json',
+          'yaml',
+          'python',
+          'javascript',
+          'typescript',
+          'powershell',
+          'ini',
+          'toml',
+          'sql',
+          'graphql',
+          'markdown',
+          'diff'
+        ],
+        // Custom syntax highlighting for AWS CLI and cloud commands
+        magicComments: [
+          {
+            className: 'theme-code-block-highlighted-line',
+            line: 'highlight-next-line',
+            block: {start: 'highlight-start', end: 'highlight-end'},
+          },
+          {
+            className: 'code-block-aws-command',
+            line: 'aws-command',
+          },
+          {
+            className: 'code-block-inventag-command',
+            line: 'inventag-command',
+          },
+        ],
       },
       // Enhanced color mode configuration
       colorMode: {
