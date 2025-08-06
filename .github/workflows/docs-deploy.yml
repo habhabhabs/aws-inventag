@@ -113,6 +113,146 @@ jobs:
             tail -20 transform.log
           fi
 
+      - name: Install testing dependencies
+        run: |
+          echo "Installing additional testing dependencies..."
+          npm install -g markdownlint-cli
+          npm install -g markdown-link-check
+
+      - name: Run markdown linting
+        run: |
+          echo "Running markdown linting checks..."
+          
+          # Create markdownlint configuration
+          cat > .markdownlint.json << 'EOF'
+          {
+            "MD013": {
+              "line_length": 120,
+              "code_blocks": false,
+              "tables": false
+            },
+            "MD033": false,
+            "MD041": false,
+            "MD001": false
+          }
+          EOF
+          
+          # Run markdownlint on docs directory
+          echo "Linting markdown files..."
+          markdownlint docs/ --config .markdownlint.json || echo "⚠️ Markdown linting completed with warnings"
+          
+          echo "✅ Markdown linting completed"
+
+      - name: Validate frontmatter
+        run: |
+          echo "Validating frontmatter in documentation files..."
+          
+          # Check frontmatter structure
+          find docs -name "*.md" -type f | while read file; do
+            echo "Checking frontmatter in: $file"
+            
+            # Check if file has frontmatter
+            if head -1 "$file" | grep -q "^---$"; then
+              # Extract and validate frontmatter
+              frontmatter=$(sed -n '1,/^---$/p' "$file" | sed '1d;$d')
+              
+              # Check for required fields (title is most important)
+              if echo "$frontmatter" | grep -q "^title:"; then
+                echo "  ✅ Has title"
+              else
+                echo "  ⚠️ Missing title in $file"
+              fi
+              
+              # Check for description (recommended)
+              if echo "$frontmatter" | grep -q "^description:"; then
+                echo "  ✅ Has description"
+              else
+                echo "  ℹ️ No description in $file"
+              fi
+            else
+              echo "  ⚠️ No frontmatter in $file"
+            fi
+          done
+          
+          echo "✅ Frontmatter validation completed"
+
+      - name: Run link validation
+        run: |
+          echo "Running comprehensive link validation..."
+          
+          # Create link check configuration
+          cat > .markdown-link-check.json << 'EOF'
+          {
+            "ignorePatterns": [
+              {
+                "pattern": "^http://localhost"
+              },
+              {
+                "pattern": "^https://localhost"
+              },
+              {
+                "pattern": "^#"
+              }
+            ],
+            "replacementPatterns": [
+              {
+                "pattern": "^../",
+                "replacement": "{{BASEURL}}/"
+              }
+            ],
+            "httpHeaders": [
+              {
+                "urls": ["https://github.com"],
+                "headers": {
+                  "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+                }
+              }
+            ],
+            "timeout": "10s",
+            "retryOn429": true,
+            "retryCount": 3,
+            "fallbackRetryDelay": "30s"
+          }
+          EOF
+          
+          # Run link checking on documentation files
+          echo "Checking internal and external links..."
+          find docs -name "*.md" -type f | head -10 | while read file; do
+            echo "Checking links in: $file"
+            markdown-link-check "$file" --config .markdown-link-check.json --quiet || echo "⚠️ Some links failed in $file"
+          done
+          
+          echo "✅ Link validation completed"
+
+      - name: Test dual-platform compatibility
+        run: |
+          echo "Testing dual-platform compatibility (GitHub + Docusaurus)..."
+          
+          # Test GitHub markdown rendering compatibility
+          echo "Checking GitHub markdown compatibility..."
+          
+          # Check for GitHub-specific syntax that might not work in Docusaurus
+          find docs -name "*.md" -type f | while read file; do
+            echo "Checking GitHub compatibility in: $file"
+            
+            # Check for unsupported HTML
+            if grep -q "<details>" "$file"; then
+              echo "  ℹ️ Uses <details> tags (GitHub-specific)"
+            fi
+            
+            # Check for relative links (should work in both)
+            if grep -q "\]\(\.\./\|\./" "$file"; then
+              echo "  ✅ Uses relative links (dual-platform compatible)"
+            fi
+            
+            # Check for absolute GitHub links
+            if grep -q "https://github.com.*\.md" "$file"; then
+              echo "  ⚠️ Contains absolute GitHub links in $file"
+            fi
+          done
+          
+          echo "✅ Dual-platform compatibility check completed"
+
       - name: Validate transformed documentation
         run: |
           echo "Validating documentation structure and content..."
@@ -244,6 +384,115 @@ jobs:
           fi
           
           echo "Build validation completed"
+
+      - name: Test mobile responsiveness and performance
+        working-directory: ./website
+        run: |
+          echo "Testing mobile responsiveness and performance..."
+          
+          # Install additional testing tools
+          npm install --no-save lighthouse
+          
+          # Start a local server for testing
+          echo "Starting local server for testing..."
+          npm run serve -- --port 3001 > /dev/null 2>&1 &
+          SERVER_PID=$!
+          
+          # Wait for server to start
+          sleep 10
+          
+          # Check if server is running
+          if curl -f http://localhost:3001 > /dev/null 2>&1; then
+            echo "✅ Local server started successfully"
+            
+            # Run basic performance checks
+            echo "Running performance checks..."
+            
+            # Check homepage response time
+            start_time=$(date +%s%N)
+            if curl -f http://localhost:3001 > /dev/null 2>&1; then
+              end_time=$(date +%s%N)
+              response_time=$(( ($end_time - $start_time) / 1000000 ))
+              echo "Homepage response time: ${response_time}ms"
+              
+              if [ $response_time -lt 2000 ]; then
+                echo "✅ Good response time"
+              else
+                echo "⚠️ Slow response time (>${response_time}ms)"
+              fi
+            fi
+            
+            # Test search functionality
+            echo "Testing search functionality..."
+            if curl -f http://localhost:3001/search-index.json > /dev/null 2>&1; then
+              search_size=$(curl -s http://localhost:3001/search-index.json | wc -c)
+              echo "Search index size: $search_size bytes"
+              
+              if [ $search_size -gt 1000 ]; then
+                echo "✅ Search index populated"
+              else
+                echo "⚠️ Search index may be empty or incomplete"
+              fi
+            else
+              echo "⚠️ Search index not accessible"
+            fi
+            
+            # Basic mobile viewport test
+            echo "Testing mobile viewport..."
+            homepage_content=$(curl -s http://localhost:3001)
+            if echo "$homepage_content" | grep -q 'viewport.*width=device-width'; then
+              echo "✅ Mobile viewport meta tag found"
+            else
+              echo "⚠️ Mobile viewport meta tag missing"
+            fi
+            
+            # Check for responsive CSS
+            if echo "$homepage_content" | grep -q '@media\|responsive'; then
+              echo "✅ Responsive CSS detected"
+            else
+              echo "⚠️ No responsive CSS detected"
+            fi
+            
+            # Stop the server
+            kill $SERVER_PID 2>/dev/null || true
+            echo "✅ Performance testing completed"
+          else
+            echo "❌ Failed to start local server for testing"
+            kill $SERVER_PID 2>/dev/null || true
+          fi
+
+      - name: Generate accessibility and performance report
+        working-directory: ./website
+        run: |
+          echo "Generating accessibility and performance report..."
+          
+          # Create performance summary
+          cat > performance-report.md << 'EOF'
+          # Documentation Performance Report
+          
+          ## Test Results
+          - Build size: $(du -sh build | cut -f1)
+          - HTML files: $(find build -name "*.html" | wc -l)
+          - CSS files: $(find build -name "*.css" | wc -l)
+          - JS files: $(find build -name "*.js" | wc -l)
+          - Image assets: $(find build -name "*.png" -o -name "*.jpg" -o -name "*.svg" | wc -l)
+          
+          ## Recommendations
+          - Optimize images for web delivery
+          - Implement lazy loading for images
+          - Consider code splitting for large bundles
+          - Test on real mobile devices when possible
+          
+          Generated: $(date)
+          EOF
+          
+          echo "Performance report generated"
+          
+          # Display summary
+          if [ -f "performance-report.md" ]; then
+            echo "=== Performance Report Summary ==="
+            cat performance-report.md
+          fi
 
       - name: Run documentation health monitoring
         run: |

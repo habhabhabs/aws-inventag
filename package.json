@@ -14,8 +14,12 @@
     "docs:validate:strict": "node scripts/validate-docs.js --strict",
     "docs:validate:migration": "node scripts/validate-docs-migration.js",
     "docs:monitor": "node scripts/monitor-docs.js",
+    "docs:test": "node scripts/test-docs.js",
+    "docs:test:quick": "node scripts/test-docs.js --quick",
+    "docs:test:verbose": "node scripts/test-docs.js --verbose",
     "docs:pipeline": "npm run docs:transform && npm run docs:validate && npm run docs:build",
-    "docs:pipeline:safe": "npm run docs:transform:dry && npm run docs:validate:migration && echo 'Pipeline validation complete - run docs:pipeline to apply changes'"
+    "docs:pipeline:safe": "npm run docs:transform:dry && npm run docs:validate:migration && echo 'Pipeline validation complete - run docs:pipeline to apply changes'",
+    "docs:pipeline:test": "npm run docs:pipeline:safe && npm run docs:test:quick && npm run docs:build"
   },
   "repository": {
     "type": "git",
