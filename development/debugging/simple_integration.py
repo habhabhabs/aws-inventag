@@ -8,12 +8,13 @@ import sys
 import os
 from pathlib import Path
 
+
 def create_optimized_discovery_module():
     """Create a new optimized discovery module that can be used alongside the existing system."""
-    
+
     print("🔧 Creating Optimized Discovery Module")
     print("=" * 50)
-    
+
     # Create the optimized discovery module
     optimized_content = '''#!/usr/bin/env python3
 """
@@ -414,13 +415,13 @@ if __name__ == "__main__":
     # Test the optimized system
     test_optimized_system()
 '''
-    
+
     # Write the optimized discovery module
-    with open("optimized_aws_discovery.py", "w", encoding='utf-8') as f:
+    with open("optimized_aws_discovery.py", "w", encoding="utf-8") as f:
         f.write(optimized_content)
-    
+
     print("✅ Created optimized_aws_discovery.py")
-    
+
     # Create a usage example
     usage_example = '''#!/usr/bin/env python3
 """
@@ -548,14 +549,14 @@ if __name__ == "__main__":
     print("\\n✅ Example complete!")
     print("\\nYou can now use OptimizedAWSDiscovery in your own scripts.")
 '''
-    
-    with open("usage_example.py", "w", encoding='utf-8') as f:
+
+    with open("usage_example.py", "w", encoding="utf-8") as f:
         f.write(usage_example)
-    
+
     print("✅ Created usage_example.py")
-    
+
     # Create integration instructions
-    instructions = '''# Optimized AWS Discovery System - Integration Guide
+    instructions = """# Optimized AWS Discovery System - Integration Guide
 
 ## 🎯 Overview
 This optimized discovery system addresses the key issues found in the original intelligent discovery:
@@ -680,13 +681,13 @@ If you encounter issues:
 4. Compare results with the legacy system
 
 The optimized system is designed to be a drop-in replacement that provides better results with improved performance.
-'''
-    
-    with open("INTEGRATION_GUIDE.md", "w", encoding='utf-8') as f:
+"""
+
+    with open("INTEGRATION_GUIDE.md", "w", encoding="utf-8") as f:
         f.write(instructions)
-    
+
     print("✅ Created INTEGRATION_GUIDE.md")
-    
+
     print(f"\n🎉 Simple Integration Complete!")
     print(f"=" * 50)
     print(f"Created standalone optimized discovery system with the following files:")
@@ -709,8 +710,9 @@ The optimized system is designed to be a drop-in replacement that provides bette
     print(f"  - ✅ Drop-in replacement for existing system")
     print(f"")
     print(f"This optimized system addresses all the issues found in the debugging session!")
-    
+
     return True
+
 
 if __name__ == "__main__":
     create_optimized_discovery_module()

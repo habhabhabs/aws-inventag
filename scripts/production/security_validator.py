@@ -11,9 +11,7 @@ import json
 from datetime import datetime
 
 # Add the project root to the Python path to import inventag
-project_root = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-)
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 
 from inventag.compliance import (
@@ -32,9 +30,7 @@ def main():
         action="store_true",
         help="Validate resource inventory operations",
     )
-    parser.add_argument(
-        "--security-policy", type=str, help="Path to custom security policy file"
-    )
+    parser.add_argument("--security-policy", type=str, help="Path to custom security policy file")
     parser.add_argument(
         "--audit-output",
         type=str,
@@ -101,9 +97,7 @@ def main():
                 "CRITICAL": "🔴",
             }.get(result.risk_level, "⚪")
 
-            print(
-                f"  {service}:{operation} - {status} {risk_color} {result.risk_level}"
-            )
+            print(f"  {service}:{operation} - {status} {risk_color} {result.risk_level}")
 
             if result.is_valid:
                 allowed_count += 1
@@ -114,9 +108,7 @@ def main():
         print(f"\n📊 Validation Summary:")
         print(f"  ✅ Allowed: {allowed_count}")
         print(f"  🚫 Blocked: {blocked_count}")
-        print(
-            f"  📈 Approval Rate: {(allowed_count / len(operations_to_test) * 100):.1f}%"
-        )
+        print(f"  📈 Approval Rate: {(allowed_count / len(operations_to_test) * 100):.1f}%")
 
     # Generate security audit report
     print(f"\n📋 Generating security audit report...")

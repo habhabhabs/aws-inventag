@@ -99,9 +99,7 @@ def main():
     print(
         f"   Forgotten resource threshold: {custom_thresholds.forgotten_resource_days_threshold} days"
     )
-    print(
-        f"   High cost alert threshold: ${custom_thresholds.high_cost_alert_threshold}"
-    )
+    print(f"   High cost alert threshold: ${custom_thresholds.high_cost_alert_threshold}")
 
     # Initialize Cost Analyzer (using mock data since we don't have real AWS access)
     analyzer = CostAnalyzer(thresholds=custom_thresholds)
@@ -289,9 +287,7 @@ def main():
         ),
     ]
 
-    total_potential_savings = sum(
-        rec.potential_monthly_savings for rec in mock_recommendations
-    )
+    total_potential_savings = sum(rec.potential_monthly_savings for rec in mock_recommendations)
 
     print(f"   Generated {len(mock_recommendations)} optimization recommendations:")
     print(f"   Total potential monthly savings: ${total_potential_savings}")
@@ -367,9 +363,7 @@ def main():
         )
 
         if cost_estimate:
-            resource["estimated_monthly_cost"] = float(
-                cost_estimate.estimated_monthly_cost
-            )
+            resource["estimated_monthly_cost"] = float(cost_estimate.estimated_monthly_cost)
             resource["cost_confidence"] = cost_estimate.confidence_level
 
             # Check if it's expensive
@@ -380,11 +374,7 @@ def main():
 
             # Check if it's forgotten
             forgotten = next(
-                (
-                    f
-                    for f in mock_forgotten_resources
-                    if f.resource_id == resource["id"]
-                ),
+                (f for f in mock_forgotten_resources if f.resource_id == resource["id"]),
                 None,
             )
             if forgotten:

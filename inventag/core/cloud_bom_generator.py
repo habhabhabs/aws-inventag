@@ -47,9 +47,7 @@ class AccountCredentials:
     profile_name: Optional[str] = None
     role_arn: Optional[str] = None
     external_id: Optional[str] = None
-    regions: List[str] = field(
-        default_factory=list
-    )  # Empty list means auto-discover all regions
+    regions: List[str] = field(default_factory=list)  # Empty list means auto-discover all regions
     services: List[str] = field(default_factory=list)  # Empty means all services
     tags: Dict[str, str] = field(default_factory=dict)  # Account-specific tag filters
 
@@ -83,9 +81,7 @@ class MultiAccountConfig:
     enable_state_management: bool = True
     enable_delta_detection: bool = True
     enable_changelog_generation: bool = True
-    bom_processing_config: BOMProcessingConfig = field(
-        default_factory=BOMProcessingConfig
-    )
+    bom_processing_config: BOMProcessingConfig = field(default_factory=BOMProcessingConfig)
     output_directory: str = "bom_output"
     credential_validation_timeout: int = 30
 
@@ -128,9 +124,7 @@ class CloudBOMGenerator:
         self.output_dir = Path(self.config.output_directory)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        self.logger.info(
-            f"Initialized CloudBOMGenerator with {len(self.config.accounts)} accounts"
-        )
+        self.logger.info(f"Initialized CloudBOMGenerator with {len(self.config.accounts)} accounts")
 
     def generate_multi_account_bom(
         self,
@@ -166,9 +160,7 @@ class CloudBOMGenerator:
             # Step 3: Consolidate resources if configured
             if self.config.consolidate_accounts:
                 self.logger.info("Consolidating resources from all accounts")
-                consolidated_resources = self._consolidate_account_resources(
-                    all_resources
-                )
+                consolidated_resources = self._consolidate_account_resources(all_resources)
             else:
                 consolidated_resources = all_resources
 
@@ -271,9 +263,7 @@ class CloudBOMGenerator:
         """
         # Note: s3_upload_config is ignored for now - S3 upload should be handled separately
         if s3_upload_config:
-            self.logger.warning(
-                "S3 upload configuration passed but not implemented in this method"
-            )
+            self.logger.warning("S3 upload configuration passed but not implemented in this method")
 
         return self.generate_multi_account_bom(
             output_formats=output_formats, compliance_policies=compliance_policies
@@ -285,9 +275,7 @@ class CloudBOMGenerator:
 
         for credentials in self.config.accounts:
             try:
-                self.logger.info(
-                    f"Establishing context for account {credentials.account_id}"
-                )
+                self.logger.info(f"Establishing context for account {credentials.account_id}")
 
                 # Create session
                 session = self._create_account_session(credentials)
@@ -314,16 +302,12 @@ class CloudBOMGenerator:
                             caller_arn = caller_identity.get("Arn", "")
                             if "assumed-role" in caller_arn:
                                 try:
-                                    role_part = caller_arn.split("assumed-role/")[
-                                        1
-                                    ].split("/")[0]
+                                    role_part = caller_arn.split("assumed-role/")[1].split("/")[0]
                                     credentials.account_name = (
                                         f"AWS Account {actual_account_id} ({role_part})"
                                     )
                                 except:
-                                    credentials.account_name = (
-                                        f"AWS Account {actual_account_id}"
-                                    )
+                                    credentials.account_name = f"AWS Account {actual_account_id}"
                             elif "user" in caller_arn:
                                 try:
                                     user_part = caller_arn.split("user/")[1]
@@ -331,13 +315,9 @@ class CloudBOMGenerator:
                                         f"AWS Account {actual_account_id} ({user_part})"
                                     )
                                 except:
-                                    credentials.account_name = (
-                                        f"AWS Account {actual_account_id}"
-                                    )
+                                    credentials.account_name = f"AWS Account {actual_account_id}"
                             else:
-                                credentials.account_name = (
-                                    f"AWS Account {actual_account_id}"
-                                )
+                                credentials.account_name = f"AWS Account {actual_account_id}"
 
                 # Auto-discover regions if none specified
                 target_regions = credentials.regions
@@ -345,9 +325,7 @@ class CloudBOMGenerator:
                     try:
                         ec2 = session.client("ec2", region_name="us-east-1")
                         all_regions = ec2.describe_regions()["Regions"]
-                        target_regions = [
-                            region["RegionName"] for region in all_regions
-                        ]
+                        target_regions = [region["RegionName"] for region in all_regions]
                         self.logger.info(
                             f"Auto-discovered {len(target_regions)} regions for account {credentials.account_id}"
                         )
@@ -361,9 +339,7 @@ class CloudBOMGenerator:
                         ]  # Fallback
 
                 # Test accessible regions
-                accessible_regions = self._test_accessible_regions(
-                    session, target_regions
-                )
+                accessible_regions = self._test_accessible_regions(session, target_regions)
 
                 # Create account context
                 context = AccountContext(
@@ -438,9 +414,7 @@ class CloudBOMGenerator:
                 return session
 
             except ClientError as e:
-                self.logger.warning(
-                    f"Role assumption failed for {credentials.role_arn}: {e}"
-                )
+                self.logger.warning(f"Role assumption failed for {credentials.role_arn}: {e}")
 
         # Try direct credentials
         if credentials.access_key_id and credentials.secret_access_key:
@@ -474,9 +448,7 @@ class CloudBOMGenerator:
                 return session
 
             except ClientError as e:
-                self.logger.warning(
-                    f"Cross-account role assumption failed for {role_arn}: {e}"
-                )
+                self.logger.warning(f"Cross-account role assumption failed for {role_arn}: {e}")
 
         # Fallback to default session
         try:
@@ -534,23 +506,16 @@ class CloudBOMGenerator:
         self, account_contexts: Dict[str, AccountContext]
     ) -> List[Dict[str, Any]]:
         """Discover resources across accounts in parallel."""
-        self.logger.info(
-            f"Starting parallel discovery across {len(account_contexts)} accounts"
-        )
+        self.logger.info(f"Starting parallel discovery across {len(account_contexts)} accounts")
 
         all_resources = []
 
-        with ThreadPoolExecutor(
-            max_workers=self.config.max_concurrent_accounts
-        ) as executor:
+        with ThreadPoolExecutor(max_workers=self.config.max_concurrent_accounts) as executor:
             # Submit discovery tasks
             future_to_account = {
-                executor.submit(
-                    self._discover_account_resources, account_id, context
-                ): account_id
+                executor.submit(self._discover_account_resources, account_id, context): account_id
                 for account_id, context in account_contexts.items()
-                if context.session
-                is not None  # Only process accounts with valid sessions
+                if context.session is not None  # Only process accounts with valid sessions
             }
 
             # Collect results
@@ -569,9 +534,7 @@ class CloudBOMGenerator:
                     )
 
                 except Exception as e:
-                    self.logger.error(
-                        f"Resource discovery failed for account {account_id}: {e}"
-                    )
+                    self.logger.error(f"Resource discovery failed for account {account_id}: {e}")
                     self._processing_stats["failed_accounts"] += 1
 
                     # Update account context with error
@@ -580,34 +543,26 @@ class CloudBOMGenerator:
                             f"Resource discovery failed: {e}"
                         )
 
-        self.logger.info(
-            f"Parallel discovery completed. Total resources: {len(all_resources)}"
-        )
+        self.logger.info(f"Parallel discovery completed. Total resources: {len(all_resources)}")
         return all_resources
 
     def _sequential_account_discovery(
         self, account_contexts: Dict[str, AccountContext]
     ) -> List[Dict[str, Any]]:
         """Discover resources across accounts sequentially."""
-        self.logger.info(
-            f"Starting sequential discovery across {len(account_contexts)} accounts"
-        )
+        self.logger.info(f"Starting sequential discovery across {len(account_contexts)} accounts")
 
         all_resources = []
 
         for account_id, context in account_contexts.items():
             if context.session is None:
-                self.logger.warning(
-                    f"Skipping account {account_id} due to invalid session"
-                )
+                self.logger.warning(f"Skipping account {account_id} due to invalid session")
                 self._processing_stats["failed_accounts"] += 1
                 continue
 
             try:
                 self.logger.info(f"Discovering resources for account {account_id}")
-                account_resources = self._discover_account_resources(
-                    account_id, context
-                )
+                account_resources = self._discover_account_resources(account_id, context)
                 all_resources.extend(account_resources)
                 self._processing_stats["successful_accounts"] += 1
 
@@ -617,17 +572,13 @@ class CloudBOMGenerator:
                 )
 
             except Exception as e:
-                self.logger.error(
-                    f"Resource discovery failed for account {account_id}: {e}"
-                )
+                self.logger.error(f"Resource discovery failed for account {account_id}: {e}")
                 self._processing_stats["failed_accounts"] += 1
 
                 # Update account context with error
                 context.processing_errors.append(f"Resource discovery failed: {e}")
 
-        self.logger.info(
-            f"Sequential discovery completed. Total resources: {len(all_resources)}"
-        )
+        self.logger.info(f"Sequential discovery completed. Total resources: {len(all_resources)}")
         return all_resources
 
     def _discover_account_resources(
@@ -665,8 +616,7 @@ class CloudBOMGenerator:
             inventory = AWSResourceInventory(
                 session=context.session,
                 regions=regions_to_use,
-                services=context.credentials.services
-                or None,  # None means all services
+                services=context.credentials.services or None,  # None means all services
                 tag_filters=context.credentials.tags,
             )
 
@@ -686,9 +636,7 @@ class CloudBOMGenerator:
             context.processing_time_seconds = (
                 datetime.now(timezone.utc) - start_time
             ).total_seconds()
-            context.discovered_services = list(
-                set(r.get("service", "") for r in resources)
-            )
+            context.discovered_services = list(set(r.get("service", "") for r in resources))
 
             self.logger.info(
                 f"Account {account_id} discovery completed in {context.processing_time_seconds:.2f}s. "
@@ -708,9 +656,7 @@ class CloudBOMGenerator:
         self, all_resources: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """Consolidate resources from multiple accounts into unified format."""
-        self.logger.info(
-            f"Consolidating {len(all_resources)} resources from multiple accounts"
-        )
+        self.logger.info(f"Consolidating {len(all_resources)} resources from multiple accounts")
 
         # Group resources by account for analysis
         resources_by_account = {}
@@ -723,13 +669,9 @@ class CloudBOMGenerator:
         # Log consolidation statistics
         for account_id, resources in resources_by_account.items():
             account_name = (
-                resources[0].get("source_account_name", "Unknown")
-                if resources
-                else "Unknown"
+                resources[0].get("source_account_name", "Unknown") if resources else "Unknown"
             )
-            self.logger.info(
-                f"Account {account_id} ({account_name}): {len(resources)} resources"
-            )
+            self.logger.info(f"Account {account_id} ({account_name}): {len(resources)} resources")
 
         # Add consolidation metadata
         for resource in all_resources:
@@ -762,9 +704,7 @@ class CloudBOMGenerator:
             )
 
             # Run compliance analysis
-            compliance_results = compliance_checker.check_resources_compliance(
-                resources
-            )
+            compliance_results = compliance_checker.check_resources_compliance(resources)
 
             # Add multi-account context to results
             compliance_results["multi_account_analysis"] = {
@@ -823,9 +763,7 @@ class CloudBOMGenerator:
                 {
                     "multi_account_generation": True,
                     "total_accounts": len(self.account_contexts),
-                    "successful_accounts": self._processing_stats[
-                        "successful_accounts"
-                    ],
+                    "successful_accounts": self._processing_stats["successful_accounts"],
                     "failed_accounts": self._processing_stats["failed_accounts"],
                     "account_summary": [
                         {
@@ -915,9 +853,7 @@ class CloudBOMGenerator:
                 "generation_timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
-    def _generate_state_artifacts(
-        self, resources: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _generate_state_artifacts(self, resources: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Generate state management artifacts for change tracking."""
         if not self.config.enable_state_management:
             return {}
@@ -966,9 +902,7 @@ class CloudBOMGenerator:
 
                     if len(previous_states) > 1:
                         # Compare with previous state
-                        previous_state_id = previous_states[-2][
-                            "state_id"
-                        ]  # Second to last
+                        previous_state_id = previous_states[-2]["state_id"]  # Second to last
                         delta_results = delta_detector.detect_changes_by_state_id(
                             state_manager, previous_state_id, state_id
                         )
@@ -1021,9 +955,7 @@ class CloudBOMGenerator:
             return {"state_saved": False, "error": str(e)}
 
     @classmethod
-    def from_credentials_file(
-        cls, credentials_file: str, **kwargs
-    ) -> "CloudBOMGenerator":
+    def from_credentials_file(cls, credentials_file: str, **kwargs) -> "CloudBOMGenerator":
         """Create CloudBOMGenerator from a credentials file."""
         credentials_path = Path(credentials_file)
 
@@ -1038,9 +970,7 @@ class CloudBOMGenerator:
             with open(credentials_path, "r") as f:
                 data = json.load(f)
         else:
-            raise ValueError(
-                f"Unsupported credentials file format: {credentials_path.suffix}"
-            )
+            raise ValueError(f"Unsupported credentials file format: {credentials_path.suffix}")
 
         # Parse accounts
         accounts = []
@@ -1104,9 +1034,7 @@ class CloudBOMGenerator:
             # Method 4 uses default cross-account role
 
             # Regions
-            regions_input = input(
-                "Regions (comma-separated, empty for all regions): "
-            ).strip()
+            regions_input = input("Regions (comma-separated, empty for all regions): ").strip()
             if regions_input:
                 credentials.regions = [r.strip() for r in regions_input.split(",")]
             # If empty, regions will remain empty list and auto-discovery will happen later

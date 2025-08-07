@@ -95,15 +95,11 @@ Examples:
         default="json",
         help="Output format (default: json)",
     )
-    parser.add_argument(
-        "--regions", nargs="+", help="AWS regions to scan (default: all regions)"
-    )
+    parser.add_argument("--regions", nargs="+", help="AWS regions to scan (default: all regions)")
     parser.add_argument("--s3-bucket", help="S3 bucket to upload results")
     parser.add_argument("--s3-key", help="S3 key for uploaded file")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose logging")
-    parser.add_argument(
-        "--no-color", action="store_true", help="Disable colored output"
-    )
+    parser.add_argument("--no-color", action="store_true", help="Disable colored output")
 
     # BOM generation options
     bom_group = parser.add_argument_group("BOM Generation Options")
@@ -127,9 +123,7 @@ Examples:
     bom_group.add_argument(
         "--service-descriptions", help="Path to service descriptions configuration file"
     )
-    bom_group.add_argument(
-        "--tag-mappings", help="Path to tag mappings configuration file"
-    )
+    bom_group.add_argument("--tag-mappings", help="Path to tag mappings configuration file")
     bom_group.add_argument(
         "--disable-vpc-enrichment",
         action="store_true",
@@ -157,9 +151,7 @@ Examples:
 
     try:
         # Initialize compliance checker
-        checker = ComprehensiveTagComplianceChecker(
-            regions=args.regions, config_file=args.config
-        )
+        checker = ComprehensiveTagComplianceChecker(regions=args.regions, config_file=args.config)
 
         # Load existing inventory or discover resources
         if args.input:
@@ -259,16 +251,12 @@ Examples:
 
                 if bom_results["success"]:
                     print(f"{Fore.GREEN}✓ BOM generation successful{Style.RESET_ALL}")
-                    print(
-                        f"Generated {len(bom_results['generated_files'])} document(s):"
-                    )
+                    print(f"Generated {len(bom_results['generated_files'])} document(s):")
                     for file_path in bom_results["generated_files"]:
                         print(f"  - {file_path}")
 
                     # Show generation summary
-                    for format_type, result in bom_results[
-                        "generation_results"
-                    ].items():
+                    for format_type, result in bom_results["generation_results"].items():
                         if result["success"]:
                             print(
                                 f"  {Fore.GREEN}✓{Style.RESET_ALL} {format_type.upper()}: {result['file']}"
@@ -279,9 +267,7 @@ Examples:
                             )
                 else:
                     print(f"{Fore.RED}✗ BOM generation failed{Style.RESET_ALL}")
-                    for format_type, result in bom_results[
-                        "generation_results"
-                    ].items():
+                    for format_type, result in bom_results["generation_results"].items():
                         if not result["success"]:
                             print(f"  {format_type.upper()}: {result['error']}")
 

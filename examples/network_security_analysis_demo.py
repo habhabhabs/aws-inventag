@@ -170,9 +170,7 @@ def print_network_analysis_summary(network_summary):
     print(f"Total Available IPs: {network_summary.total_available_ips:,}")
 
     if network_summary.highest_utilization_subnet:
-        print(
-            f"Highest Utilization Subnet: {network_summary.highest_utilization_subnet}"
-        )
+        print(f"Highest Utilization Subnet: {network_summary.highest_utilization_subnet}")
         print(
             f"Highest Utilization Percentage: {network_summary.highest_utilization_percentage:.1f}%"
         )
@@ -233,9 +231,7 @@ def print_vpc_analysis_details(vpc_analysis):
             print(f"\nSubnets ({len(vpc.subnets)}):")
             for subnet in vpc.subnets:
                 public_indicator = "🌐" if subnet.is_public else "🔒"
-                utilization_indicator = (
-                    "⚠️" if subnet.utilization_percentage > 80 else "✅"
-                )
+                utilization_indicator = "⚠️" if subnet.utilization_percentage > 80 else "✅"
 
                 print(
                     f"  {public_indicator} {utilization_indicator} {subnet.subnet_name} ({subnet.subnet_id})"
@@ -271,9 +267,7 @@ def print_resource_network_mapping(enriched_resources):
     # Print VPC-grouped resources
     for vpc_name, resources in vpc_resources.items():
         print(f"\nVPC: {vpc_name}")
-        print(
-            f"VPC Utilization: {resources[0].get('vpc_utilization_percentage', 0):.1f}%"
-        )
+        print(f"VPC Utilization: {resources[0].get('vpc_utilization_percentage', 0):.1f}%")
         print(f"Resources ({len(resources)}):")
 
         for resource in resources:
@@ -285,9 +279,7 @@ def print_resource_network_mapping(enriched_resources):
 
             if "subnet_name" in resource:
                 subnet_util = resource.get("subnet_utilization_percentage", 0)
-                subnet_public = (
-                    "🌐 Public" if resource.get("subnet_is_public") else "🔒 Private"
-                )
+                subnet_public = "🌐 Public" if resource.get("subnet_is_public") else "🔒 Private"
                 print(
                     f"    Subnet: {resource['subnet_name']} ({subnet_public}, {subnet_util:.1f}% utilized)"
                 )
@@ -337,9 +329,7 @@ def demonstrate_capacity_planning(vpc_analysis):
             print(f"  ⚠️  {subnet.subnet_name} in {vpc.vpc_name}")
             print(f"      {subnet.utilization_percentage:.1f}% utilized")
             print(f"      {subnet.available_ips:,} IPs remaining")
-            print(
-                f"      Estimated capacity for {subnet.available_ips // 10} more resources"
-            )
+            print(f"      Estimated capacity for {subnet.available_ips // 10} more resources")
             print()
 
     # Medium utilization monitoring
@@ -424,9 +414,7 @@ def demonstrate_cost_optimization(vpc_analysis):
     print("🌐 NAT GATEWAY OPTIMIZATION")
     print("-" * 40)
     for vpc in vpc_analysis.values():
-        private_subnets = [
-            s for s in vpc.subnets if not s.is_public and s.associated_resources
-        ]
+        private_subnets = [s for s in vpc.subnets if not s.is_public and s.associated_resources]
 
         if private_subnets and not vpc.nat_gateways:
             print(f"  💡 {vpc.vpc_name}: Consider adding NAT Gateway")
@@ -473,9 +461,7 @@ def demonstrate_security_analysis(enriched_resources):
     print("🔒 PRIVATE SUBNET RESOURCES")
     print("-" * 40)
     if private_resources:
-        print(
-            f"  ✅ {len(private_resources)} resources properly isolated in private subnets"
-        )
+        print(f"  ✅ {len(private_resources)} resources properly isolated in private subnets")
 
         # Group by service
         service_counts = {}
@@ -610,9 +596,7 @@ def main():
     print("    alerts = []")
     print("    for vpc in vpc_analysis.values():")
     print("        if vpc.utilization_percentage > threshold:")
-    print(
-        "            alerts.append(f'VPC {vpc.vpc_name} at {vpc.utilization_percentage:.1f}%')"
-    )
+    print("            alerts.append(f'VPC {vpc.vpc_name} at {vpc.utilization_percentage:.1f}%')")
     print("    return alerts")
     print()
 

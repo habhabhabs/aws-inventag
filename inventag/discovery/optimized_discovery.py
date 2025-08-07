@@ -47,12 +47,7 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
             },
             "iam": {
                 "resource_types": ["Role", "User", "Policy", "Group"],
-                "operations": [
-                    "ListRoles",
-                    "ListUsers", 
-                    "ListPolicies",
-                    "ListGroups"
-                ],
+                "operations": ["ListRoles", "ListUsers", "ListPolicies", "ListGroups"],
                 "name_fields": ["RoleName", "UserName", "PolicyName", "GroupName"],
                 "region_dependent": False,
                 "global_service": True,

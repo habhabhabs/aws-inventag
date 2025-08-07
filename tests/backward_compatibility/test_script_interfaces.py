@@ -207,9 +207,7 @@ class TestScriptInterfaceCompatibility:
                 # If successful, verify output file exists
                 assert os.path.exists(csv_output)
 
-    def test_tag_compliance_checker_output_format_compatibility(
-        self, sample_inventory_data
-    ):
+    def test_tag_compliance_checker_output_format_compatibility(self, sample_inventory_data):
         """Test that tag compliance checker produces expected output format"""
         with tempfile.TemporaryDirectory() as temp_dir:
             # Create input file
@@ -490,9 +488,7 @@ class TestWrapperScriptFunctionality:
             assert "DISCOVERY_IMPORT_SUCCESS" in result.stdout
         else:
             # Allow for missing dependencies but not module structure issues
-            assert (
-                "ModuleNotFoundError" in result.stderr or "ImportError" in result.stderr
-            )
+            assert "ModuleNotFoundError" in result.stderr or "ImportError" in result.stderr
 
         # Test compliance module
         result = subprocess.run(
@@ -509,9 +505,7 @@ class TestWrapperScriptFunctionality:
         if result.returncode == 0:
             assert "COMPLIANCE_IMPORT_SUCCESS" in result.stdout
         else:
-            assert (
-                "ModuleNotFoundError" in result.stderr or "ImportError" in result.stderr
-            )
+            assert "ModuleNotFoundError" in result.stderr or "ImportError" in result.stderr
 
         # Test reporting module
         result = subprocess.run(
@@ -528,9 +522,7 @@ class TestWrapperScriptFunctionality:
         if result.returncode == 0:
             assert "REPORTING_IMPORT_SUCCESS" in result.stdout
         else:
-            assert (
-                "ModuleNotFoundError" in result.stderr or "ImportError" in result.stderr
-            )
+            assert "ModuleNotFoundError" in result.stderr or "ImportError" in result.stderr
 
     def test_fallback_import_mechanism(self):
         """Test that scripts have fallback import mechanisms"""

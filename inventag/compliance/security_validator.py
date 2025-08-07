@@ -322,9 +322,7 @@ class ReadOnlyAccessValidator:
         "reject_",
     }
 
-    def __init__(
-        self, compliance_standard: ComplianceStandard = ComplianceStandard.GENERAL
-    ):
+    def __init__(self, compliance_standard: ComplianceStandard = ComplianceStandard.GENERAL):
         """Initialize the security validator."""
         self.compliance_standard = compliance_standard
         self.logger = self._setup_logging()
@@ -347,9 +345,7 @@ class ReadOnlyAccessValidator:
         logger.setLevel(logging.INFO)
 
         # Create formatter for audit logs
-        formatter = logging.Formatter(
-            "%(asctime)s - SECURITY_AUDIT - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s - SECURITY_AUDIT - %(levelname)s - %(message)s")
 
         # Console handler
         console_handler = logging.StreamHandler()
@@ -425,19 +421,13 @@ class ReadOnlyAccessValidator:
 
         # Validate operation
         is_valid = operation_type == OperationType.READ_ONLY
-        risk_level = self._assess_risk_level(
-            operation_type, service_lower, operation_lower
-        )
+        risk_level = self._assess_risk_level(operation_type, service_lower, operation_lower)
 
         # Generate validation message
         if is_valid:
-            validation_message = (
-                f"Operation {operation} on {service} is validated as read-only"
-            )
+            validation_message = f"Operation {operation} on {service} is validated as read-only"
         else:
-            validation_message = (
-                f"Operation {operation} on {service} is BLOCKED - not read-only"
-            )
+            validation_message = f"Operation {operation} on {service} is BLOCKED - not read-only"
             self.blocked_operations.append(f"{service}:{operation}")
 
         # Generate compliance notes
@@ -550,13 +540,9 @@ class ReadOnlyAccessValidator:
         }
 
         if result.is_valid:
-            self.logger.info(
-                f"SECURITY_VALIDATION_PASSED: {json.dumps(log_data, default=str)}"
-            )
+            self.logger.info(f"SECURITY_VALIDATION_PASSED: {json.dumps(log_data, default=str)}")
         else:
-            self.logger.warning(
-                f"SECURITY_VALIDATION_BLOCKED: {json.dumps(log_data, default=str)}"
-            )
+            self.logger.warning(f"SECURITY_VALIDATION_BLOCKED: {json.dumps(log_data, default=str)}")
 
     def _create_audit_entry(
         self,
@@ -676,9 +662,7 @@ class ReadOnlyAccessValidator:
                 "No read operations succeeded - check credentials and permissions"
             )
 
-        self.logger.info(
-            f"Permission validation complete: {validation_results['overall_status']}"
-        )
+        self.logger.info(f"Permission validation complete: {validation_results['overall_status']}")
         return validation_results
 
     def generate_compliance_report(self) -> ComplianceReport:
@@ -703,9 +687,7 @@ class ReadOnlyAccessValidator:
 
         # Calculate compliance score
         compliance_score = (
-            (read_only_operations / total_operations * 100)
-            if total_operations > 0
-            else 100
+            (read_only_operations / total_operations * 100) if total_operations > 0 else 100
         )
 
         # Generate security findings
@@ -759,9 +741,7 @@ class ReadOnlyAccessValidator:
             recommendations=recommendations,
         )
 
-        self.logger.info(
-            f"Compliance report generated: {compliance_score:.1f}% compliant"
-        )
+        self.logger.info(f"Compliance report generated: {compliance_score:.1f}% compliant")
         return report
 
     def save_compliance_report(self, report: ComplianceReport, filename: str):
@@ -779,23 +759,15 @@ class ReadOnlyAccessValidator:
             "session_id": self.session_id,
             "total_operations": len(self.audit_entries),
             "read_only_operations": len(
-                [
-                    e
-                    for e in self.audit_entries
-                    if e.operation_type == OperationType.READ_ONLY
-                ]
+                [e for e in self.audit_entries if e.operation_type == OperationType.READ_ONLY]
             ),
             "blocked_operations": len(self.blocked_operations),
             "compliance_standard": self.compliance_standard.value,
             "user_identity": self.user_identity,
             "session_start": (
-                min([e.timestamp for e in self.audit_entries])
-                if self.audit_entries
-                else None
+                min([e.timestamp for e in self.audit_entries]) if self.audit_entries else None
             ),
             "session_end": (
-                max([e.timestamp for e in self.audit_entries])
-                if self.audit_entries
-                else None
+                max([e.timestamp for e in self.audit_entries]) if self.audit_entries else None
             ),
         }

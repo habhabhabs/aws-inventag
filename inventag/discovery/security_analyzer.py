@@ -187,9 +187,7 @@ class SecurityAnalyzer:
         # Assess risk levels
         self._assess_security_group_risks()
 
-        logger.info(
-            f"Analyzed {len(self.sg_cache)} security groups across {len(regions)} regions"
-        )
+        logger.info(f"Analyzed {len(self.sg_cache)} security groups across {len(regions)} regions")
         return self.sg_cache
 
     def identify_overly_permissive_rules(
@@ -244,9 +242,7 @@ class SecurityAnalyzer:
         logger.info(f"Identified {len(risks)} overly permissive rules")
         return risks
 
-    def analyze_nacls(
-        self, nacl_resources: List[Dict[str, Any]]
-    ) -> Dict[str, NACLAnalysis]:
+    def analyze_nacls(self, nacl_resources: List[Dict[str, Any]]) -> Dict[str, NACLAnalysis]:
         """
         Analyze Network ACL configurations.
 
@@ -268,9 +264,7 @@ class SecurityAnalyzer:
         # Analyze NACL rules for optimization opportunities
         self._analyze_nacl_optimization()
 
-        logger.info(
-            f"Analyzed {len(self.nacl_cache)} NACLs across {len(regions)} regions"
-        )
+        logger.info(f"Analyzed {len(self.nacl_cache)} NACLs across {len(regions)} regions")
         return self.nacl_cache
 
     def map_resources_to_security_groups(
@@ -313,9 +307,7 @@ class SecurityAnalyzer:
                 if sg_info:
                     enriched_resource["security_groups"] = sg_info
                     enriched_resource["security_group_count"] = len(sg_info)
-                    enriched_resource["max_security_risk"] = max(
-                        sg["risk_level"] for sg in sg_info
-                    )
+                    enriched_resource["max_security_risk"] = max(sg["risk_level"] for sg in sg_info)
                     enriched_count += 1
 
             enriched_resources.append(enriched_resource)
@@ -430,9 +422,7 @@ class SecurityAnalyzer:
         except Exception as e:
             logger.warning(f"Could not cache security group info for {region}: {e}")
 
-    def _parse_security_rule(
-        self, rule: Dict[str, Any], rule_type: str
-    ) -> List[SecurityRule]:
+    def _parse_security_rule(self, rule: Dict[str, Any], rule_type: str) -> List[SecurityRule]:
         """Parse a security group rule into SecurityRule objects."""
         parsed_rules = []
 
@@ -555,9 +545,7 @@ class SecurityAnalyzer:
                 nacl_name = tags.get("Name", nacl_id)
 
                 # Get associated subnets
-                associated_subnets = [
-                    assoc["SubnetId"] for assoc in nacl.get("Associations", [])
-                ]
+                associated_subnets = [assoc["SubnetId"] for assoc in nacl.get("Associations", [])]
 
                 # Parse rules
                 inbound_rules = []
@@ -710,16 +698,11 @@ class SecurityAnalyzer:
             if rule_numbers:
                 max_rule = max(rule_numbers)
                 if max_rule > len(rule_numbers) * 10:  # Arbitrary threshold
-                    recommendations.append(
-                        "Consider renumbering rules to eliminate gaps"
-                    )
+                    recommendations.append("Consider renumbering rules to eliminate gaps")
 
             # Check for overly broad rules
             for rule in all_rules:
-                if (
-                    rule.cidr_block in ["0.0.0.0/0", "::/0"]
-                    and rule.rule_action == "allow"
-                ):
+                if rule.cidr_block in ["0.0.0.0/0", "::/0"] and rule.rule_action == "allow":
                     recommendations.append(
                         f"Rule {rule.rule_number} allows all traffic - consider restricting"
                     )
@@ -743,9 +726,7 @@ class SecurityAnalyzer:
 
         # High-risk rule recommendations
         high_risk_sgs = [
-            sg.group_name
-            for sg in sg_analysis.values()
-            if sg.risk_level in ["high", "critical"]
+            sg.group_name for sg in sg_analysis.values() if sg.risk_level in ["high", "critical"]
         ]
         if high_risk_sgs:
             recommendations.append(

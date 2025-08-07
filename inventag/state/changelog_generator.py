@@ -185,18 +185,14 @@ class Changelog:
                     for key, value in list(entry.technical_details.items())[:3]:
                         lines.append(f"  - {key}: {value}")
                     if len(entry.technical_details) > 3:
-                        lines.append(
-                            f"  - ... and {len(entry.technical_details) - 3} more details"
-                        )
+                        lines.append(f"  - ... and {len(entry.technical_details) - 3} more details")
 
                 if entry.remediation_steps:
                     lines.append("- **Action Required:**")
                     for step in entry.remediation_steps[:2]:  # Limit to first 2 steps
                         lines.append(f"  - {step}")
                     if len(entry.remediation_steps) > 2:
-                        lines.append(
-                            f"  - ... and {len(entry.remediation_steps) - 2} more steps"
-                        )
+                        lines.append(f"  - ... and {len(entry.remediation_steps) - 2} more steps")
 
                 lines.append("")
 
@@ -207,9 +203,7 @@ class Changelog:
             lines.append(
                 f"**Change Velocity:** {self.trend_analysis.change_velocity:.2f} changes per day"
             )
-            lines.append(
-                f"**Analysis Period:** {self.trend_analysis.total_periods} periods"
-            )
+            lines.append(f"**Analysis Period:** {self.trend_analysis.total_periods} periods")
             lines.append("")
 
             if self.trend_analysis.most_active_services:
@@ -337,9 +331,7 @@ class ChangelogGenerator:
         # Generate trend analysis if requested
         trend_analysis = None
         if include_trend_analysis and historical_reports:
-            trend_analysis = self._generate_trend_analysis(
-                historical_reports + [delta_report]
-            )
+            trend_analysis = self._generate_trend_analysis(historical_reports + [delta_report])
 
         # Create changelog
         changelog = Changelog(
@@ -369,9 +361,7 @@ class ChangelogGenerator:
         )
         return changelog
 
-    def _convert_delta_to_entries(
-        self, delta_report: DeltaReport
-    ) -> List[ChangelogEntry]:
+    def _convert_delta_to_entries(self, delta_report: DeltaReport) -> List[ChangelogEntry]:
         """Convert delta report changes to structured changelog entries"""
         entries = []
 
@@ -448,9 +438,7 @@ class ChangelogGenerator:
             remediation_steps=remediation_steps,
         )
 
-    def _generate_change_id(
-        self, resource_change: ResourceChange, timestamp: str
-    ) -> str:
+    def _generate_change_id(self, resource_change: ResourceChange, timestamp: str) -> str:
         """Generate a unique ID for the change"""
         data = f"{resource_change.resource_arn}:{resource_change.change_type.value}:{timestamp}"
         return hashlib.md5(data.encode()).hexdigest()[:12]
@@ -486,10 +474,7 @@ class ChangelogGenerator:
             )
 
         # Add attribute change details for modifications
-        if (
-            resource_change.change_type == ChangeType.MODIFIED
-            and resource_change.attribute_changes
-        ):
+        if resource_change.change_type == ChangeType.MODIFIED and resource_change.attribute_changes:
             change_count = len(resource_change.attribute_changes)
             description_parts.append(
                 f"This change involved {change_count} attribute modification(s):"
@@ -519,9 +504,7 @@ class ChangelogGenerator:
 
         return " ".join(description_parts)
 
-    def _determine_primary_category(
-        self, resource_change: ResourceChange
-    ) -> ChangeCategory:
+    def _determine_primary_category(self, resource_change: ResourceChange) -> ChangeCategory:
         """Determine the primary category for the change"""
         # Check compliance changes first (highest priority)
         if resource_change.compliance_changes:
@@ -531,9 +514,7 @@ class ChangelogGenerator:
             return ChangeCategory.CONFIGURATION
 
         # Count changes by category
-        category_counts = Counter(
-            change.category for change in resource_change.attribute_changes
-        )
+        category_counts = Counter(change.category for change in resource_change.attribute_changes)
 
         # Return the most common category, with security taking priority
         if ChangeCategory.SECURITY in category_counts:
@@ -571,9 +552,7 @@ class ChangelogGenerator:
 
         return " ".join(impact_parts)
 
-    def _collect_technical_details(
-        self, resource_change: ResourceChange
-    ) -> Dict[str, Any]:
+    def _collect_technical_details(self, resource_change: ResourceChange) -> Dict[str, Any]:
         """Collect technical details for the change"""
         if not self.include_technical_details:
             return {}
@@ -593,14 +572,10 @@ class ChangelogGenerator:
                     {
                         "path": attr_change.attribute_path,
                         "old_value": (
-                            str(attr_change.old_value)[:100]
-                            if attr_change.old_value
-                            else None
+                            str(attr_change.old_value)[:100] if attr_change.old_value else None
                         ),
                         "new_value": (
-                            str(attr_change.new_value)[:100]
-                            if attr_change.new_value
-                            else None
+                            str(attr_change.new_value)[:100] if attr_change.new_value else None
                         ),
                         "category": attr_change.category.value,
                         "severity": attr_change.severity.value,
@@ -615,14 +590,10 @@ class ChangelogGenerator:
                     {
                         "path": comp_change.attribute_path,
                         "old_value": (
-                            str(comp_change.old_value)[:100]
-                            if comp_change.old_value
-                            else None
+                            str(comp_change.old_value)[:100] if comp_change.old_value else None
                         ),
                         "new_value": (
-                            str(comp_change.new_value)[:100]
-                            if comp_change.new_value
-                            else None
+                            str(comp_change.new_value)[:100] if comp_change.new_value else None
                         ),
                         "severity": comp_change.severity.value,
                     }
@@ -630,9 +601,7 @@ class ChangelogGenerator:
 
         return details
 
-    def _extract_compliance_impact(
-        self, resource_change: ResourceChange
-    ) -> Optional[str]:
+    def _extract_compliance_impact(self, resource_change: ResourceChange) -> Optional[str]:
         """Extract compliance impact description"""
         if not resource_change.compliance_changes:
             return None
@@ -660,19 +629,13 @@ class ChangelogGenerator:
 
         # Determine remediation based on change characteristics
         if resource_change.security_impact:
-            remediation_steps.extend(
-                self.remediation_templates.get("security_group_change", [])
-            )
+            remediation_steps.extend(self.remediation_templates.get("security_group_change", []))
 
         if resource_change.compliance_changes:
-            remediation_steps.extend(
-                self.remediation_templates.get("compliance_violation", [])
-            )
+            remediation_steps.extend(self.remediation_templates.get("compliance_violation", []))
 
         if resource_change.network_impact:
-            remediation_steps.extend(
-                self.remediation_templates.get("network_change", [])
-            )
+            remediation_steps.extend(self.remediation_templates.get("network_change", []))
 
         # Check for encryption-related changes
         encryption_changes = [
@@ -681,9 +644,7 @@ class ChangelogGenerator:
             if "encryption" in change.attribute_path.lower()
         ]
         if encryption_changes:
-            remediation_steps.extend(
-                self.remediation_templates.get("encryption_change", [])
-            )
+            remediation_steps.extend(self.remediation_templates.get("encryption_change", []))
 
         # Add general remediation steps based on severity
         if resource_change.severity in [ChangeSeverity.CRITICAL, ChangeSeverity.HIGH]:
@@ -720,9 +681,7 @@ class ChangelogGenerator:
         changes_by_service = Counter(entry.service for entry in entries)
 
         # Get most impacted services (top 5)
-        most_impacted_services = [
-            service for service, _ in changes_by_service.most_common(5)
-        ]
+        most_impacted_services = [service for service, _ in changes_by_service.most_common(5)]
 
         # Count specific types of changes
         critical_changes = changes_by_severity.get("critical", 0)
@@ -778,32 +737,16 @@ class ChangelogGenerator:
                 # Generate section statistics
                 summary_stats = {
                     "total_changes": len(service_entries),
-                    "added": len(
-                        [
-                            e
-                            for e in service_entries
-                            if e.change_type == ChangeType.ADDED
-                        ]
-                    ),
+                    "added": len([e for e in service_entries if e.change_type == ChangeType.ADDED]),
                     "removed": len(
-                        [
-                            e
-                            for e in service_entries
-                            if e.change_type == ChangeType.REMOVED
-                        ]
+                        [e for e in service_entries if e.change_type == ChangeType.REMOVED]
                     ),
                     "modified": len(
-                        [
-                            e
-                            for e in service_entries
-                            if e.change_type == ChangeType.MODIFIED
-                        ]
+                        [e for e in service_entries if e.change_type == ChangeType.MODIFIED]
                     ),
                 }
 
-                severity_breakdown = Counter(
-                    entry.severity.value for entry in service_entries
-                )
+                severity_breakdown = Counter(entry.severity.value for entry in service_entries)
 
                 section = ChangelogSection(
                     title=f"{service} Service Changes",
@@ -834,31 +777,17 @@ class ChangelogGenerator:
                     summary_stats = {
                         "total_changes": len(severity_entries),
                         "added": len(
-                            [
-                                e
-                                for e in severity_entries
-                                if e.change_type == ChangeType.ADDED
-                            ]
+                            [e for e in severity_entries if e.change_type == ChangeType.ADDED]
                         ),
                         "removed": len(
-                            [
-                                e
-                                for e in severity_entries
-                                if e.change_type == ChangeType.REMOVED
-                            ]
+                            [e for e in severity_entries if e.change_type == ChangeType.REMOVED]
                         ),
                         "modified": len(
-                            [
-                                e
-                                for e in severity_entries
-                                if e.change_type == ChangeType.MODIFIED
-                            ]
+                            [e for e in severity_entries if e.change_type == ChangeType.MODIFIED]
                         ),
                     }
 
-                    service_breakdown = Counter(
-                        entry.service for entry in severity_entries
-                    )
+                    service_breakdown = Counter(entry.service for entry in severity_entries)
 
                     section = ChangelogSection(
                         title=f"{severity.value.title()} Severity Changes",
@@ -871,9 +800,7 @@ class ChangelogGenerator:
 
         return sections
 
-    def _generate_trend_analysis(
-        self, historical_reports: List[DeltaReport]
-    ) -> TrendAnalysis:
+    def _generate_trend_analysis(self, historical_reports: List[DeltaReport]) -> TrendAnalysis:
         """Generate trend analysis from historical delta reports"""
         if len(historical_reports) < 2:
             return None
@@ -882,33 +809,23 @@ class ChangelogGenerator:
         sorted_reports = sorted(historical_reports, key=lambda x: x.timestamp)
 
         # Calculate time period
-        start_time = datetime.fromisoformat(
-            sorted_reports[0].timestamp.replace("Z", "+00:00")
-        )
-        end_time = datetime.fromisoformat(
-            sorted_reports[-1].timestamp.replace("Z", "+00:00")
-        )
+        start_time = datetime.fromisoformat(sorted_reports[0].timestamp.replace("Z", "+00:00"))
+        end_time = datetime.fromisoformat(sorted_reports[-1].timestamp.replace("Z", "+00:00"))
         period_days = (end_time - start_time).days or 1
 
         # Calculate change velocity
-        total_changes = sum(
-            report.summary.get("total_changes", 0) for report in sorted_reports
-        )
+        total_changes = sum(report.summary.get("total_changes", 0) for report in sorted_reports)
         change_velocity = total_changes / period_days
 
         # Analyze service activity
         service_activity = defaultdict(int)
         for report in sorted_reports:
             for change in (
-                report.added_resources
-                + report.removed_resources
-                + report.modified_resources
+                report.added_resources + report.removed_resources + report.modified_resources
             ):
                 service_activity[change.service] += 1
 
-        most_active_services = [
-            service for service, _ in Counter(service_activity).most_common(5)
-        ]
+        most_active_services = [service for service, _ in Counter(service_activity).most_common(5)]
 
         # Analyze severity trends
         severity_trends = defaultdict(list)
@@ -919,9 +836,7 @@ class ChangelogGenerator:
             category_counts = defaultdict(int)
 
             for change in (
-                report.added_resources
-                + report.removed_resources
-                + report.modified_resources
+                report.added_resources + report.removed_resources + report.modified_resources
             ):
                 severity_counts[change.severity.value] += 1
                 # Determine primary category (simplified)
@@ -977,9 +892,7 @@ class ChangelogGenerator:
                 "total_changes_per_period": [
                     report.summary.get("total_changes", 0) for report in sorted_reports
                 ],
-                "average_changes_per_period": round(
-                    total_changes / len(sorted_reports), 2
-                ),
+                "average_changes_per_period": round(total_changes / len(sorted_reports), 2),
             },
             severity_trends=dict(severity_trends),
             category_trends=dict(category_trends),
@@ -1052,9 +965,7 @@ class ChangelogGenerator:
             else:
                 raise ValueError(f"Unsupported format: {format_type}")
 
-            logger.info(
-                f"Changelog formatted as {format_type.value} and saved to {output_file}"
-            )
+            logger.info(f"Changelog formatted as {format_type.value} and saved to {output_file}")
             return str(output_file)
 
         except Exception as e:
@@ -1104,15 +1015,9 @@ class ChangelogGenerator:
             lines.append("## Trend Analysis")
             lines.append("")
             trend = changelog.trend_analysis
-            lines.append(
-                f"- **Analysis Period:** {trend.period_start} to {trend.period_end}"
-            )
-            lines.append(
-                f"- **Change Velocity:** {trend.change_velocity} changes per day"
-            )
-            lines.append(
-                f"- **Most Active Services:** {', '.join(trend.most_active_services)}"
-            )
+            lines.append(f"- **Analysis Period:** {trend.period_start} to {trend.period_end}")
+            lines.append(f"- **Change Velocity:** {trend.change_velocity} changes per day")
+            lines.append(f"- **Most Active Services:** {', '.join(trend.most_active_services)}")
             lines.append("")
 
             if trend.recommendations:
@@ -1141,9 +1046,7 @@ class ChangelogGenerator:
             for entry in section.entries:
                 lines.append(f"#### {entry.summary}")
                 lines.append("")
-                lines.append(
-                    f"- **Resource:** {entry.resource_type} `{entry.resource_id}`"
-                )
+                lines.append(f"- **Resource:** {entry.resource_type} `{entry.resource_id}`")
                 lines.append(f"- **Service:** {entry.service}")
                 lines.append(f"- **Region:** {entry.region}")
                 lines.append(f"- **Change Type:** {entry.change_type.value}")
@@ -1201,9 +1104,7 @@ class ChangelogGenerator:
         # Title and metadata
         html_parts.append(f"<h1>{changelog.title}</h1>")
         html_parts.append(f'<div class="metadata">')
-        html_parts.append(
-            f"<p><strong>Generated:</strong> {changelog.generation_timestamp}</p>"
-        )
+        html_parts.append(f"<p><strong>Generated:</strong> {changelog.generation_timestamp}</p>")
         html_parts.append(
             f"<p><strong>State Comparison:</strong> {changelog.state_comparison['from_state']} → {changelog.state_comparison['to_state']}</p>"
         )
@@ -1213,18 +1114,12 @@ class ChangelogGenerator:
         html_parts.append('<div class="summary">')
         html_parts.append("<h2>Summary</h2>")
         summary = changelog.summary
-        html_parts.append(
-            f"<p><strong>Total Changes:</strong> {summary.total_changes}</p>"
-        )
-        html_parts.append(
-            f"<p><strong>Critical Changes:</strong> {summary.critical_changes}</p>"
-        )
+        html_parts.append(f"<p><strong>Total Changes:</strong> {summary.total_changes}</p>")
+        html_parts.append(f"<p><strong>Critical Changes:</strong> {summary.critical_changes}</p>")
         html_parts.append(
             f"<p><strong>High Severity Changes:</strong> {summary.high_severity_changes}</p>"
         )
-        html_parts.append(
-            f"<p><strong>Security Changes:</strong> {summary.security_changes}</p>"
-        )
+        html_parts.append(f"<p><strong>Security Changes:</strong> {summary.security_changes}</p>")
         html_parts.append(
             f"<p><strong>Compliance Changes:</strong> {summary.compliance_changes}</p>"
         )
@@ -1253,9 +1148,7 @@ class ChangelogGenerator:
                 html_parts.append(
                     f"<p><strong>Change Type:</strong> {entry.change_type.value} | <strong>Severity:</strong> {entry.severity.value}</p>"
                 )
-                html_parts.append(
-                    f"<p><strong>Description:</strong> {entry.description}</p>"
-                )
+                html_parts.append(f"<p><strong>Description:</strong> {entry.description}</p>")
                 html_parts.append(
                     f"<p><strong>Impact Assessment:</strong> {entry.impact_assessment}</p>"
                 )
@@ -1289,9 +1182,7 @@ class ChangelogGenerator:
         else:
             return obj
 
-    def integrate_into_bom_document(
-        self, changelog: Changelog, bom_document_path: str
-    ) -> str:
+    def integrate_into_bom_document(self, changelog: Changelog, bom_document_path: str) -> str:
         """
         Integrate changelog as a dedicated section into BOM documents.
 
@@ -1312,9 +1203,7 @@ class ChangelogGenerator:
         with open(changelog_section_path, "w", encoding="utf-8") as f:
             f.write(content)
 
-        logger.info(
-            f"Changelog section created for BOM integration: {changelog_section_path}"
-        )
+        logger.info(f"Changelog section created for BOM integration: {changelog_section_path}")
         return str(changelog_section_path)
 
     def _generate_bom_section_content(self, changelog: Changelog) -> str:
@@ -1323,9 +1212,7 @@ class ChangelogGenerator:
 
         lines.append("# Infrastructure Change Log")
         lines.append("")
-        lines.append(
-            "This section documents changes detected between infrastructure scans."
-        )
+        lines.append("This section documents changes detected between infrastructure scans.")
         lines.append("")
 
         # Summary table

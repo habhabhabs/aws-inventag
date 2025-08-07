@@ -187,9 +187,7 @@ class TestWordIntegration(unittest.TestCase):
         # Verify file was created
         output_file = os.path.join(self.temp_dir, result.filename)
         self.assertTrue(os.path.exists(output_file))
-        self.assertGreater(
-            os.path.getsize(output_file), 10000
-        )  # Should be substantial file
+        self.assertGreater(os.path.getsize(output_file), 10000)  # Should be substantial file
 
         # Load and verify Word content
         doc = docx.Document(output_file)
@@ -215,9 +213,7 @@ class TestWordIntegration(unittest.TestCase):
 
         for expected in expected_headings:
             found = any(expected in heading for heading in headings)
-            self.assertTrue(
-                found, f"Expected heading '{expected}' not found in document"
-            )
+            self.assertTrue(found, f"Expected heading '{expected}' not found in document")
 
         # Verify company name appears in document
         all_text = [p.text for p in doc.paragraphs]
@@ -225,9 +221,7 @@ class TestWordIntegration(unittest.TestCase):
         self.assertTrue(company_found, "Company name not found in document")
 
         # Verify document properties
-        self.assertEqual(
-            doc.core_properties.title, "Integration Test Corp - Cloud BOM Report"
-        )
+        self.assertEqual(doc.core_properties.title, "Integration Test Corp - Cloud BOM Report")
         self.assertEqual(doc.core_properties.author, "InvenTag Cloud BOM Generator")
 
     @unittest.skipUnless(PYTHON_DOCX_AVAILABLE, "python-docx not available")
@@ -264,9 +258,7 @@ class TestWordIntegration(unittest.TestCase):
         doc = docx.Document(output_file)
 
         # Check document properties
-        self.assertEqual(
-            doc.core_properties.title, "Custom Branding Test - Cloud BOM Report"
-        )
+        self.assertEqual(doc.core_properties.title, "Custom Branding Test - Cloud BOM Report")
         self.assertEqual(doc.core_properties.author, "InvenTag Cloud BOM Generator")
 
         # Verify custom company name appears
@@ -437,9 +429,7 @@ class TestWordIntegration(unittest.TestCase):
         self.assertGreater(len(doc.paragraphs), 5)
 
         # Should have at least basic sections
-        headings = [
-            p.text for p in doc.paragraphs if p.style.name.startswith("Heading")
-        ]
+        headings = [p.text for p in doc.paragraphs if p.style.name.startswith("Heading")]
         self.assertIn("Executive Summary", " ".join(headings))
 
     @unittest.skipUnless(PYTHON_DOCX_AVAILABLE, "python-docx not available")
@@ -457,9 +447,7 @@ class TestWordIntegration(unittest.TestCase):
                         "id": f"{service.lower()}-{i:03d}",
                         "name": f"{service} Resource {i}",
                         "region": "us-east-1",
-                        "compliance_status": (
-                            "compliant" if i % 2 == 0 else "non_compliant"
-                        ),
+                        "compliance_status": ("compliant" if i % 2 == 0 else "non_compliant"),
                     }
                 )
 
@@ -495,9 +483,7 @@ class TestWordIntegration(unittest.TestCase):
         doc = docx.Document(output_file)
 
         # Should have sections for each service
-        headings = [
-            p.text for p in doc.paragraphs if p.style.name.startswith("Heading")
-        ]
+        headings = [p.text for p in doc.paragraphs if p.style.name.startswith("Heading")]
 
         # Check for service-specific headings
         for service in services:

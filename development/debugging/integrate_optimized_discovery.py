@@ -9,32 +9,33 @@ import os
 import shutil
 from pathlib import Path
 
+
 def integrate_optimized_discovery():
     """
     Integrate the optimized discovery system into the existing inventag package.
     """
-    
+
     print("🔧 Integrating Optimized Discovery System")
     print("=" * 50)
-    
+
     # Check if inventag directory exists
     inventag_path = Path("inventag")
     if not inventag_path.exists():
         print("❌ Error: inventag directory not found!")
         return False
-    
+
     discovery_path = inventag_path / "discovery"
     if not discovery_path.exists():
         print("❌ Error: inventag/discovery directory not found!")
         return False
-    
+
     # 1. Backup existing intelligent_discovery.py
     intelligent_discovery_path = discovery_path / "intelligent_discovery.py"
     if intelligent_discovery_path.exists():
         backup_path = discovery_path / "intelligent_discovery_backup.py"
         shutil.copy2(intelligent_discovery_path, backup_path)
         print(f"✅ Backed up existing intelligent_discovery.py to {backup_path}")
-    
+
     # 2. Create enhanced intelligent discovery
     enhanced_content = '''#!/usr/bin/env python3
 """
@@ -424,40 +425,40 @@ class EnhancedAWSDiscovery(IntelligentAWSDiscovery):
         
         return service_name.lower() in global_services
 '''
-    
+
     # Write the enhanced content
-    with open(intelligent_discovery_path, 'w') as f:
+    with open(intelligent_discovery_path, "w") as f:
         f.write(enhanced_content)
-    
+
     print(f"✅ Created enhanced intelligent_discovery.py")
-    
+
     # 3. Update the inventory.py to use enhanced discovery
     inventory_path = discovery_path / "inventory.py"
     if inventory_path.exists():
         # Read the current content
-        with open(inventory_path, 'r') as f:
+        with open(inventory_path, "r") as f:
             content = f.read()
-        
+
         # Replace the import to use enhanced classes
         updated_content = content.replace(
             "from .intelligent_discovery import IntelligentAWSDiscovery, StandardResource",
-            "from .intelligent_discovery import IntelligentAWSDiscovery, StandardResource, EnhancedAWSDiscovery, EnhancedFieldMapper"
+            "from .intelligent_discovery import IntelligentAWSDiscovery, StandardResource, EnhancedAWSDiscovery, EnhancedFieldMapper",
         )
-        
+
         # Replace the initialization to use enhanced discovery
         updated_content = updated_content.replace(
             "self.intelligent_discovery = IntelligentAWSDiscovery(",
-            "self.intelligent_discovery = EnhancedAWSDiscovery("
+            "self.intelligent_discovery = EnhancedAWSDiscovery(",
         )
-        
+
         # Write back the updated content
-        with open(inventory_path, 'w') as f:
+        with open(inventory_path, "w") as f:
             f.write(updated_content)
-        
+
         print(f"✅ Updated inventory.py to use enhanced discovery")
-    
+
     # 4. Create a configuration file for easy switching
-    config_content = '''# Optimized Discovery Configuration
+    config_content = """# Optimized Discovery Configuration
 # This file controls the behavior of the optimized discovery system
 
 [discovery]
@@ -488,14 +489,14 @@ enable_confidence_scoring = true
 operation_timeout = 30
 max_operations_per_service = 3
 enable_caching = true
-'''
-    
+"""
+
     config_path = discovery_path / "optimized_config.ini"
-    with open(config_path, 'w') as f:
+    with open(config_path, "w") as f:
         f.write(config_content)
-    
+
     print(f"✅ Created configuration file: {config_path}")
-    
+
     # 5. Create a test script
     test_script_content = '''#!/usr/bin/env python3
 """
@@ -555,13 +556,13 @@ def test_optimized_discovery():
 if __name__ == "__main__":
     test_optimized_discovery()
 '''
-    
+
     test_script_path = discovery_path / "test_optimized.py"
-    with open(test_script_path, 'w') as f:
+    with open(test_script_path, "w") as f:
         f.write(test_script_content)
-    
+
     print(f"✅ Created test script: {test_script_path}")
-    
+
     print(f"\n🎉 Integration Complete!")
     print(f"=" * 50)
     print(f"The optimized discovery system has been integrated into your inventag package.")
@@ -584,8 +585,9 @@ if __name__ == "__main__":
     print(f"  - Improved confidence scoring")
     print(f"  - Better resource name and type detection")
     print(f"  - Parallel processing support for faster discovery")
-    
+
     return True
+
 
 if __name__ == "__main__":
     integrate_optimized_discovery()
