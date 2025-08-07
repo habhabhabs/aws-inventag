@@ -4,6 +4,7 @@ AWS Resource Inventory Tool
 Discovers and catalogs all AWS resources across services and regions.
 
 Extracted from scripts/aws_resource_inventory.py and enhanced for the unified inventag package.
+Now includes AI-capable intelligent discovery for sustainable service-agnostic resource detection.
 """
 
 import json
@@ -16,6 +17,9 @@ import threading
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Set
 from botocore.exceptions import ClientError, NoCredentialsError
+
+# Import the new intelligent discovery system
+from .intelligent_discovery import IntelligentAWSDiscovery, StandardResource
 
 
 class ProgressSpinner:
@@ -78,6 +82,34 @@ class AWSResourceInventory:
         self.billing_spend_by_service: Dict[str, float] = {}
         self.enable_billing_validation = True
 
+        # Initialize intelligent discovery system
+        self.intelligent_discovery = IntelligentAWSDiscovery(
+            session=self.session, regions=self.regions
+        )
+
+        # Discovery modes
+        self.use_intelligent_discovery = True  # Enable AI-capable discovery by default
+        self.standardized_output = True  # Enable standardized column output
+
+    def configure_discovery_mode(
+        self, use_intelligent: bool = True, standardized_output: bool = True
+    ):
+        """Configure the discovery mode and output format.
+
+        Args:
+            use_intelligent: Use AI-capable intelligent discovery system
+            standardized_output: Use standardized column format for consistent output
+        """
+        self.use_intelligent_discovery = use_intelligent
+        self.standardized_output = standardized_output
+
+        if use_intelligent:
+            self.logger.info(
+                "Configured to use AI-capable intelligent discovery with standardized output"
+            )
+        else:
+            self.logger.info("Configured to use legacy discovery methods")
+
     def _setup_logging(self) -> logging.Logger:
         """Set up logging configuration with fallback handling."""
         try:
@@ -111,9 +143,10 @@ class AWSResourceInventory:
             return ["us-east-1", "ap-southeast-1"]  # Fallback to key regions
 
     def discover_resources(self) -> List[Dict[str, Any]]:
-        """Discover all AWS resources across regions and services with billing validation."""
+        """Discover all AWS resources across regions and services with billing validation and intelligent discovery."""
+        discovery_method = "intelligent" if self.use_intelligent_discovery else "legacy"
         self.logger.info(
-            "Starting comprehensive AWS resource discovery with billing validation..."
+            f"Starting comprehensive AWS resource discovery ({discovery_method} mode) with billing validation..."
         )
 
         # Step 1: Discover services with actual usage via billing data
@@ -127,7 +160,21 @@ class AWSResourceInventory:
             finally:
                 spinner.stop()
 
-        # Step 2: Use ResourceGroupsTagging API for comprehensive discovery (recommended)
+        # Step 2: Intelligent AI-capable discovery (if enabled)
+        if self.use_intelligent_discovery:
+            initial_resource_count = len(self.resources)
+            spinner = ProgressSpinner("🧠 AI-capable intelligent resource discovery")
+            spinner.start()
+            try:
+                self._perform_intelligent_discovery()
+            finally:
+                spinner.stop()
+            intelligent_resource_count = len(self.resources)
+            self.logger.info(
+                f"Intelligent discovery found {intelligent_resource_count - initial_resource_count} resources with standardized output"
+            )
+
+        # Step 3: Use ResourceGroupsTagging API for comprehensive discovery (recommended)
         initial_resource_count = len(self.resources)
         spinner = ProgressSpinner(
             "📋 Discovering resources via ResourceGroupsTagging API"
@@ -208,6 +255,97 @@ class AWSResourceInventory:
             f"({len(self.billing_validated_services)} billing-validated)."
         )
         return self.resources
+
+    def _perform_intelligent_discovery(self):
+        """Perform AI-capable intelligent resource discovery with standardized output."""
+        self.logger.info(
+            "Starting intelligent AWS discovery with standardized columns..."
+        )
+
+        try:
+            # Use the intelligent discovery system
+            standard_resources = self.intelligent_discovery.discover_all_services()
+
+            if self.standardized_output:
+                # Convert StandardResource objects to standardized dictionaries
+                standardized_data = (
+                    self.intelligent_discovery.export_standardized_data()
+                )
+
+                # Convert to our internal format while preserving standardized structure
+                for standard_data in standardized_data:
+                    # Create resource in the format expected by the rest of the system
+                    resource = {
+                        # Standardized core fields
+                        "arn": standard_data.get("resource_arn")
+                        or f"arn:aws:{standard_data['service_name'].lower()}:{standard_data['region']}:{standard_data.get('account_id', 'unknown')}:resource/{standard_data['resource_id']}",
+                        "id": standard_data["resource_id"],
+                        "service": standard_data["service_name"],
+                        "type": standard_data["resource_type"],
+                        "name": standard_data.get("resource_name")
+                        or standard_data.get("name_from_tags")
+                        or standard_data["resource_id"],
+                        "region": standard_data["region"],
+                        # Standardized metadata
+                        "account_id": standard_data.get("account_id"),
+                        "status": standard_data.get("status"),
+                        "state": standard_data.get("state"),
+                        "created_date": standard_data.get("created_date"),
+                        "last_modified": standard_data.get("last_modified"),
+                        # Standardized tagging
+                        "tags": standard_data.get("tags", {}),
+                        "environment": standard_data.get("environment"),
+                        "project": standard_data.get("project"),
+                        "cost_center": standard_data.get("cost_center"),
+                        # Standardized security and networking
+                        "public_access": standard_data.get("public_access", False),
+                        "encrypted": standard_data.get("encrypted"),
+                        "vpc_id": standard_data.get("vpc_id"),
+                        "subnet_ids": standard_data.get("subnet_ids", []),
+                        "security_groups": standard_data.get("security_groups", []),
+                        "availability_zone": standard_data.get("availability_zone"),
+                        # Discovery metadata
+                        "discovered_at": standard_data.get("discovered_at"),
+                        "discovery_method": standard_data.get(
+                            "discovery_method", "IntelligentDiscovery"
+                        ),
+                        "api_operation": standard_data.get("api_operation"),
+                        "confidence_score": standard_data.get("confidence_score", 1.0),
+                        # Legacy compatibility
+                        "compliance_status": "unknown",  # Will be updated by compliance analysis
+                    }
+
+                    self.resources.append(resource)
+
+                self.logger.info(
+                    f"Intelligent discovery added {len(standardized_data)} resources with standardized columns"
+                )
+            else:
+                # Convert StandardResource objects to legacy format
+                for standard_resource in standard_resources:
+                    legacy_resource = {
+                        "arn": standard_resource.resource_arn
+                        or f"arn:aws:{standard_resource.service_name.lower()}:{standard_resource.region}:{standard_resource.account_id or 'unknown'}:resource/{standard_resource.resource_id}",
+                        "id": standard_resource.resource_id,
+                        "service": standard_resource.service_name,
+                        "type": standard_resource.resource_type,
+                        "name": standard_resource.resource_name
+                        or standard_resource.name_from_tags
+                        or standard_resource.resource_id,
+                        "region": standard_resource.region,
+                        "tags": standard_resource.tags,
+                        "compliance_status": "unknown",
+                    }
+
+                    self.resources.append(legacy_resource)
+
+                self.logger.info(
+                    f"Intelligent discovery added {len(standard_resources)} resources in legacy format"
+                )
+
+        except Exception as e:
+            self.logger.error(f"Intelligent discovery failed: {e}")
+            self.logger.info("Falling back to traditional discovery methods...")
 
     def _discover_services_via_billing(self):
         """Discover services with actual usage via AWS Cost Explorer billing data."""
