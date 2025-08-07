@@ -55,7 +55,11 @@ export AWS_DEFAULT_REGION=us-east-1
 
 ### Required AWS Permissions
 
-InvenTag requires read-only permissions for AWS resources. Here's a minimal IAM policy:
+InvenTag supports two permission levels depending on your security requirements:
+
+#### Option 1: Minimal IAM Policy (Basic Discovery)
+
+For basic resource discovery with minimal permissions:
 
 ```json
 {
@@ -64,29 +68,105 @@ InvenTag requires read-only permissions for AWS resources. Here's a minimal IAM 
         {
             "Effect": "Allow",
             "Action": [
-                "ec2:Describe*",
-                "s3:List*",
-                "s3:Get*",
-                "rds:Describe*",
-                "lambda:List*",
-                "lambda:Get*",
-                "iam:List*",
-                "iam:Get*",
-                "cloudformation:Describe*",
-                "cloudformation:List*",
-                "elasticloadbalancing:Describe*",
-                "autoscaling:Describe*",
-                "cloudwatch:Describe*",
-                "cloudwatch:List*",
-                "logs:Describe*",
-                "route53:List*",
-                "route53:Get*"
+                "resourcegroupstaggingapi:GetResources",
+                "ce:GetCostAndUsage",
+                "ce:GetUsageReport",
+                "pricing:GetProducts",
+                "ec2:DescribeInstances",
+                "ec2:DescribeVpcs",
+                "s3:ListAllMyBuckets",
+                "s3:GetBucketLocation",
+                "rds:DescribeDBInstances",
+                "lambda:ListFunctions"
             ],
             "Resource": "*"
         }
     ]
 }
 ```
+
+#### Option 2: Enhanced Discovery with ReadOnlyAccess Policy
+
+For comprehensive resource discovery with detailed service-specific attributes, **add** the AWS ReadOnlyAccess policy **in addition to** the minimal policy above:
+
+**For IAM Identity Center/SSO Users:**
+- Keep the minimal policy above
+- **Add** the AWS managed policy: `ReadOnlyAccess`
+
+**For IAM Users:**
+```bash
+# First ensure the minimal policy is attached, then add ReadOnlyAccess
+aws iam attach-user-policy \
+    --user-name your-username \
+    --policy-arn arn:aws:iam::aws:policy/ReadOnlyAccess
+```
+
+**For IAM Roles:**
+```bash
+# First ensure the minimal policy is attached, then add ReadOnlyAccess
+aws iam attach-role-policy \
+    --role-name your-role-name \
+    --policy-arn arn:aws:iam::aws:policy/ReadOnlyAccess
+```
+
+> **Note**: ReadOnlyAccess **extends** the minimal policy's capabilities. Both policies work together to provide comprehensive discovery while maintaining the core billing and pricing access from the minimal policy.
+
+#### Permission Level Comparison
+
+| Feature | Minimal Policy Only | Minimal + ReadOnlyAccess |
+|---------|---------------------|-------------------------|
+| Basic resource discovery | ✅ | ✅ |
+| Billing-based service identification | ✅ | ✅ |
+| Cost Explorer access | ✅ | ✅ |
+| Service-specific attributes | Limited | ✅ Full |
+| KMS key details & rotation | ❌ | ✅ |
+| S3 encryption/retention config | ❌ | ✅ |
+| RDS parameter groups | ❌ | ✅ |
+| Lambda VPC configurations | ❌ | ✅ |
+| CloudWatch detailed metrics | ❌ | ✅ |
+| ELB health check details | ❌ | ✅ |
+| Global service support | ✅ | ✅ Enhanced |
+
+#### Setting Up IAM Identity Center/SSO
+
+If using AWS IAM Identity Center:
+
+1. **Create Permission Set:**
+   ```bash
+   # Option 1: Use ReadOnlyAccess managed policy
+   aws sso-admin create-permission-set \
+       --instance-arn arn:aws:sso:::instance/ssoins-xxxxxxxxx \
+       --name InvenTagReadOnly \
+       --description "ReadOnly access for InvenTag"
+   
+   # Attach ReadOnlyAccess policy
+   aws sso-admin attach-managed-policy-to-permission-set \
+       --instance-arn arn:aws:sso:::instance/ssoins-xxxxxxxxx \
+       --permission-set-arn arn:aws:sso:::permissionSet/ssoins-xxxxxxxxx/ps-xxxxxxxxx \
+       --managed-policy-arn arn:aws:iam::aws:policy/ReadOnlyAccess
+   ```
+
+2. **Create Custom Permission Set (Minimal):**
+   ```bash
+   # Option 2: Use minimal custom policy
+   aws sso-admin create-permission-set \
+       --instance-arn arn:aws:sso:::instance/ssoins-xxxxxxxxx \
+       --name InvenTagMinimal \
+       --description "Minimal access for InvenTag"
+   
+   # Create and attach inline policy (use JSON from Option 1 above)
+   ```
+
+3. **Assign Permission Set:**
+   ```bash
+   aws sso-admin create-account-assignment \
+       --instance-arn arn:aws:sso:::instance/ssoins-xxxxxxxxx \
+       --target-id 123456789012 \
+       --target-type AWS_ACCOUNT \
+       --permission-set-arn arn:aws:sso:::permissionSet/ssoins-xxxxxxxxx/ps-xxxxxxxxx \
+       --principal-type USER \
+       --principal-id user-id-from-sso
+   ```
 
 ## Verification
 

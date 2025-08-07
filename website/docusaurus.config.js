@@ -51,8 +51,11 @@ const config = {
       ({
         docs: {
           path: '../docs', // Single source of truth - read from root-level docs directory
-          routeBasePath: '/', // Serve docs at the root path
+          routeBasePath: '/docs', // Serve docs at /docs path to avoid homepage conflict
           sidebarPath: './sidebars.js',
+          // Ensure consistent sidebar across all pages
+          sidebarCollapsible: true,
+          sidebarCollapsed: false,
           // Edit links point to GitHub repository for dual-platform compatibility
           editUrl: 'https://github.com/habhabhabs/inventag-aws/edit/main/docs/',
           showLastUpdateTime: true,
@@ -112,7 +115,7 @@ const config = {
         // Remove default stopwords for better AWS/technical term search
         removeDefaultStopWordFilter: true,
         // Set docs route base path
-        docsRouteBasePath: '/',
+        docsRouteBasePath: '/docs',
         // Include more context in search results
         explicitSearchResultPath: true,
       }),
@@ -142,6 +145,7 @@ const config = {
             sidebarId: 'docsSidebar',
             position: 'left',
             label: 'Documentation',
+            docsPluginId: 'default',
           },
           {
             type: 'search',
@@ -164,19 +168,19 @@ const config = {
             items: [
               {
                 label: 'Getting Started',
-                to: '/',
+                to: '/docs',
               },
               {
                 label: 'User Guides',
-                to: '/user-guides/cli-user-guide',
+                to: '/docs/user-guides/cli-user-guide',
               },
               {
                 label: 'Architecture',
-                to: '/architecture/core-module-integration',
+                to: '/docs/architecture/core-module-integration',
               },
               {
                 label: 'Development',
-                to: '/development/CONTRIBUTING',
+                to: '/docs/development/CONTRIBUTING',
               },
             ],
           },
@@ -202,11 +206,11 @@ const config = {
             items: [
               {
                 label: 'Configuration Examples',
-                to: '/user-guides/configuration-examples',
+                to: '/docs/user-guides/configuration-examples',
               },
               {
                 label: 'Contributing Guide',
-                to: '/development/CONTRIBUTING',
+                to: '/docs/development/CONTRIBUTING',
               },
               {
                 label: 'License',
@@ -253,11 +257,11 @@ const config = {
           },
         ],
       },
-      // Enhanced color mode configuration
+      // Enhanced color mode configuration - default to light theme
       colorMode: {
         defaultMode: 'light',
         disableSwitch: false,
-        respectPrefersColorScheme: true,
+        respectPrefersColorScheme: false,  // Force light mode as default
       },
       // Table of contents configuration for better navigation
       tableOfContents: {

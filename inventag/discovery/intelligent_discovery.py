@@ -15,6 +15,7 @@ Features:
 import json
 import re
 import logging
+import threading
 from typing import Dict, List, Any, Optional, Set, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -703,6 +704,35 @@ class IntelligentAWSDiscovery:
         self.logger = logging.getLogger(__name__)
         self.discovered_resources: List[StandardResource] = []
 
+        # Circuit breaker to prevent recursion during client creation (thread-safe)
+        self._clients_in_progress = set()
+        self._client_lock = threading.RLock()
+
+    def _create_client_safely(self, service_name: str, region: str):
+        """Safely create AWS client with recursion protection (thread-safe)."""
+        client_key = f"{service_name}:{region}"
+
+        with self._client_lock:
+            if client_key in self._clients_in_progress:
+                self.logger.warning(
+                    f"Recursion detected during {service_name} client creation in {region}"
+                )
+                return None
+
+            self._clients_in_progress.add(client_key)
+
+        try:
+            client = self.session.client(service_name, region_name=region)
+            return client
+        except Exception as e:
+            self.logger.error(
+                f"Failed to create {service_name} client in {region}: {e}"
+            )
+            return None
+        finally:
+            with self._client_lock:
+                self._clients_in_progress.discard(client_key)
+
     def discover_all_services(self) -> List[StandardResource]:
         """
         Discover resources from all AWS services using intelligent discovery.
@@ -740,8 +770,10 @@ class IntelligentAWSDiscovery:
 
         for region in self.regions:
             try:
-                # Get service client
-                client = self.session.client(service_name, region_name=region)
+                # Get service client safely
+                client = self._create_client_safely(service_name, region)
+                if client is None:
+                    continue
 
                 # Get available operations
                 operations = client._service_model.operation_names
@@ -915,13 +947,9 @@ class IntelligentAWSDiscovery:
 
     def _get_available_regions(self) -> List[str]:
         """Get available AWS regions."""
-        try:
-            ec2 = self.session.client("ec2", region_name="us-east-1")
-            regions = ec2.describe_regions()["Regions"]
-            return [region["RegionName"] for region in regions]
-        except:
-            # Fallback to common regions
-            return ["us-east-1", "us-west-2", "eu-west-1"]
+        # Return static list to avoid recursion when creating EC2 client
+        # This prevents infinite recursion during discovery initialization
+        return ["us-east-1", "us-west-2", "eu-west-1", "eu-central-1", "ap-southeast-1"]
 
     def _pascal_to_snake_case(self, pascal_string: str) -> str:
         """Convert PascalCase to snake_case."""
