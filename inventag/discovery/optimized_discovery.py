@@ -943,7 +943,7 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
 
         # Region handling
         self.specified_regions = regions
-        
+
         # Use parent's circuit breaker for recursion protection
         # (parent already initialized self._clients_in_progress)
         self.fallback_to_all_regions = True
@@ -954,19 +954,23 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
     def _create_client_safely(self, service_name: str, region: str):
         """Safely create AWS client with recursion protection (thread-safe)."""
         client_key = f"{service_name}:{region}"
-        
+
         with self._client_lock:
             if client_key in self._clients_in_progress:
-                self.logger.warning(f"Recursion detected during {service_name} client creation in {region}")
+                self.logger.warning(
+                    f"Recursion detected during {service_name} client creation in {region}"
+                )
                 return None
-            
+
             self._clients_in_progress.add(client_key)
-        
+
         try:
             client = self.session.client(service_name, region_name=region)
             return client
         except Exception as e:
-            self.logger.error(f"Failed to create {service_name} client in {region}: {e}")
+            self.logger.error(
+                f"Failed to create {service_name} client in {region}: {e}"
+            )
             return None
         finally:
             with self._client_lock:
@@ -1304,7 +1308,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         try:
             s3_client = self._create_client_safely("s3", "us-east-1")
             if not s3_client:
-                self.logger.warning("Could not create S3 client for bucket location detection")
+                self.logger.warning(
+                    "Could not create S3 client for bucket location detection"
+                )
                 return s3_buckets
 
             for bucket_resource in s3_buckets:

@@ -257,11 +257,11 @@ const config = {
           },
         ],
       },
-      // Enhanced color mode configuration
+      // Enhanced color mode configuration - default to light theme
       colorMode: {
         defaultMode: 'light',
         disableSwitch: false,
-        respectPrefersColorScheme: true,
+        respectPrefersColorScheme: false,  // Force light mode as default
       },
       // Table of contents configuration for better navigation
       tableOfContents: {

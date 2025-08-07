@@ -146,7 +146,7 @@ class CostAnalyzer:
         self.pricing_client = None
         self.cloudwatch_client = None
         self.cost_explorer_client = None
-        
+
         self.logger.info("Cost analyzer initialized with lazy client loading")
 
     def _get_pricing_client(self):
@@ -181,7 +181,11 @@ class CostAnalyzer:
                 self.logger.warning(f"Failed to create Cost Explorer client: {e}")
                 self.cost_explorer_client = False  # Mark as failed to avoid retry
                 raise
-        return self.cost_explorer_client if self.cost_explorer_client is not False else None
+        return (
+            self.cost_explorer_client
+            if self.cost_explorer_client is not False
+            else None
+        )
 
     def estimate_resource_costs(
         self, resources: List[Dict[str, Any]]
@@ -748,14 +752,18 @@ class CostAnalyzer:
 
             elif service == "RDS" and resource_type == "DBInstance":
                 # Get database connections
-                connection_metrics = self._get_cloudwatch_client().get_metric_statistics(
-                    Namespace="AWS/RDS",
-                    MetricName="DatabaseConnections",
-                    Dimensions=[{"Name": "DBInstanceIdentifier", "Value": resource_id}],
-                    StartTime=start_time,
-                    EndTime=end_time,
-                    Period=86400,
-                    Statistics=["Average", "Maximum"],
+                connection_metrics = (
+                    self._get_cloudwatch_client().get_metric_statistics(
+                        Namespace="AWS/RDS",
+                        MetricName="DatabaseConnections",
+                        Dimensions=[
+                            {"Name": "DBInstanceIdentifier", "Value": resource_id}
+                        ],
+                        StartTime=start_time,
+                        EndTime=end_time,
+                        Period=86400,
+                        Statistics=["Average", "Maximum"],
+                    )
                 )
                 activity_indicators["database_connections"] = connection_metrics.get(
                     "Datapoints", []
@@ -764,14 +772,16 @@ class CostAnalyzer:
             elif service == "S3" and resource_type == "Bucket":
                 # Get request metrics (if enabled)
                 try:
-                    request_metrics = self._get_cloudwatch_client().get_metric_statistics(
-                        Namespace="AWS/S3",
-                        MetricName="AllRequests",
-                        Dimensions=[{"Name": "BucketName", "Value": resource_id}],
-                        StartTime=start_time,
-                        EndTime=end_time,
-                        Period=86400,
-                        Statistics=["Sum"],
+                    request_metrics = (
+                        self._get_cloudwatch_client().get_metric_statistics(
+                            Namespace="AWS/S3",
+                            MetricName="AllRequests",
+                            Dimensions=[{"Name": "BucketName", "Value": resource_id}],
+                            StartTime=start_time,
+                            EndTime=end_time,
+                            Period=86400,
+                            Statistics=["Sum"],
+                        )
                     )
                     activity_indicators["s3_requests"] = request_metrics.get(
                         "Datapoints", []
@@ -962,7 +972,7 @@ class CostAnalyzer:
             cost_client = self._get_cost_explorer_client()
             if not cost_client:
                 return []
-            
+
             response = cost_client.get_cost_and_usage(
                 TimePeriod={"Start": start_date, "End": end_date},
                 Granularity="MONTHLY",

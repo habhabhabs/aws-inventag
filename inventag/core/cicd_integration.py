@@ -424,7 +424,7 @@ class CICDIntegration:
             s3_client = self._get_s3_client()
             if not s3_client:
                 return
-                
+
             lifecycle_config = {
                 "Rules": [
                     {

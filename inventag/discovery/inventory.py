@@ -21,6 +21,7 @@ from botocore.exceptions import ClientError
 # Import the discovery systems
 from .intelligent_discovery import IntelligentAWSDiscovery
 from .optimized_discovery import OptimizedAWSDiscovery
+from .comprehensive_discovery import ComprehensiveAWSDiscovery
 
 
 class ProgressSpinner:
@@ -69,6 +70,11 @@ class AWSResourceInventory:
         session: Optional[boto3.Session] = None,
         services: Optional[List[str]] = None,
         tag_filters: Optional[Dict[str, Any]] = None,
+        enable_billing_validation: bool = True,
+        use_intelligent: bool = True,
+        use_optimized: bool = True,
+        standardized_output: bool = True,
+        use_comprehensive: bool = True,
     ):
         """Initialize the AWS Resource Inventory tool."""
         self.session = session or boto3.Session()
@@ -81,7 +87,7 @@ class AWSResourceInventory:
         # Billing-based discovery state
         self.billing_validated_services: Set[str] = set()
         self.billing_spend_by_service: Dict[str, float] = {}
-        self.enable_billing_validation = True
+        self.enable_billing_validation = enable_billing_validation
 
         # Initialize discovery systems
         self.intelligent_discovery = IntelligentAWSDiscovery(
@@ -90,14 +96,18 @@ class AWSResourceInventory:
         self.optimized_discovery = OptimizedAWSDiscovery(
             session=self.session, regions=self.regions
         )
+        self.comprehensive_discovery = ComprehensiveAWSDiscovery(
+            session=self.session, regions=self.regions
+        )
 
         # Store original regions for fallback logic
         self.original_regions = self.regions.copy() if self.regions else None
 
-        # Discovery modes - Re-enabled with circuit breaker protection
-        self.use_intelligent_discovery = True  # Re-enabled with recursion protection
-        self.use_optimized_discovery = True  # Re-enabled with recursion protection
-        self.standardized_output = True  # Use standardized output format
+        # Discovery modes - Configure from parameters
+        self.use_intelligent_discovery = use_intelligent
+        self.use_optimized_discovery = use_optimized
+        self.use_comprehensive_discovery = use_comprehensive
+        self.standardized_output = standardized_output
 
         # AI prediction and state management
         self.enable_ai_prediction = True  # Enable AI-based resource prediction
@@ -137,17 +147,41 @@ class AWSResourceInventory:
     def _setup_logging(self) -> logging.Logger:
         """Set up logging configuration with fallback handling."""
         try:
-            logging.basicConfig(
-                level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-            )
             logger = logging.getLogger(__name__)
-            logger.info("Logger initialized successfully")
+
+            # Avoid duplicate handlers if logger already configured
+            if not logger.handlers:
+                # Only configure basicConfig if no root handlers exist
+                if not logging.root.handlers:
+                    logging.basicConfig(
+                        level=logging.INFO,
+                        format="%(asctime)s - %(levelname)s - %(message)s",
+                    )
+                else:
+                    # If root logger has handlers, just set level for this logger
+                    logger.setLevel(logging.INFO)
+
+                # Prevent propagation to root logger to avoid duplicates
+                logger.propagate = False
+
+                # Add handler only if none exists
+                if not logger.handlers:
+                    handler = logging.StreamHandler()
+                    formatter = logging.Formatter(
+                        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+                    )
+                    handler.setFormatter(formatter)
+                    logger.addHandler(handler)
+
+            logger.debug("Logger initialized successfully")
             return logger
         except Exception as e:
             # Fallback to basic logging if setup fails
             fallback_logger = logging.getLogger(__name__)
-            fallback_logger.addHandler(logging.StreamHandler())
-            fallback_logger.setLevel(logging.INFO)
+            if not fallback_logger.handlers:
+                fallback_logger.addHandler(logging.StreamHandler())
+                fallback_logger.setLevel(logging.INFO)
+                fallback_logger.propagate = False
             fallback_logger.warning(f"Failed to setup logging, using fallback: {e}")
             return fallback_logger
 
@@ -158,7 +192,7 @@ class AWSResourceInventory:
         fallback_regions = [
             "us-east-1",
             "us-west-2",
-            "eu-west-1", 
+            "eu-west-1",
             "eu-central-1",
             "ap-southeast-1",
             "ap-northeast-1",
@@ -169,14 +203,22 @@ class AWSResourceInventory:
             "ap-southeast-2",
             "ap-northeast-2",
             "ca-central-1",
-            "sa-east-1"
+            "sa-east-1",
         ]
-        self.logger.info(f"Using static region list with {len(fallback_regions)} AWS regions")
+        self.logger.info(
+            f"Using static region list with {len(fallback_regions)} AWS regions"
+        )
         return fallback_regions
 
     def discover_resources(self) -> List[Dict[str, Any]]:
         """Discover all AWS resources across regions and services with billing validation and intelligent discovery."""
-        discovery_method = "intelligent" if self.use_intelligent_discovery else "legacy"
+        if self.use_comprehensive_discovery:
+            discovery_method = "comprehensive"
+        elif self.use_intelligent_discovery:
+            discovery_method = "intelligent"
+        else:
+            discovery_method = "legacy"
+
         self.logger.info(
             f"Starting comprehensive AWS resource discovery ({discovery_method} mode) with billing validation..."
         )
@@ -218,17 +260,35 @@ class AWSResourceInventory:
                 f"Intelligent discovery found {intelligent_resource_count - initial_resource_count} resources with enhanced detection"
             )
 
-        # Step 3: Use ResourceGroupsTagging API for comprehensive discovery (recommended)
-        initial_resource_count = len(self.resources)
-        spinner = ProgressSpinner(
-            "📋 Discovering resources via ResourceGroupsTagging API"
-        )
-        spinner.start()
-        try:
-            self._discover_via_resource_groups_tagging_api()
-        finally:
-            spinner.stop()
-        rgt_resource_count = len(self.resources)
+        # Step 3: Comprehensive discovery - service-specific APIs first, then ResourceGroupsTagging for enrichment
+        if self.use_comprehensive_discovery:
+            initial_resource_count = len(self.resources)
+            spinner = ProgressSpinner(
+                "🔍 Comprehensive discovery: service-specific APIs → tag enrichment → billing validation"
+            )
+            spinner.start()
+            try:
+                comprehensive_resources = (
+                    self.comprehensive_discovery.discover_all_resources()
+                )
+                # Convert comprehensive discovery format to inventory format
+                for resource in comprehensive_resources:
+                    self.resources.append(resource)
+            finally:
+                spinner.stop()
+            rgt_resource_count = len(self.resources)
+        else:
+            # Fallback to ResourceGroupsTagging API for backward compatibility
+            initial_resource_count = len(self.resources)
+            spinner = ProgressSpinner(
+                "📋 Discovering resources via ResourceGroupsTagging API (fallback mode)"
+            )
+            spinner.start()
+            try:
+                self._discover_via_resource_groups_tagging_api()
+            finally:
+                spinner.stop()
+            rgt_resource_count = len(self.resources)
 
         # Step 3: Cross-validate with billing and enhance discovery
         if self.enable_billing_validation:
@@ -251,24 +311,73 @@ class AWSResourceInventory:
             )
             if undiscovered_services:
                 self.logger.info(
-                    f"Attempting dynamic discovery for {len(undiscovered_services)} services with billing usage"
+                    f"Attempting optimized dynamic discovery for {len(undiscovered_services)} services with billing usage"
                 )
                 spinner = ProgressSpinner(
-                    f"🚀 Performing dynamic discovery for {len(undiscovered_services)} services"
+                    f"🚀 Performing optimized dynamic discovery for {len(undiscovered_services)} services"
                 )
                 spinner.start()
                 try:
-                    for i, service_name in enumerate(
-                        list(undiscovered_services)[:10]
-                    ):  # Limit to avoid too many API calls
-                        spinner.update_message(
-                            f"🚀 Dynamic discovery: {service_name} ({i+1}/{min(len(undiscovered_services), 10)})"
+                    # Use optimized parallel discovery
+                    from .optimized_dynamic_discovery import OptimizedDynamicDiscovery
+
+                    optimizer = OptimizedDynamicDiscovery(
+                        session=self.session,
+                        max_workers=min(
+                            10, len(undiscovered_services) * 2
+                        ),  # Reasonable parallelism
+                    )
+
+                    # Limit services to avoid excessive API calls
+                    services_to_discover = list(undiscovered_services)[:15]
+
+                    spinner.update_message(
+                        f"🚀 Parallel discovery across {len(self.regions)} regions"
+                    )
+
+                    # Run optimized discovery
+                    discovery_results = optimizer.discover_services_parallel(
+                        services=services_to_discover,
+                        regions=self.regions,
+                        max_resources_per_service=20,  # Reasonable limit per service
+                    )
+
+                    # Add discovered resources to main resource list
+                    if discovery_results["resources"]:
+                        self.resources.extend(discovery_results["resources"])
+
+                    # Log performance metrics
+                    perf = discovery_results["performance"]
+                    self.logger.info(
+                        f"✅ Dynamic discovery completed: {perf['total_resources_found']} resources "
+                        f"in {perf['total_execution_time']:.1f}s "
+                        f"({perf['resources_per_second']:.1f} resources/sec)"
+                    )
+
+                    # Log successful services
+                    successful_services = [
+                        r.service_name
+                        for r in discovery_results["results"]
+                        if r.success and r.resources_found > 0
+                    ]
+                    if successful_services:
+                        self.logger.info(
+                            f"📊 Resources found in: {', '.join(set(successful_services))}"
                         )
+
+                except Exception as e:
+                    self.logger.error(f"Optimized dynamic discovery failed: {e}")
+                    # Fallback to original method for critical reliability
+                    self.logger.info("Falling back to sequential discovery...")
+                    for i, service_name in enumerate(
+                        list(undiscovered_services)[:5]
+                    ):  # Reduced fallback
+                        spinner.update_message(f"🔄 Fallback: {service_name} ({i+1}/5)")
                         try:
                             self._discover_service_by_name(service_name)
-                        except Exception as e:
-                            self.logger.warning(
-                                f"Dynamic discovery failed for {service_name}: {e}"
+                        except Exception as fallback_error:
+                            self.logger.debug(
+                                f"Fallback discovery failed for {service_name}: {fallback_error}"
                             )
                 finally:
                     spinner.stop()

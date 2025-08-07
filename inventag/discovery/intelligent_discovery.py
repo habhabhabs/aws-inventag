@@ -703,7 +703,7 @@ class IntelligentAWSDiscovery:
         self.field_mapper = IntelligentFieldMapper()
         self.logger = logging.getLogger(__name__)
         self.discovered_resources: List[StandardResource] = []
-        
+
         # Circuit breaker to prevent recursion during client creation (thread-safe)
         self._clients_in_progress = set()
         self._client_lock = threading.RLock()
@@ -711,19 +711,23 @@ class IntelligentAWSDiscovery:
     def _create_client_safely(self, service_name: str, region: str):
         """Safely create AWS client with recursion protection (thread-safe)."""
         client_key = f"{service_name}:{region}"
-        
+
         with self._client_lock:
             if client_key in self._clients_in_progress:
-                self.logger.warning(f"Recursion detected during {service_name} client creation in {region}")
+                self.logger.warning(
+                    f"Recursion detected during {service_name} client creation in {region}"
+                )
                 return None
-            
+
             self._clients_in_progress.add(client_key)
-        
+
         try:
             client = self.session.client(service_name, region_name=region)
             return client
         except Exception as e:
-            self.logger.error(f"Failed to create {service_name} client in {region}: {e}")
+            self.logger.error(
+                f"Failed to create {service_name} client in {region}: {e}"
+            )
             return None
         finally:
             with self._client_lock:
