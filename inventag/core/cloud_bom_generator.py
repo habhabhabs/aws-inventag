@@ -961,7 +961,7 @@ class CloudBOMGenerator:
             # Generate delta detection if enabled
             if self.config.enable_delta_detection:
                 try:
-                    delta_detector = DeltaDetector(state_manager)
+                    delta_detector = DeltaDetector()
                     previous_states = state_manager.list_states()
 
                     if len(previous_states) > 1:

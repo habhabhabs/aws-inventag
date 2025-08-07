@@ -952,8 +952,9 @@ class AWSResourceInventory:
 
     def _extract_resource_id(self, resource_data: dict) -> Optional[str]:
         """Extract resource ID from AWS API response data."""
-        # Common ID fields in AWS API responses
+        # Common ID fields in AWS API responses (prioritized order)
         id_fields = [
+            # Primary identifiers
             "Id",
             "ResourceId",
             "InstanceId",
@@ -967,42 +968,200 @@ class AWSResourceInventory:
             "AlarmName",
             "RuleName",
             "KeyId",
-            "CertificateArn",
-            "QueueUrl",
-            "TopicArn",
             "Name",
+            # ARN-based identifiers (extract ID from ARN)
+            "CertificateArn",
+            "TopicArn",
+            "QueueUrl",
+            "RoleArn",
+            "PolicyArn",
+            # Database identifiers
             "DBInstanceIdentifier",
             "DBClusterIdentifier",
-            "UserPoolId",
+            "DBSubnetGroupName",
+            # API Gateway identifiers
             "RestApiId",
+            "ApiId",
+            "DomainName",
+            # User/Auth identifiers
+            "UserPoolId",
+            "IdentityPoolId",
+            "UserName",
+            # Network identifiers
+            "VpcId",
+            "SubnetId",
+            "SecurityGroupId",
+            "NetworkInterfaceId",
+            # Route53 identifiers
+            "HostedZoneId",
+            "RecordName",
         ]
 
         for field in id_fields:
             if field in resource_data and resource_data[field]:
-                return str(resource_data[field])
+                value = str(resource_data[field])
 
-        # Fallback: use the first string field as ID
+                # Extract ID from ARN if needed
+                if value.startswith("arn:aws:"):
+                    # ARN format: arn:partition:service:region:account:resourcetype/resourcename
+                    try:
+                        arn_parts = value.split(":")
+                        if len(arn_parts) >= 6:
+                            resource_part = arn_parts[5]
+                            if "/" in resource_part:
+                                return resource_part.split("/")[-1]  # Get resource name
+                            return resource_part
+                    except:
+                        pass
+
+                return value
+
+        # Fallback: look for any string field that could be an identifier
+        fallback_patterns = ["identifier", "ref", "reference", "key", "token"]
         for key, value in resource_data.items():
             if isinstance(value, str) and len(value) > 0 and len(value) < 200:
-                return value
+                key_lower = key.lower()
+                if any(pattern in key_lower for pattern in fallback_patterns):
+                    return value
+
+        # Last resort: use the first meaningful string field
+        for key, value in resource_data.items():
+            if isinstance(value, str) and len(value) > 0 and len(value) < 200:
+                # Skip metadata fields
+                if key.lower() not in [
+                    "status",
+                    "state",
+                    "type",
+                    "kind",
+                    "description",
+                ]:
+                    return value
 
         return None
 
     def _extract_resource_name(self, resource_data: dict) -> Optional[str]:
         """Extract resource name from AWS API response data."""
-        name_fields = ["Name", "ResourceName", "DisplayName", "Title", "Label"]
+        name_fields = [
+            # Primary name fields
+            "Name",
+            "ResourceName",
+            "DisplayName",
+            "Title",
+            "Label",
+            # Service-specific name fields
+            "BucketName",
+            "TableName",
+            "FunctionName",
+            "StackName",
+            "AlarmName",
+            "RuleName",
+            "ClusterName",
+            "ServiceName",
+            "DomainName",
+            # Tag-based naming
+            "Tags.Name",
+            "TagList.Name",
+        ]
 
         for field in name_fields:
             if field in resource_data and resource_data[field]:
                 return str(resource_data[field])
+
+        # Check tags for Name tag
+        if "Tags" in resource_data:
+            tags = resource_data["Tags"]
+            if isinstance(tags, list):
+                # List of {"Key": "Name", "Value": "value"} format
+                for tag in tags:
+                    if isinstance(tag, dict) and tag.get("Key") == "Name":
+                        return str(tag.get("Value", ""))
+            elif isinstance(tags, dict):
+                # Direct key-value mapping
+                if "Name" in tags:
+                    return str(tags["Name"])
+
+        # For ARN-based resources, extract meaningful name from ARN
+        for arn_field in ["Arn", "ARN", "CertificateArn", "TopicArn", "RoleArn"]:
+            if arn_field in resource_data:
+                arn = str(resource_data[arn_field])
+                if arn.startswith("arn:aws:"):
+                    try:
+                        # Extract resource name from ARN
+                        resource_part = arn.split(":")[-1]
+                        if "/" in resource_part:
+                            return resource_part.split("/")[-1]
+                        return resource_part
+                    except:
+                        pass
 
         return None
 
     def _determine_resource_type(
         self, operation_name: str, list_key: str, resource_data: dict
     ) -> str:
-        """Determine resource type from operation name and response data."""
-        # Extract type from operation name
+        """Determine resource type from operation name, response key, and data."""
+        # First check for explicit type fields in resource data
+        type_fields = [
+            "Type",
+            "ResourceType",
+            "ServiceType",
+            "InstanceType",
+            "AlarmType",
+        ]
+        for field in type_fields:
+            if field in resource_data and resource_data[field]:
+                return str(resource_data[field])
+
+        # Service-specific type determination
+        if "CertificateArn" in resource_data:
+            return "Certificate"
+        elif "HostedZoneId" in resource_data:
+            return "Hosted Zone"
+        elif "BucketName" in resource_data:
+            return "Bucket"
+        elif "TableName" in resource_data:
+            return "Table"
+        elif "FunctionName" in resource_data:
+            return "Function"
+        elif "StackName" in resource_data:
+            return "Stack"
+        elif "AlarmName" in resource_data:
+            return "Alarm"
+        elif "RuleName" in resource_data:
+            return "Rule"
+        elif "KeyId" in resource_data:
+            return "Key"
+        elif "ClusterName" in resource_data or "ClusterId" in resource_data:
+            return "Cluster"
+        elif "InstanceId" in resource_data:
+            return "Instance"
+        elif "VolumeId" in resource_data:
+            return "Volume"
+        elif "VpcId" in resource_data:
+            return "VPC"
+        elif "SubnetId" in resource_data:
+            return "Subnet"
+
+        # Infer from response list key
+        if list_key:
+            key_mappings = {
+                "CertificateSummaryList": "Certificate",
+                "HostedZones": "Hosted Zone",
+                "Buckets": "Bucket",
+                "TableNames": "Table",
+                "Functions": "Function",
+                "Stacks": "Stack",
+                "MetricAlarms": "Alarm",
+                "Rules": "Rule",
+                "Keys": "Key",
+                "Clusters": "Cluster",
+                "Instances": "Instance",
+                "Volumes": "Volume",
+            }
+            if list_key in key_mappings:
+                return key_mappings[list_key]
+
+        # Extract from operation name as fallback
         if operation_name.startswith("Describe"):
             type_from_op = operation_name[8:]  # Remove 'Describe'
         elif operation_name.startswith("List"):
@@ -1015,13 +1174,17 @@ class AWSResourceInventory:
         # Clean up the type name
         type_from_op = type_from_op.rstrip("s")  # Remove plural 's'
 
-        # Check if resource_data has a Type field
-        if "Type" in resource_data:
-            return resource_data["Type"]
-        elif "ResourceType" in resource_data:
-            return resource_data["ResourceType"]
+        # Apply common transformations
+        type_transformations = {
+            "Certificate": "Certificate",
+            "HostedZone": "Hosted Zone",
+            "MetricAlarm": "Alarm",
+            "EventRule": "Rule",
+            "DatabaseCluster": "DB Cluster",
+            "DatabaseInstance": "DB Instance",
+        }
 
-        return type_from_op
+        return type_transformations.get(type_from_op, type_from_op)
 
     def _extract_tags(self, resource_data: dict) -> dict:
         """Extract tags from AWS API response data."""
@@ -1177,27 +1340,117 @@ class AWSResourceInventory:
                 self._discover_cloudwatch_resources(region)
 
     def _deduplicate_resources(self):
-        """Remove duplicate resources based on ARN."""
-        seen_arns = set()
+        """Remove duplicate resources with smart deduplication and merge enhanced data."""
+        seen_resources = {}
         deduplicated = []
+        merge_stats = {"duplicates_removed": 0, "resources_enhanced": 0}
 
         for resource in self.resources:
-            arn = resource.get("arn", "")
-            # Create a unique key for resources without ARNs
-            unique_key = (
-                arn
-                or f"{resource.get('service', '')}-{resource.get('type', '')}-{resource.get('id', '')}-{resource.get('region', '')}"
-            )
+            # Create comprehensive unique key
+            unique_key = self._create_unique_resource_key(resource)
 
-            if unique_key not in seen_arns:
-                seen_arns.add(unique_key)
-                deduplicated.append(resource)
+            if unique_key in seen_resources:
+                # Merge resources - keep the one with more complete data
+                existing_resource = seen_resources[unique_key]
+                merged_resource = self._merge_resource_data(existing_resource, resource)
+                seen_resources[unique_key] = merged_resource
+                merge_stats["duplicates_removed"] += 1
+                if merged_resource != existing_resource:
+                    merge_stats["resources_enhanced"] += 1
+            else:
+                seen_resources[unique_key] = resource
+
+        # Convert back to list, prioritizing resources with more complete data
+        deduplicated = list(seen_resources.values())
 
         removed_count = len(self.resources) - len(deduplicated)
         if removed_count > 0:
-            self.logger.info(f"Removed {removed_count} duplicate resources")
+            self.logger.info(
+                f"Smart deduplication: removed {merge_stats['duplicates_removed']} duplicates, "
+                f"enhanced {merge_stats['resources_enhanced']} resources with additional data"
+            )
 
         self.resources = deduplicated
+
+    def _create_unique_resource_key(self, resource: dict) -> str:
+        """Create a comprehensive unique key for resource deduplication."""
+        arn = resource.get("arn", "")
+        if arn:
+            return f"arn:{arn}"
+
+        # Service-specific unique key generation
+        service = resource.get("service", "").upper()
+        resource_type = resource.get("type", "")
+        resource_id = resource.get("id", "")
+        region = resource.get("region", "")
+
+        # Handle service-specific cases
+        if service == "ROUTE53" or service == "ROUTE 53":
+            # Route53 resources are global, use hosted zone ID or domain name
+            return f"route53:{resource_id}:{resource.get('name', '')}"
+
+        elif service == "S3":
+            # S3 buckets are globally unique
+            bucket_name = resource.get("name", "") or resource_id
+            return f"s3:bucket:{bucket_name}"
+
+        elif service == "VPC" or service == "EC2":
+            # VPC resources need region specificity
+            return f"vpc:{region}:{resource_type}:{resource_id}"
+
+        elif service == "IAM":
+            # IAM resources are global
+            return f"iam:{resource_type}:{resource_id}"
+
+        elif service == "CLOUDFRONT" or service == "CLOUDTRAIL":
+            # Global services
+            return f"{service.lower()}:{resource_id}"
+
+        # Default case
+        return f"{service.lower()}:{region}:{resource_type}:{resource_id}"
+
+    def _merge_resource_data(self, existing: dict, new: dict) -> dict:
+        """Merge two resource records, prioritizing completeness and accuracy."""
+        # Start with the resource that has more fields
+        if len(new) > len(existing):
+            base_resource = new.copy()
+            additional_resource = existing
+        else:
+            base_resource = existing.copy()
+            additional_resource = new
+
+        # Merge data intelligently
+        for key, value in additional_resource.items():
+            if key not in base_resource or not base_resource[key]:
+                # Add missing data
+                base_resource[key] = value
+            elif key == "tags":
+                # Merge tags
+                base_tags = base_resource.get("tags", {})
+                additional_tags = value if isinstance(value, dict) else {}
+                base_resource["tags"] = {**base_tags, **additional_tags}
+            elif key == "discovered_via":
+                # Track all discovery methods
+                existing_methods = base_resource.get("discovered_via", "")
+                if value not in existing_methods:
+                    base_resource["discovered_via"] = (
+                        f"{existing_methods}+{value}" if existing_methods else value
+                    )
+            elif key in ["arn", "name"] and not base_resource.get(key):
+                # Prefer non-empty ARNs and names
+                base_resource[key] = value
+
+        # Add merge metadata
+        base_resource["data_sources"] = list(
+            set(
+                [
+                    existing.get("discovered_via", "Unknown"),
+                    new.get("discovered_via", "Unknown"),
+                ]
+            )
+        )
+
+        return base_resource
 
     # Legacy discovery methods (fallback when ResourceGroupsTagging API fails)
     def _discover_ec2_resources_legacy(self, region: str):
