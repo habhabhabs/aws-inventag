@@ -1,0 +1,18 @@
+# Gitleaks configuration file
+# https://github.com/gitleaks/gitleaks
+
+# Global allowlist for false positives
+[allowlist]
+  description = "Allow false positive patterns"
+  paths = [
+    '''docs/CONFIGURATION_EXAMPLES\.md''',  # Example/demo files
+    '''tests/.*''',                         # Test files  
+    '''examples/.*'''                       # Example files
+  ]
+  
+  # Allow specific patterns that are false positives
+  regexes = [
+    '''args\.s3_key_prefix''',     # Command line argument, not a secret
+    '''AKIAIOSFODNN7STAGING''',    # Example/staging key in documentation
+    '''s3_key_prefix.*or.*bom-reports''', # Default config values
+  ]
