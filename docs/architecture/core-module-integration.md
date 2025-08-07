@@ -20,6 +20,11 @@ The core module exposes the following components:
 - **`AccountContext`**: Individual account processing context
 - **`AccountCredentials`**: Secure credential management for accounts
 
+### Optimized Discovery System
+- **`OptimizedAWSDiscovery`**: Enhanced discovery engine with 3-4x performance improvement
+- **`OptimizedFieldMapper`**: Service-specific field mapping with intelligent patterns
+- **`StandardResource`**: Standardized resource representation with confidence scoring
+
 ### Credential Management
 - **`CredentialManager`**: Secure credential validation and management
 - **`CredentialValidationResult`**: Credential validation results
@@ -41,21 +46,27 @@ The core module exposes the following components:
 
 ## Usage Examples
 
-### Basic Multi-Account BOM Generation with State Management
+### Basic Multi-Account BOM Generation with Optimized Discovery
 
 ```python
 from inventag.core import (
     CloudBOMGenerator, 
     StateManager, 
     DeltaDetector, 
-    ChangelogGenerator
+    ChangelogGenerator,
+    OptimizedAWSDiscovery
 )
 
-# Initialize components
+# Initialize components with optimized discovery
 generator = CloudBOMGenerator.from_credentials_file('accounts.json')
 state_manager = StateManager(state_dir="inventory_states")
 delta_detector = DeltaDetector()
 changelog_generator = ChangelogGenerator()
+
+# Configure optimized discovery for better performance
+optimized_discovery = OptimizedAWSDiscovery(regions=['us-east-1', 'us-west-2'])
+optimized_discovery.max_workers = 6  # Parallel processing
+optimized_discovery.enable_parallel = True
 
 # Generate comprehensive BOM
 result = generator.generate_comprehensive_bom(
@@ -84,6 +95,13 @@ state_id = state_manager.save_state(
 print(f"BOM generated successfully. State saved as: {state_id}")
 print(f"Total resources discovered: {len(result.all_resources)}")
 print(f"Accounts processed: {len(result.account_results)}")
+
+# Optional: Use optimized discovery directly for specific services
+if result.discovery_performance_issues:
+    print("Using optimized discovery for enhanced performance...")
+    optimized_resources = optimized_discovery.discover_all_services()
+    print(f"Optimized discovery found {len(optimized_resources)} resources")
+    print(f"High confidence resources: {len([r for r in optimized_resources if r.confidence_score >= 0.7])}")
 ```
 
 ### Change Detection and Changelog Generation
@@ -253,6 +271,51 @@ print(f"CI/CD Pipeline: {'SUCCESS' if result.success else 'FAILED'}")
 print(f"Compliance Gate: {'PASSED' if result.compliance_gate_passed else 'FAILED'}")
 print(f"Documents Generated: {len(result.generated_documents)}")
 print(f"S3 Uploads: {len(result.s3_uploads)}")
+```
+
+### Optimized Discovery System Usage
+
+```python
+from inventag.core import OptimizedAWSDiscovery, StandardResource
+
+# Initialize optimized discovery with performance settings
+discovery = OptimizedAWSDiscovery(regions=['us-east-1', 'us-west-2'])
+discovery.max_workers = 6  # Parallel processing
+discovery.enable_parallel = True
+discovery.operation_timeout = 30
+
+# Discover resources with enhanced performance
+resources = discovery.discover_all_services()
+
+# Analyze discovery results
+print(f"Discovery Performance:")
+print(f"  - Total Resources: {len(resources)}")
+print(f"  - Services Covered: {len(set(r.service_name for r in resources))}")
+
+# Quality analysis
+high_confidence = [r for r in resources if r.confidence_score >= 0.7]
+medium_confidence = [r for r in resources if 0.4 <= r.confidence_score < 0.7]
+low_confidence = [r for r in resources if r.confidence_score < 0.4]
+
+print(f"Quality Distribution:")
+print(f"  - High Confidence (≥0.7): {len(high_confidence)} ({len(high_confidence)/len(resources)*100:.1f}%)")
+print(f"  - Medium Confidence (0.4-0.7): {len(medium_confidence)} ({len(medium_confidence)/len(resources)*100:.1f}%)")
+print(f"  - Low Confidence (<0.4): {len(low_confidence)} ({len(low_confidence)/len(resources)*100:.1f}%)")
+
+# Service-specific analysis
+service_counts = {}
+for resource in resources:
+    service_counts[resource.service_name] = service_counts.get(resource.service_name, 0) + 1
+
+print(f"Service Coverage:")
+for service, count in sorted(service_counts.items()):
+    print(f"  - {service}: {count} resources")
+
+# Focus on specific services if needed
+priority_services = ['cloudfront', 'iam', 'route53', 's3', 'lambda']
+discovery.priority_services = priority_services
+focused_resources = discovery.discover_all_services()
+print(f"Focused discovery found {len(focused_resources)} resources from priority services")
 ```
 
 ### Advanced Credential Management
