@@ -35,6 +35,29 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for gitleaks
+        
+    - name: Security scan with gitleaks
+      id: gitleaks
+      uses: gitleaks/gitleaks-action@v2
+      continue-on-error: true  # Don't fail the entire workflow on artifact issues
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
+        GITLEAKS_ENABLE_SUMMARY: true
+        
+    - name: Check gitleaks results
+      if: always()
+      run: |
+        if [ "${{ steps.gitleaks.outcome }}" == "failure" ]; then
+          echo "⚠️ Gitleaks detected security issues - please review"
+          exit 1
+        elif [ "${{ steps.gitleaks.outcome }}" == "success" ]; then
+          echo "✅ No security leaks detected"
+        else
+          echo "ℹ️ Gitleaks scan completed with warnings"
+        fi
 
     - name: Set up Python ${{ matrix.python-version }}
       id: setup-python

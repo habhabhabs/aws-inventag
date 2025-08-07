@@ -33,6 +33,7 @@ pip install -r requirements.txt
 - 🛡️ **Production Safety & Security** - Enterprise-grade security validation and compliance standards (SOC 2, PCI, HIPAA, GDPR)
 - 📊 **Professional BOM Generation** - Excel/Word/Google Docs reports with logical column ordering and service-specific sheets
 - 🔍 **Multi-Account Discovery** - Comprehensive resource scanning across multiple AWS accounts with parallel processing
+- 🧠 **Optimized Discovery System** - Enhanced intelligent discovery with service-specific patterns and 3-4x performance improvement
 - 🌐 **Advanced Analysis Suite** - Network security analysis, cost optimization, and security posture assessment
 - 🏷️ **Tag Compliance Checking** - Automated validation against organizational tagging policies
 - 🔄 **State Management** - Change tracking with delta detection and professional changelog generation
@@ -121,6 +122,7 @@ Comprehensive guides for using InvenTag in different scenarios.
 Technical documentation for developers and system architects.
 
 - **[Core Module Integration](architecture/core-module-integration)** - System architecture overview
+- **[Optimized Discovery System](architecture/optimized-discovery-system)** - Enhanced discovery with 3-4x performance improvement
 - **[State Management](architecture/state-management)** - Change tracking and delta detection
 - **[Template Framework](architecture/template-framework)** - Document generation system
 - **[Service Enrichment](architecture/service-enrichment)** - AWS service attribute enhancement

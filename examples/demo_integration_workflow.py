@@ -91,9 +91,7 @@ def demo_integrated_workflow():
         from inventag.compliance import ComprehensiveTagComplianceChecker
 
         # Create temporary policy file
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False
-        ) as policy_file:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as policy_file:
             json.dump(tag_policy, policy_file, indent=2)
             policy_path = policy_file.name
 
@@ -101,9 +99,7 @@ def demo_integrated_workflow():
         print("-" * 30)
 
         # Initialize compliance checker
-        checker = ComprehensiveTagComplianceChecker(
-            regions=["us-east-1"], config_file=policy_path
-        )
+        checker = ComprehensiveTagComplianceChecker(regions=["us-east-1"], config_file=policy_path)
 
         # Run compliance check
         results = checker.check_compliance(sample_resources)
@@ -208,9 +204,7 @@ def demo_integrated_workflow():
         converter.export_to_excel(excel_file)
 
         file_size = os.path.getsize(excel_file)
-        print(
-            f"✅ Enhanced Excel BOM: {os.path.basename(excel_file)} ({file_size:,} bytes)"
-        )
+        print(f"✅ Enhanced Excel BOM: {os.path.basename(excel_file)} ({file_size:,} bytes)")
         print("📊 Enhanced features include:")
         print("   - Service-specific sheets with detailed resource information")
         print("   - Compliance status column for each resource")

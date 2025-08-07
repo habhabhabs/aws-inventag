@@ -138,14 +138,17 @@
   font-size: 3rem;
   font-weight: 800;
   margin-bottom: 1rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #ffffff !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .hero__subtitle {
   font-size: 1.25rem;
   font-weight: 400;
-  opacity: 0.9;
+  color: #ffffff !important;
+  opacity: 1;
   margin-bottom: 2rem;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* ===== CONTENT STYLING ===== */
@@ -387,6 +390,54 @@ code {
   box-shadow: 0 8px 25px -8px rgba(37, 99, 235, 0.5);
 }
 
+/* Enhanced hero section button styling */
+.hero .button--secondary {
+  background: #ffffff !important;
+  color: var(--inventag-blue) !important;
+  border: 2px solid #ffffff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.hero .button--secondary:hover {
+  background: #f8fafc !important;
+  color: var(--inventag-blue-dark) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+}
+
+.hero .button--outline {
+  background: transparent !important;
+  color: #ffffff !important;
+  border: 2px solid rgba(255, 255, 255, 0.8) !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.hero .button--outline:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Fix illegible outline primary buttons in features section */
+.button--outline.button--primary {
+  color: var(--inventag-blue) !important;
+  border-color: var(--inventag-blue) !important;
+  background: transparent !important;
+  font-weight: 600 !important;
+}
+
+.button--outline.button--primary:hover {
+  background: var(--inventag-blue) !important;
+  color: #ffffff !important;
+  border-color: var(--inventag-blue) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+}
+
 /* ===== TABLE STYLING ===== */
 table {
   border-collapse: collapse;
@@ -601,13 +652,52 @@ tr:hover {
 }
 
 /* ===== ENHANCED MOBILE RESPONSIVENESS ===== */
+/* Mobile viewport fixes for iPhone 16 Plus and other large phones */
 @media (max-width: 996px) {
+  /* Fix mobile menu bar viewport issues */
+  .navbar {
+    padding: 0 1rem;
+    min-height: 60px;
+  }
+  
+  .navbar__inner {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  
   .navbar__items {
     gap: 0.5rem;
   }
   
   .navbar__brand {
     margin-right: 1rem;
+    flex-shrink: 0;
+  }
+  
+  .navbar__toggle {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+  }
+  
+  /* Fix mobile menu toggle button */
+  .navbar__toggle svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  /* Mobile menu dropdown improvements */
+  .navbar-sidebar {
+    width: 100vw;
+    max-width: 100vw;
+  }
+  
+  .navbar-sidebar__backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
   }
   
   .hero {

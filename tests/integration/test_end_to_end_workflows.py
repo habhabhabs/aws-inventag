@@ -194,9 +194,7 @@ class TestEndToEndWorkflows:
                     "violations": ["Missing required tag: Role"],
                 }
             ],
-            "untagged_resources": [
-                {**sample_aws_resources[3], "compliance_status": "untagged"}
-            ],
+            "untagged_resources": [{**sample_aws_resources[3], "compliance_status": "untagged"}],
         }
 
         compliance_file = temp_workspace / "compliance_report.json"
@@ -301,9 +299,7 @@ class TestEndToEndWorkflows:
                     assert bom_file.stat().st_size > 0
 
                     # Verify workflow completed successfully
-                    assert (
-                        "BOM report generated" in bom_result.stdout or bom_file.exists()
-                    )
+                    assert "BOM report generated" in bom_result.stdout or bom_file.exists()
 
 
 class TestMultiFormatOutputValidation:
@@ -596,9 +592,7 @@ class TestConfigurationFileValidation:
 
         # Should handle missing config gracefully
         if result.returncode != 0:
-            assert (
-                "not found" in result.stderr.lower() or "file" in result.stderr.lower()
-            )
+            assert "not found" in result.stderr.lower() or "file" in result.stderr.lower()
 
 
 class TestMockAWSEnvironment:
@@ -710,9 +704,7 @@ class TestMockAWSEnvironment:
             },
         ]
 
-    def test_comprehensive_service_coverage(
-        self, temp_workspace, comprehensive_aws_resources
-    ):
+    def test_comprehensive_service_coverage(self, temp_workspace, comprehensive_aws_resources):
         """Test comprehensive service coverage"""
         # Create inventory with multiple services
         inventory_file = temp_workspace / "comprehensive_inventory.json"
@@ -747,27 +739,18 @@ class TestMockAWSEnvironment:
             assert bom_file.stat().st_size > 0
 
             # Verify processing message
-            assert (
-                "BOM report generated" in result.stdout
-                or "resources processed" in result.stdout
-            )
+            assert "BOM report generated" in result.stdout or "resources processed" in result.stdout
 
-    def test_service_specific_processing(
-        self, temp_workspace, comprehensive_aws_resources
-    ):
+    def test_service_specific_processing(self, temp_workspace, comprehensive_aws_resources):
         """Test service-specific processing logic"""
         # Filter resources by service
         services = set(resource["service"] for resource in comprehensive_aws_resources)
 
         for service in services:
-            service_resources = [
-                r for r in comprehensive_aws_resources if r["service"] == service
-            ]
+            service_resources = [r for r in comprehensive_aws_resources if r["service"] == service]
 
             # Create service-specific inventory
-            service_inventory_file = (
-                temp_workspace / f"{service.lower()}_inventory.json"
-            )
+            service_inventory_file = temp_workspace / f"{service.lower()}_inventory.json"
             service_inventory_data = {"all_discovered_resources": service_resources}
 
             with open(service_inventory_file, "w") as f:
@@ -910,9 +893,7 @@ if result.stderr:
             f.write(script_content)
 
         # Execute automated workflow
-        result = subprocess.run(
-            [sys.executable, str(batch_script)], capture_output=True, text=True
-        )
+        result = subprocess.run([sys.executable, str(batch_script)], capture_output=True, text=True)
 
         # Verify automated execution
         assert result.returncode == 0

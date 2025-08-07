@@ -636,10 +636,6 @@ jobs:
           git add version.json
           git commit -m "$(cat <<'EOF'
         chore: bump version to ${{ steps.version.outputs.new_version }}
-
-        🤖 Generated with [Claude Code](https://claude.ai/code)
-
-        Co-Authored-By: Claude <noreply@anthropic.com>
         EOF
         )"
           

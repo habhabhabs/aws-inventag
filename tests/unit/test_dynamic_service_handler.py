@@ -59,9 +59,7 @@ class TestDynamicServiceHandler:
         resource_id = "test-resource-123"
         arn = "arn:aws:service:region:account:testresource/test-resource-123"
 
-        patterns = self.handler._generate_parameter_patterns(
-            resource_type, resource_id, arn
-        )
+        patterns = self.handler._generate_parameter_patterns(resource_type, resource_id, arn)
 
         expected_patterns = [
             {"TestResourceName": resource_id},
@@ -108,9 +106,7 @@ class TestDynamicServiceHandler:
         with patch.object(
             self.handler, "_get_service_operations", return_value=["describe_document"]
         ):
-            with patch.object(
-                self.handler, "_safe_api_call", return_value=mock_response
-            ):
+            with patch.object(self.handler, "_safe_api_call", return_value=mock_response):
                 result = self.handler.enrich_resource(resource)
 
         # Verify enrichment
@@ -216,12 +212,8 @@ class TestDynamicServiceHandler:
             "CreateDocument",
         ]
 
-        with patch.object(
-            self.handler, "validate_read_only_operation"
-        ) as mock_validate:
-            mock_validate.side_effect = lambda op: op.startswith(
-                ("Describe", "Get", "List")
-            )
+        with patch.object(self.handler, "validate_read_only_operation") as mock_validate:
+            mock_validate.side_effect = lambda op: op.startswith(("Describe", "Get", "List"))
 
             operations = self.handler._get_service_operations(mock_client)
 
@@ -241,9 +233,7 @@ class TestDynamicServiceHandler:
         self.handler._cache_pattern_result(service, resource_type, resource_id, result)
 
         # Retrieve from cache
-        cached_result = self.handler._get_cached_pattern_result(
-            service, resource_type, resource_id
-        )
+        cached_result = self.handler._get_cached_pattern_result(service, resource_type, resource_id)
         assert cached_result == result
 
     def test_failed_pattern_caching(self):
