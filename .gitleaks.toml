@@ -7,12 +7,28 @@
   paths = [
     '''docs/CONFIGURATION_EXAMPLES\.md''',  # Example/demo files
     '''tests/.*''',                         # Test files  
-    '''examples/.*'''                       # Example files
+    '''examples/.*''',                      # Example files
+    '''.github/.*'''                        # GitHub Actions files
   ]
   
   # Allow specific patterns that are false positives
   regexes = [
-    '''args\.s3_key_prefix''',     # Command line argument, not a secret
-    '''AKIAIOSFODNN7STAGING''',    # Example/staging key in documentation
-    '''s3_key_prefix.*or.*bom-reports''', # Default config values
+    '''args\.s3_key_prefix''',              # Command line argument, not a secret
+    '''AKIAIOSFODNN7STAGING''',             # Example/staging key in documentation
+    '''s3_key_prefix.*or.*bom-reports''',   # Default config values
+    '''GITHUB_TOKEN.*secrets\.GITHUB_TOKEN''', # GitHub Actions token reference
+    '''GITLEAKS_LICENSE.*secrets\.GITLEAKS_LICENSE''', # Gitleaks license reference
   ]
+
+# Extend default rules with custom settings
+[[rules]]
+  id = "github-pat"
+  description = "GitHub Personal Access Token"
+  regex = '''ghp_[0-9a-zA-Z]{36}'''
+  keywords = ["ghp_"]
+
+[[rules]]
+  id = "aws-access-key-id"
+  description = "AWS Access Key"
+  regex = '''AKIA[0-9A-Z]{16}'''
+  keywords = ["AKIA"]

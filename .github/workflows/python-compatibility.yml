@@ -35,11 +35,14 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+      with:
+        fetch-depth: 0  # Fetch full history for gitleaks
+        
     - name: Security scan with gitleaks
       uses: gitleaks/gitleaks-action@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: false
 
     - name: Set up Python ${{ matrix.python-version }}
       id: setup-python
