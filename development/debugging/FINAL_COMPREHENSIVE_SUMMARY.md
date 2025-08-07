@@ -14,7 +14,7 @@ Successfully implemented a comprehensive enhancement of the AWS resource discove
 
 ## 🚀 Key Achievements
 
-### **Enhanced Service Coverage (22 Services)**
+### **Enhanced Service Coverage (22+ Services)**
 - **Core Services**: S3, EC2, IAM, Lambda, CloudFront, Route53, RDS, CloudWatch
 - **Container Services**: ECS, EKS
 - **Database Services**: RDS, DynamoDB, ElastiCache
@@ -23,6 +23,12 @@ Successfully implemented a comprehensive enhancement of the AWS resource discove
 - **DevOps**: CodePipeline, CodeBuild, CloudFormation
 - **Security**: Secrets Manager, KMS, ACM, WAF
 - **Management**: Systems Manager (SSM)
+
+All services include:
+- **Service-specific extraction patterns** for accurate resource identification
+- **AWS managed resource filtering** to focus on user-created resources
+- **Enhanced confidence scoring** with weighted quality assessment
+- **Region-aware discovery** with proper global service handling
 
 ### **AWS Managed Resource Filtering**
 ```python

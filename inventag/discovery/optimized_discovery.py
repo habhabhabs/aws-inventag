@@ -17,6 +17,7 @@ This module provides optimized discovery with:
 import re
 import concurrent.futures
 from typing import Dict, List, Any, Optional
+from datetime import datetime
 import boto3
 
 # Import the base classes
@@ -46,7 +47,12 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
             },
             "iam": {
                 "resource_types": ["Role", "User", "Policy", "Group"],
-                "operations": ["ListRoles", "ListUsers", "ListPolicies", "ListGroups"],
+                "operations": [
+                    "ListRoles",
+                    "ListUsers", 
+                    "ListPolicies",
+                    "ListGroups"
+                ],
                 "name_fields": ["RoleName", "UserName", "PolicyName", "GroupName"],
                 "region_dependent": False,
                 "global_service": True,
@@ -70,6 +76,10 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "global_service": True,
                 "exclude_aws_managed": True,
                 "exclude_resource_types": ["GeoLocation"],  # Exclude geolocation records
+                "aws_managed_patterns": [
+                    r".*\.amazonaws\.com\.$",  # AWS service domains
+                    r".*\.aws\.amazon\.com\.$",  # AWS internal domains
+                ],
             },
             "s3": {
                 "resource_types": ["Bucket"],
@@ -115,47 +125,67 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "region_dependent": True,
                 "exclude_aws_managed": True,
             },
-            
             # Enhanced ECS patterns
             "ecs": {
                 "resource_types": ["Cluster", "Service", "TaskDefinition", "ContainerInstance"],
-                "operations": ["ListClusters", "ListServices", "ListTaskDefinitions", "ListContainerInstances"],
-                "name_fields": ["clusterName", "serviceName", "taskDefinitionArn", "containerInstanceArn"],
+                "operations": [
+                    "ListClusters",
+                    "ListServices",
+                    "ListTaskDefinitions",
+                    "ListContainerInstances",
+                ],
+                "name_fields": [
+                    "clusterName",
+                    "serviceName",
+                    "taskDefinitionArn",
+                    "containerInstanceArn",
+                ],
                 "region_dependent": True,
                 "exclude_aws_managed": True,
                 "aws_managed_patterns": [
                     r"^default$",
                     r"^ecs-optimized-.*$",
-                    r"^AWSServiceRoleForECS.*$"
+                    r"^AWSServiceRoleForECS.*$",
                 ],
             },
-            
             # Enhanced EKS patterns
             "eks": {
                 "resource_types": ["Cluster", "NodeGroup", "FargateProfile", "Addon"],
-                "operations": ["ListClusters", "ListNodegroups", "ListFargateProfiles", "ListAddons"],
+                "operations": [
+                    "ListClusters",
+                    "ListNodegroups",
+                    "ListFargateProfiles",
+                    "ListAddons",
+                ],
                 "name_fields": ["name", "clusterName", "nodegroupName", "fargateProfileName"],
                 "region_dependent": True,
                 "exclude_aws_managed": True,
-                "aws_managed_patterns": [
-                    r"^eks-.*-cluster$",
-                    r"^AWSServiceRoleForAmazonEKS.*$"
-                ],
+                "aws_managed_patterns": [r"^eks-.*-cluster$", r"^AWSServiceRoleForAmazonEKS.*$"],
             },
-            
             # Enhanced ElastiCache patterns
             "elasticache": {
-                "resource_types": ["CacheCluster", "ReplicationGroup", "CacheSubnetGroup", "CacheParameterGroup"],
-                "operations": ["DescribeCacheClusters", "DescribeReplicationGroups", "DescribeCacheSubnetGroups", "DescribeCacheParameterGroups"],
-                "name_fields": ["CacheClusterId", "ReplicationGroupId", "CacheSubnetGroupName", "CacheParameterGroupName"],
+                "resource_types": [
+                    "CacheCluster",
+                    "ReplicationGroup",
+                    "CacheSubnetGroup",
+                    "CacheParameterGroup",
+                ],
+                "operations": [
+                    "DescribeCacheClusters",
+                    "DescribeReplicationGroups",
+                    "DescribeCacheSubnetGroups",
+                    "DescribeCacheParameterGroups",
+                ],
+                "name_fields": [
+                    "CacheClusterId",
+                    "ReplicationGroupId",
+                    "CacheSubnetGroupName",
+                    "CacheParameterGroupName",
+                ],
                 "region_dependent": True,
                 "exclude_aws_managed": True,
-                "aws_managed_patterns": [
-                    r"^default$",
-                    r"^default\..*$"
-                ],
+                "aws_managed_patterns": [r"^default$", r"^default\..*$"],
             },
-            
             # Enhanced SNS patterns
             "sns": {
                 "resource_types": ["Topic", "Subscription", "PlatformApplication"],
@@ -164,7 +194,6 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "region_dependent": True,
                 "exclude_aws_managed": True,
             },
-            
             # Enhanced SQS patterns
             "sqs": {
                 "resource_types": ["Queue"],
@@ -173,7 +202,6 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "region_dependent": True,
                 "exclude_aws_managed": True,
             },
-            
             # Enhanced DynamoDB patterns
             "dynamodb": {
                 "resource_types": ["Table", "Backup", "GlobalTable"],
@@ -182,7 +210,6 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "region_dependent": True,
                 "exclude_aws_managed": True,
             },
-            
             # Enhanced API Gateway patterns
             "apigateway": {
                 "resource_types": ["RestApi", "DomainName", "ApiKey", "UsagePlan"],
@@ -191,7 +218,6 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "region_dependent": True,
                 "exclude_aws_managed": True,
             },
-            
             # Enhanced CloudFormation patterns
             "cloudformation": {
                 "resource_types": ["Stack", "StackSet", "ChangeSet"],
@@ -199,12 +225,8 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "name_fields": ["StackName", "StackSetName", "ChangeSetName"],
                 "region_dependent": True,
                 "exclude_aws_managed": True,
-                "aws_managed_patterns": [
-                    r"^aws-.*$",
-                    r"^AWSServiceRole.*$"
-                ],
+                "aws_managed_patterns": [r"^aws-.*$", r"^AWSServiceRole.*$"],
             },
-            
             # Enhanced CodePipeline patterns
             "codepipeline": {
                 "resource_types": ["Pipeline"],
@@ -213,7 +235,6 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "region_dependent": True,
                 "exclude_aws_managed": True,
             },
-            
             # Enhanced CodeBuild patterns
             "codebuild": {
                 "resource_types": ["Project", "Build"],
@@ -222,7 +243,6 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "region_dependent": True,
                 "exclude_aws_managed": True,
             },
-            
             # Enhanced Secrets Manager patterns
             "secretsmanager": {
                 "resource_types": ["Secret"],
@@ -232,10 +252,9 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "exclude_aws_managed": True,
                 "aws_managed_patterns": [
                     r"^aws/.*$",
-                    r"^rds-db-credentials/.*$"  # RDS managed secrets
+                    r"^rds-db-credentials/.*$",  # RDS managed secrets
                 ],
             },
-            
             # Enhanced Systems Manager patterns
             "ssm": {
                 "resource_types": ["Parameter", "Document", "PatchBaseline"],
@@ -244,7 +263,6 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "region_dependent": True,
                 "exclude_aws_managed": True,
             },
-            
             # Enhanced KMS patterns
             "kms": {
                 "resource_types": ["Key", "Alias"],
@@ -252,12 +270,8 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "name_fields": ["KeyId", "AliasName"],
                 "region_dependent": True,
                 "exclude_aws_managed": True,
-                "aws_managed_patterns": [
-                    r"^alias/aws/.*$",  # AWS managed KMS keys
-                    r"^aws/.*$"
-                ],
+                "aws_managed_patterns": [r"^alias/aws/.*$", r"^aws/.*$"],  # AWS managed KMS keys
             },
-            
             # Enhanced ACM patterns
             "acm": {
                 "resource_types": ["Certificate"],
@@ -266,7 +280,6 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "region_dependent": True,
                 "exclude_aws_managed": True,
             },
-            
             # Enhanced WAF patterns
             "wafv2": {
                 "resource_types": ["WebACL", "RuleGroup", "IPSet"],
@@ -286,7 +299,7 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
             r"^default",
             r"^Default",
         ]
-        
+
         # Extract AWS managed patterns from service patterns for easy access
         self.aws_managed_patterns = {}
         for service, config in self.optimized_service_patterns.items():
@@ -569,40 +582,123 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
         # Check for AWS managed policies
         if resource_type == "Policy":
             arn = data.get("Arn", "")
-            if ":policy/aws-service-role/" in arn or ":policy/service-role/" in arn:
-                return True
+            # AWS managed policies
             if arn.startswith("arn:aws:iam::aws:policy/"):
                 return True
+            # Service-linked role policies
+            if ":policy/aws-service-role/" in arn or ":policy/service-role/" in arn:
+                return True
+            # Check policy name patterns
+            policy_name = data.get("PolicyName", resource_id)
+            aws_policy_patterns = [
+                r"^AWS.*Policy$",
+                r"^Amazon.*Policy$",
+                r"^.*ServiceRolePolicy$",
+                r"^.*ServiceLinkedRolePolicy$",
+            ]
+            for pattern in aws_policy_patterns:
+                if re.match(pattern, policy_name, re.IGNORECASE):
+                    return True
 
-        # Check for service-linked roles
+        # Check for service-linked roles and AWS managed roles
         if resource_type == "Role":
             path = data.get("Path", "")
+            # Service-linked roles
             if path.startswith("/aws-service-role/") or path.startswith("/service-role/"):
+                return True
+
+            # Check role creation date - roles created before account creation
+            # are likely AWS managed
+            create_date = data.get("CreateDate")
+            if create_date and self._is_pre_account_creation(create_date):
                 return True
 
             # Check assume role policy for service-linked roles
             assume_role_policy = data.get("AssumeRolePolicyDocument", "")
-            if isinstance(assume_role_policy, str) and "amazonaws.com" in assume_role_policy:
-                # Parse the policy to check if it's service-linked
-                try:
-                    import json as json_module
+            if self._is_service_linked_role_policy(assume_role_policy):
+                return True
 
-                    policy = (
-                        json_module.loads(assume_role_policy)
-                        if isinstance(assume_role_policy, str)
-                        else assume_role_policy
-                    )
-                    statements = policy.get("Statement", [])
-                    for statement in statements:
-                        principal = statement.get("Principal", {})
-                        if isinstance(principal, dict):
-                            service = principal.get("Service", "")
-                            if isinstance(service, str) and service.endswith(".amazonaws.com"):
-                                return True
-                except Exception:
-                    pass
+        # Check for AWS managed users (rare but possible)
+        if resource_type == "User":
+            path = data.get("Path", "")
+            if path.startswith("/aws-service-role/") or path.startswith("/service-role/"):
+                return True
+
+        # Check for AWS managed groups
+        if resource_type == "Group":
+            path = data.get("Path", "")
+            if path.startswith("/aws-service-role/") or path.startswith("/service-role/"):
+                return True
 
         return False
+
+    def _is_service_linked_role_policy(self, assume_role_policy: Any) -> bool:
+        """Check if assume role policy indicates a service-linked role."""
+
+        if not assume_role_policy:
+            return False
+
+        try:
+            import json as json_module
+
+            # Parse policy if it's a string
+            if isinstance(assume_role_policy, str):
+                policy = json_module.loads(assume_role_policy)
+            else:
+                policy = assume_role_policy
+
+            statements = policy.get("Statement", [])
+            for statement in statements:
+                principal = statement.get("Principal", {})
+                if isinstance(principal, dict):
+                    service = principal.get("Service", "")
+                    # Check for AWS service principals
+                    if isinstance(service, str) and service.endswith(".amazonaws.com"):
+                        # Additional check for service-linked role indicators
+                        if any(
+                            svc in service
+                            for svc in [
+                                "autoscaling",
+                                "ec2",
+                                "rds",
+                                "lambda",
+                                "ecs",
+                                "eks",
+                                "elasticloadbalancing",
+                                "cloudformation",
+                                "config",
+                            ]
+                        ):
+                            return True
+                elif isinstance(principal, str) and principal.endswith(".amazonaws.com"):
+                    return True
+        except Exception as e:
+            self.logger.debug(f"Failed to parse assume role policy: {e}")
+
+        return False
+
+    def _is_pre_account_creation(self, create_date) -> bool:
+        """Check if resource was created before typical account creation (likely AWS managed)."""
+
+        try:
+            from datetime import datetime, timezone
+
+            # Convert to datetime if it's not already
+            if isinstance(create_date, str):
+                # Try to parse ISO format
+                create_dt = datetime.fromisoformat(create_date.replace("Z", "+00:00"))
+            elif hasattr(create_date, "timestamp"):
+                create_dt = create_date
+            else:
+                return False
+
+            # If resource was created before 2010 (when AWS was very limited), it's likely AWS managed
+            aws_early_date = datetime(2010, 1, 1, tzinfo=timezone.utc)
+            return create_dt < aws_early_date
+
+        except Exception as e:
+            self.logger.debug(f"Failed to parse create date {create_date}: {e}")
+            return False
 
     def _is_aws_managed_route53_resource(
         self, data: Dict[str, Any], resource_id: str, resource_type: str
@@ -616,9 +712,36 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
         # Check for AWS managed hosted zones
         if resource_type == "HostedZone":
             name = data.get("Name", "")
-            # Exclude reverse DNS zones and other AWS managed zones
+
+            # Exclude reverse DNS zones
             if name.endswith(".in-addr.arpa.") or name.endswith(".ip6.arpa."):
                 return True
+
+            # Exclude AWS service domains
+            aws_domain_patterns = [
+                r".*\.amazonaws\.com\.$",
+                r".*\.aws\.amazon\.com\.$",
+                r".*\.awsapps\.com\.$",
+                r".*\.elb\.amazonaws\.com\.$",
+                r".*\.s3\.amazonaws\.com\.$",
+                r".*\.cloudfront\.net\.$",
+            ]
+
+            for pattern in aws_domain_patterns:
+                if re.match(pattern, name, re.IGNORECASE):
+                    return True
+
+            # Check if it's a private hosted zone for VPC (these might be user-created)
+            config = data.get("Config", {})
+            if config.get("PrivateZone", False):
+                # Private zones are typically user-created, so don't filter them
+                return False
+
+            # Check resource record count - AWS managed zones typically have minimal records
+            resource_record_set_count = data.get("ResourceRecordSetCount", 0)
+            if resource_record_set_count <= 2:  # Only NS and SOA records
+                # Could be AWS managed, but let's be conservative and keep it
+                pass
 
         return False
 
@@ -628,16 +751,65 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
         """Check if EC2 resource is AWS managed."""
 
         # Check for default VPC and security groups
-        if resource_type in ["VPC", "SecurityGroup"]:
+        if resource_type == "VPC":
             is_default = data.get("IsDefault", False)
             if is_default:
                 return True
-
-        # Check for default security group
-        if resource_type == "SecurityGroup":
-            group_name = data.get("GroupName", "")
-            if group_name == "default":
+            # Check for VPC CIDR blocks that indicate default VPCs
+            cidr_block = data.get("CidrBlock", "")
+            if cidr_block == "172.31.0.0/16":  # Default VPC CIDR
                 return True
+
+        # Check for default security groups and AWS managed security groups
+        if resource_type == "SecurityGroup":
+            is_default = data.get("IsDefault", False)
+            group_name = data.get("GroupName", "")
+
+            if is_default or group_name == "default":
+                return True
+
+            # Check for AWS managed security group patterns
+            aws_sg_patterns = [
+                r"^aws-.*",
+                r"^Amazon.*",
+                r"^rds-launch-wizard.*",
+                r"^elasticache-.*",
+                r"^ElasticMapReduce-.*",
+            ]
+
+            for pattern in aws_sg_patterns:
+                if re.match(pattern, group_name, re.IGNORECASE):
+                    return True
+
+        # Check for default subnets
+        if resource_type == "Subnet":
+            # Default subnets typically have specific naming patterns
+            # availability_zone = data.get("AvailabilityZone", "")
+            # vpc_id = data.get("VpcId", "")
+
+            # If it's in a default VPC, it's likely a default subnet
+            # We would need to check the VPC separately, but for now use heuristics
+            cidr_block = data.get("CidrBlock", "")
+            if cidr_block.startswith("172.31."):  # Default VPC subnet range
+                return True
+
+        # Check for default route tables
+        if resource_type == "RouteTable":
+            # Default route tables have specific associations
+            associations = data.get("Associations", [])
+            for assoc in associations:
+                if assoc.get("Main", False):  # Main route table
+                    return True
+
+        # Check for default internet gateways
+        if resource_type == "InternetGateway":
+            # Internet gateways attached to default VPCs
+            attachments = data.get("Attachments", [])
+            for attachment in attachments:
+                # vpc_id = attachment.get("VpcId", "")
+                # We'd need to check if this VPC is default, but that requires another call
+                # For now, be conservative and don't filter IGWs
+                pass
 
         return False
 
@@ -792,6 +964,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         service_resources = []
         regions_to_use = self._get_regions_for_service(service_name)
 
+        # Track if we successfully discovered from any region
+        discovery_successful = False
+
         for region in regions_to_use:
             try:
                 # Skip global services for non-primary regions
@@ -805,6 +980,7 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                 operations = self._get_optimized_discovery_operations(service_name, client)
 
                 # Try each discovery operation
+                region_resources = []
                 for operation_name in operations:
                     try:
                         resources = self._discover_via_operation_enhanced(
@@ -812,17 +988,10 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                         )
                         # Filter out None results (AWS managed resources)
                         resources = [r for r in resources if r is not None]
-                        service_resources.extend(resources)
+                        region_resources.extend(resources)
 
-                        # For S3, we need to detect bucket regions
-                        if service_name.lower() == "s3" and operation_name == "ListBuckets":
-                            service_resources = self._enhance_s3_bucket_regions(
-                                service_resources, client
-                            )
-
-                        # Limit operations per service to avoid too many API calls
-                        if len(resources) > 0:
-                            break
+                        if resources:
+                            discovery_successful = True
 
                     except Exception as e:
                         self.logger.debug(
@@ -830,15 +999,24 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                         )
                         continue
 
+                # Add region resources to total
+                service_resources.extend(region_resources)
+
             except Exception as e:
                 self.logger.warning(f"Failed to create {service_name} client in {region}: {e}")
-                # If specified regions fail, try fallback to all regions
-                if self.specified_regions and self.fallback_to_all_regions:
-                    self.logger.info(f"Falling back to all regions for {service_name}")
-                    return self._discover_service_all_regions(service_name)
+                continue
 
-        # Enhanced deduplication for this service
-        service_resources = self._intelligent_deduplication(service_resources)
+        # If specified regions failed and we have fallback enabled, try all regions
+        if not discovery_successful and self.specified_regions and self.fallback_to_all_regions:
+            self.logger.info(f"Falling back to all regions for {service_name}")
+            return self._discover_service_all_regions(service_name)
+
+        # For S3, enhance with actual bucket regions after all regions are processed
+        if service_name.lower() == "s3" and service_resources:
+            service_resources = self._enhance_s3_bucket_regions_comprehensive(service_resources)
+
+        # Enhanced deduplication for this service with consistent ordering
+        service_resources = self._intelligent_deduplication_consistent(service_resources)
 
         return service_resources
 
@@ -973,6 +1151,119 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
 
         return enhanced_resources
 
+    def _enhance_s3_bucket_regions_comprehensive(
+        self, resources: List[StandardResource]
+    ) -> List[StandardResource]:
+        """Comprehensive S3 bucket region enhancement for all discovered buckets."""
+
+        enhanced_resources = []
+        s3_buckets = [
+            r for r in resources if r.service_name.upper() == "S3" and r.resource_type == "Bucket"
+        ]
+        other_resources = [
+            r
+            for r in resources
+            if not (r.service_name.upper() == "S3" and r.resource_type == "Bucket")
+        ]
+
+        if not s3_buckets:
+            return resources
+
+        # Create S3 client for bucket location detection
+        try:
+            s3_client = self.session.client("s3", region_name="us-east-1")
+
+            for bucket_resource in s3_buckets:
+                try:
+                    bucket_name = bucket_resource.resource_id
+
+                    # Check cache first
+                    if bucket_name in self.s3_region_cache:
+                        actual_region = self.s3_region_cache[bucket_name]
+                    else:
+                        # Get bucket location
+                        try:
+                            location_response = s3_client.get_bucket_location(Bucket=bucket_name)
+                            location_constraint = location_response.get("LocationConstraint")
+
+                            # Handle special cases for region mapping
+                            if location_constraint is None or location_constraint == "":
+                                actual_region = "us-east-1"  # Default region
+                            elif location_constraint == "EU":
+                                actual_region = "eu-west-1"  # Legacy EU constraint
+                            else:
+                                actual_region = location_constraint
+
+                            # Cache the result
+                            self.s3_region_cache[bucket_name] = actual_region
+
+                            self.logger.debug(
+                                f"S3 bucket {bucket_name} actual region: {actual_region}"
+                            )
+
+                        except Exception as e:
+                            self.logger.debug(
+                                f"Failed to get bucket location for {bucket_name}: {e}"
+                            )
+                            actual_region = bucket_resource.region  # Keep original region
+
+                    # Update resource region and ARN
+                    bucket_resource.region = actual_region
+                    # Update ARN to reflect correct region
+                    bucket_resource.arn = f"arn:aws:s3:::{bucket_name}"
+                    enhanced_resources.append(bucket_resource)
+
+                except Exception as e:
+                    self.logger.debug(
+                        f"Failed to enhance S3 bucket {bucket_resource.resource_id}: {e}"
+                    )
+                    enhanced_resources.append(bucket_resource)  # Keep original
+
+        except Exception as e:
+            self.logger.warning(f"Failed to create S3 client for region detection: {e}")
+            enhanced_resources.extend(s3_buckets)  # Keep originals
+
+        # Add back other resources
+        enhanced_resources.extend(other_resources)
+        return enhanced_resources
+
+    def _intelligent_deduplication_consistent(
+        self, resources: List[StandardResource]
+    ) -> List[StandardResource]:
+        """Enhanced deduplication with consistent ordering for state management."""
+
+        if not resources:
+            return resources
+
+        # Create a map of unique resources by ARN (primary key)
+        unique_resources = {}
+
+        for resource in resources:
+            # Use ARN as primary key, fallback to service:type:id:region
+            if resource.arn:
+                key = resource.arn
+            else:
+                key = f"{resource.service_name}:{resource.resource_type}:{resource.resource_id}:{resource.region}"
+
+            # Keep the resource with higher confidence score
+            if key not in unique_resources:
+                unique_resources[key] = resource
+            else:
+                existing = unique_resources[key]
+                if resource.confidence_score > existing.confidence_score:
+                    unique_resources[key] = resource
+
+        # Convert back to list and sort consistently for state management
+        deduplicated = list(unique_resources.values())
+
+        # Sort by ARN first, then by service, type, id, region for consistent ordering
+        deduplicated.sort(
+            key=lambda r: (r.arn or "", r.service_name, r.resource_type, r.resource_id, r.region)
+        )
+
+        self.logger.debug(f"Deduplication: {len(resources)} -> {len(deduplicated)} resources")
+        return deduplicated
+
     def _get_optimized_discovery_operations(self, service_name: str, client) -> List[str]:
         """Get optimized discovery operations for a service."""
 
@@ -1030,9 +1321,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
 
     def _apply_ai_predictions(self, resources: List[StandardResource]) -> List[StandardResource]:
         """Apply AI-based resource predictions for missing dependencies."""
-        
+
         predicted_resources = []
-        
+
         # AI prediction patterns for cross-service dependencies
         ai_patterns = {
             # Lambda functions -> CloudWatch log groups
@@ -1041,91 +1332,86 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                 "target_service": "logs",
                 "pattern": lambda resource: f"/aws/lambda/{resource.resource_id}",
                 "resource_type": "LogGroup",
-                "confidence": 0.7
+                "confidence": 0.7,
             },
-            
             # ECS clusters -> CloudWatch log groups
             "ecs_to_logs": {
                 "source_service": "ecs",
                 "target_service": "logs",
-                "pattern": lambda resource: f"/ecs/{resource.resource_id}" if resource.resource_type == "Cluster" else f"/aws/ecs/containerinsights/{resource.resource_id}",
+                "pattern": lambda resource: (
+                    f"/ecs/{resource.resource_id}"
+                    if resource.resource_type == "Cluster"
+                    else f"/aws/ecs/containerinsights/{resource.resource_id}"
+                ),
                 "resource_type": "LogGroup",
-                "confidence": 0.6
+                "confidence": 0.6,
             },
-            
             # EKS clusters -> CloudWatch log groups
             "eks_to_logs": {
                 "source_service": "eks",
                 "target_service": "logs",
                 "pattern": lambda resource: f"/aws/eks/{resource.resource_id}/cluster",
                 "resource_type": "LogGroup",
-                "confidence": 0.6
+                "confidence": 0.6,
             },
-            
             # API Gateway -> CloudWatch log groups
             "apigateway_to_logs": {
                 "source_service": "apigateway",
                 "target_service": "logs",
                 "pattern": lambda resource: f"API-Gateway-Execution-Logs_{resource.resource_id}/prod",
                 "resource_type": "LogGroup",
-                "confidence": 0.5
+                "confidence": 0.5,
             },
-            
             # RDS instances -> CloudWatch log groups
             "rds_to_logs": {
                 "source_service": "rds",
                 "target_service": "logs",
                 "pattern": lambda resource: f"/aws/rds/instance/{resource.resource_id}/error",
                 "resource_type": "LogGroup",
-                "confidence": 0.4
+                "confidence": 0.4,
             },
-            
             # CodeBuild projects -> CloudWatch log groups
             "codebuild_to_logs": {
                 "source_service": "codebuild",
                 "target_service": "logs",
                 "pattern": lambda resource: f"/aws/codebuild/{resource.resource_id}",
                 "resource_type": "LogGroup",
-                "confidence": 0.6
+                "confidence": 0.6,
             },
-            
             # Lambda functions -> CloudWatch alarms
             "lambda_to_cloudwatch": {
                 "source_service": "lambda",
                 "target_service": "cloudwatch",
                 "pattern": lambda resource: f"{resource.resource_id}-errors",
                 "resource_type": "Alarm",
-                "confidence": 0.4
+                "confidence": 0.4,
             },
-            
             # RDS instances -> CloudWatch alarms
             "rds_to_cloudwatch": {
                 "source_service": "rds",
                 "target_service": "cloudwatch",
                 "pattern": lambda resource: f"{resource.resource_id}-cpu-utilization",
                 "resource_type": "Alarm",
-                "confidence": 0.4
+                "confidence": 0.4,
             },
-            
             # Lambda functions -> IAM roles
             "lambda_to_iam": {
                 "source_service": "lambda",
                 "target_service": "iam",
                 "pattern": lambda resource: f"{resource.resource_id}-role",
                 "resource_type": "Role",
-                "confidence": 0.5
+                "confidence": 0.5,
             },
-            
             # ECS services -> IAM roles
             "ecs_to_iam": {
                 "source_service": "ecs",
                 "target_service": "iam",
-                "pattern": lambda resource: f"ecsTaskExecutionRole",
+                "pattern": lambda resource: "ecsTaskExecutionRole",
                 "resource_type": "Role",
-                "confidence": 0.4
+                "confidence": 0.4,
             },
         }
-        
+
         # Group resources by service
         resources_by_service = {}
         for resource in resources:
@@ -1133,18 +1419,18 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             if service not in resources_by_service:
                 resources_by_service[service] = []
             resources_by_service[service].append(resource)
-        
+
         # Apply prediction patterns
         for pattern_name, pattern_config in ai_patterns.items():
             source_service = pattern_config["source_service"]
             target_service = pattern_config["target_service"]
-            
+
             if source_service in resources_by_service:
                 for source_resource in resources_by_service[source_service]:
                     try:
                         # Generate predicted resource ID
                         predicted_id = pattern_config["pattern"](source_resource)
-                        
+
                         # Check if this predicted resource already exists
                         exists = False
                         if target_service in resources_by_service:
@@ -1152,7 +1438,7 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                                 if existing.resource_id == predicted_id:
                                     exists = True
                                     break
-                        
+
                         if not exists:
                             # Create predicted resource
                             predicted_resource = StandardResource(
@@ -1164,33 +1450,38 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                                 account_id=source_resource.account_id,
                                 arn=f"arn:aws:{target_service}:{source_resource.region}:{source_resource.account_id}:{pattern_config['resource_type'].lower()}/{predicted_id}",
                                 tags={},
-                                raw_data={"predicted": True, "source_resource": source_resource.arn},
+                                raw_data={
+                                    "predicted": True,
+                                    "source_resource": source_resource.arn,
+                                },
                                 confidence_score=pattern_config["confidence"],
                                 discovery_method="ai_prediction",
-                                last_seen=datetime.now()
+                                last_seen=datetime.now(),
                             )
-                            
+
                             predicted_resources.append(predicted_resource)
-                            
+
                     except Exception as e:
                         self.logger.debug(f"AI prediction failed for {pattern_name}: {e}")
-        
+
         self.logger.info(f"AI predictions generated {len(predicted_resources)} potential resources")
         return predicted_resources
 
     def discover_all_services_with_ai(self) -> List[StandardResource]:
         """Enhanced discovery with AI predictions for missing resources."""
-        
+
         # First, run standard optimized discovery
         discovered_resources = self.discover_all_services()
-        
+
         # Apply AI predictions
         predicted_resources = self._apply_ai_predictions(discovered_resources)
-        
+
         # Combine and deduplicate
         all_resources = discovered_resources + predicted_resources
         all_resources = self._intelligent_deduplication(all_resources)
-        
-        self.logger.info(f"Discovery with AI complete: {len(discovered_resources)} discovered + {len(predicted_resources)} predicted = {len(all_resources)} total")
-        
+
+        self.logger.info(
+            f"Discovery with AI complete: {len(discovered_resources)} discovered + {len(predicted_resources)} predicted = {len(all_resources)} total"
+        )
+
         return all_resources

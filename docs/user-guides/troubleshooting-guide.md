@@ -630,7 +630,7 @@ python inventag_cli.py --create-excel --debug --log-file discovery.log
 |--------|----------------|----------------|------------------|
 | Legacy | 364 | 58+ seconds | 15+ services |
 | Intelligent | 6 | 60+ seconds | 2 services |
-| Optimized | 52+ | 4.03 seconds | 8 priority services |
+| Optimized | 52+ | 4.03 seconds | 22+ services |
 
 #### Optimized Discovery Troubleshooting
 

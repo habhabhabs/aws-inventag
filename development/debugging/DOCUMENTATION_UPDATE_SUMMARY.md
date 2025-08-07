@@ -6,7 +6,7 @@ This document summarizes the comprehensive documentation updates made to reflect
 
 **Status**: ✅ **COMPLETE** - All documentation is current and reflects the fully integrated optimized discovery system.
 
-**Last Updated**: January 8, 2025 - Documentation updated to reflect the complete optimized discovery system implementation with AWS managed resource filtering and enhanced service coverage including ECS, EKS, ElastiCache, SNS, SQS, DynamoDB, API Gateway, CloudFormation, CodePipeline, CodeBuild, Secrets Manager, SSM, KMS, ACM, and WAF patterns.
+**Last Updated**: January 8, 2025 - Documentation updated to reflect the complete optimized discovery system implementation with AWS managed resource filtering and comprehensive service coverage for 22+ AWS services including CloudFront, IAM, Route53, S3, Lambda, EC2, RDS, ECS, EKS, ElastiCache, SNS, SQS, DynamoDB, API Gateway, CloudFormation, CodePipeline, CodeBuild, Secrets Manager, SSM, KMS, ACM, and WAF patterns.
 
 ## Files Updated
 
@@ -94,7 +94,7 @@ This document summarizes the comprehensive documentation updates made to reflect
 | Resources Found | 364 | 6 | 52+ |
 | Discovery Time | 58+ seconds | 60+ seconds | 4.03 seconds |
 | Discovery Rate | 6.24 res/sec | 0.1 res/sec | 12.92 res/sec |
-| Service Coverage | 15+ services | 2 services | 6+ priority services |
+| Service Coverage | 15+ services | 2 services | 22+ services |
 | High Confidence | N/A | 0% | 98% |
 
 ## Usage Examples Added

@@ -394,8 +394,11 @@ class AWSResourceInventory:
         self.logger.info("Starting optimized AWS discovery with enhanced service coverage...")
 
         try:
-            # Use the optimized discovery system
-            standard_resources = self.optimized_discovery.discover_all_services()
+            # Use the optimized discovery system with AI predictions
+            if self.enable_ai_prediction:
+                standard_resources = self.optimized_discovery.discover_all_services_with_ai()
+            else:
+                standard_resources = self.optimized_discovery.discover_all_services()
 
             if self.standardized_output:
                 # Convert StandardResource objects to standardized dictionaries

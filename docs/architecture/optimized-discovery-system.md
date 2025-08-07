@@ -19,6 +19,7 @@ The Optimized Discovery System is an enhanced AWS resource discovery engine that
 - **Smart Deduplication**: Efficient resource merging with confidence-based selection
 
 ### 🎯 Enhanced Service Coverage
+- **22+ AWS Services**: Comprehensive patterns for CloudFront, IAM, Route53, S3, Lambda, EC2, RDS, ECS, EKS, ElastiCache, SNS, SQS, DynamoDB, API Gateway, CloudFormation, CodePipeline, CodeBuild, Secrets Manager, SSM, KMS, ACM, and WAF
 - **Service-Specific Patterns**: Tailored extraction logic for each AWS service
 - **Priority Services**: Focus on previously problematic services (CloudFront, IAM, Route53, S3, Lambda)
 - **Global Service Handling**: Proper region management for global services
@@ -205,6 +206,111 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
 - **Resource Types**: DBInstance, DBCluster
 - **Name Fields**: DBInstanceIdentifier, DBClusterIdentifier
 - **Special Logic**: Database cluster and instance relationships
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled
+
+### ECS
+- **Resource Types**: Cluster, Service, TaskDefinition, ContainerInstance
+- **Name Fields**: clusterName, serviceName, taskDefinitionArn, containerInstanceArn
+- **Special Logic**: Container orchestration resource relationships
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled with patterns for default clusters and ECS-optimized resources
+
+### EKS
+- **Resource Types**: Cluster, NodeGroup, FargateProfile, Addon
+- **Name Fields**: name, clusterName, nodegroupName, fargateProfileName
+- **Special Logic**: Kubernetes cluster and node management
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled with patterns for EKS service roles
+
+### ElastiCache
+- **Resource Types**: CacheCluster, ReplicationGroup, CacheSubnetGroup, CacheParameterGroup
+- **Name Fields**: CacheClusterId, ReplicationGroupId, CacheSubnetGroupName, CacheParameterGroupName
+- **Special Logic**: Cache cluster and replication group relationships
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled with patterns for default parameter groups
+
+### SNS
+- **Resource Types**: Topic, Subscription, PlatformApplication
+- **Name Fields**: TopicArn, SubscriptionArn, Name
+- **Special Logic**: Message topic and subscription relationships
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled
+
+### SQS
+- **Resource Types**: Queue
+- **Name Fields**: QueueUrl, QueueName
+- **Special Logic**: Queue URL parsing and name extraction
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled
+
+### DynamoDB
+- **Resource Types**: Table, Backup, GlobalTable
+- **Name Fields**: TableName, BackupName, GlobalTableName
+- **Special Logic**: Table and backup relationships
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled
+
+### API Gateway
+- **Resource Types**: RestApi, DomainName, ApiKey, UsagePlan
+- **Name Fields**: id, restApiId, name, domainName
+- **Special Logic**: API resource relationships and domain mapping
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled
+
+### CloudFormation
+- **Resource Types**: Stack, StackSet, ChangeSet
+- **Name Fields**: StackName, StackSetName, ChangeSetName
+- **Special Logic**: Stack and change set relationships
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled with patterns for AWS service stacks
+
+### CodePipeline
+- **Resource Types**: Pipeline
+- **Name Fields**: name, pipelineName
+- **Special Logic**: CI/CD pipeline configuration
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled
+
+### CodeBuild
+- **Resource Types**: Project, Build
+- **Name Fields**: name, projectName, buildId
+- **Special Logic**: Build project and execution relationships
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled
+
+### Secrets Manager
+- **Resource Types**: Secret
+- **Name Fields**: Name, ARN, SecretId
+- **Special Logic**: Secret metadata and rotation configuration
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled with patterns for RDS managed secrets
+
+### Systems Manager (SSM)
+- **Resource Types**: Parameter, Document, PatchBaseline
+- **Name Fields**: Name, ParameterName, DocumentName
+- **Special Logic**: Parameter hierarchy and document relationships
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled
+
+### KMS
+- **Resource Types**: Key, Alias
+- **Name Fields**: KeyId, AliasName
+- **Special Logic**: Key and alias relationships
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled with patterns for AWS managed keys
+
+### ACM
+- **Resource Types**: Certificate
+- **Name Fields**: CertificateArn, DomainName
+- **Special Logic**: Certificate domain and validation information
+- **Global Service**: No (region-specific)
+- **AWS Managed Filtering**: Enabled
+
+### WAF
+- **Resource Types**: WebACL, RuleGroup, IPSet
+- **Name Fields**: Name, Id, ARN
+- **Special Logic**: Web ACL and rule relationships
 - **Global Service**: No (region-specific)
 - **AWS Managed Filtering**: Enabled
 
@@ -501,9 +607,10 @@ resources = specific_discovery.discover_all_services()
 | **Resources Found** | 364 | 6 | 52 |
 | **Discovery Time** | 58+ seconds | 60+ seconds | 4.03 seconds |
 | **Discovery Rate** | 6.24 res/sec | 0.1 res/sec | 12.92 res/sec |
-| **Service Coverage** | 15+ services | 2 services | 6 services |
+| **Service Coverage** | 15+ services | 2 services | 22+ services |
 | **High Confidence** | N/A | 0% | 98% |
 | **Missing Services** | None | CloudFront, IAM, Route53 | None |
+| **AWS Managed Filtering** | No | No | Yes |
 
 ### Performance Improvements
 
