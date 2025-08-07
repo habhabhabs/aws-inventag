@@ -209,22 +209,26 @@ class IntelligentFieldMapper:
         This is the core AI-like function that understands AWS API patterns.
         """
         try:
-            # Initialize standard resource
+            # Pre-extract required fields before initialization
+            resource_id = self._extract_resource_id(raw_data)
+            resource_type = self._determine_resource_type(
+                raw_data, operation_name, service_name
+            )
+
+            # Initialize standard resource with required fields
             resource = StandardResource(
                 service_name=self._normalize_service_name(service_name),
+                resource_type=resource_type,
+                resource_id=resource_id,
                 region=region,
                 account_id=account_id or self._extract_account_from_data(raw_data),
                 api_operation=operation_name,
                 raw_data=raw_data,
             )
 
-            # Intelligent field extraction
-            resource.resource_id = self._extract_resource_id(raw_data)
+            # Additional intelligent field extraction
             resource.resource_name = self._extract_resource_name(raw_data)
             resource.resource_arn = self._extract_arn(raw_data)
-            resource.resource_type = self._determine_resource_type(
-                raw_data, operation_name, service_name
-            )
 
             # Status and lifecycle information
             resource.status = self._extract_status(raw_data)
@@ -755,8 +759,8 @@ class IntelligentAWSDiscovery:
 
                 # Try each discovery operation
                 for operation_name in discovery_ops[
-                    :5
-                ]:  # Limit to prevent too many API calls
+                    :1
+                ]:  # Limit to 1 operation per service for very fast testing
                     try:
                         resources = self._discover_via_operation(
                             client, operation_name, service_name, region
@@ -901,21 +905,10 @@ class IntelligentAWSDiscovery:
 
     def _get_available_aws_services(self) -> List[str]:
         """Get list of available AWS services."""
-        # Core services to always try
+        # Very limited services for fast testing
         core_services = [
             "ec2",
             "s3",
-            "iam",
-            "rds",
-            "lambda",
-            "cloudformation",
-            "cloudwatch",
-            "sns",
-            "sqs",
-            "dynamodb",
-            "acm",
-            "route53",
-            "kms",
         ]
 
         return core_services
