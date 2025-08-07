@@ -688,9 +688,9 @@ The optimized system provides enhanced confidence scoring:
    ```
 
 2. **Expected confidence levels:**
-   - High Confidence (≥0.7): 98% of resources
-   - Medium Confidence (0.4-0.7): <2% of resources
-   - Low Confidence (<0.4): <1% of resources
+   - High Confidence (≥0.7): `98%` of resources
+   - Medium Confidence (0.4-0.7): `<2%` of resources
+   - Low Confidence (<0.4): `<1%` of resources
 
 ### For Large Environments
 
