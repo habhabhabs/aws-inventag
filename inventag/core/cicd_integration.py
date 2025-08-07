@@ -142,12 +142,22 @@ class CICDIntegration:
         self.notification_config = notification_config or NotificationConfig()
         self.prometheus_config = prometheus_config or PrometheusConfig()
 
-        # Initialize AWS clients
+        # Initialize AWS clients lazily
         self.s3_client = None
-        if s3_config:
-            self.s3_client = boto3.client("s3", region_name=s3_config.region)
+        self.s3_config = s3_config
 
         self.logger.info("Initialized CICDIntegration")
+
+    def _get_s3_client(self):
+        """Lazily create and return S3 client."""
+        if self.s3_client is None and self.s3_config:
+            try:
+                self.s3_client = boto3.client("s3", region_name=self.s3_config.region)
+                self.logger.debug("Created S3 client")
+            except Exception as e:
+                self.logger.warning(f"Failed to create S3 client: {e}")
+                raise
+        return self.s3_client
 
     def execute_pipeline_integration(
         self,
@@ -352,7 +362,8 @@ class CICDIntegration:
         Returns:
             Dictionary mapping format to S3 URL
         """
-        if not self.s3_client or not self.s3_config:
+        s3_client = self._get_s3_client()
+        if not s3_client or not self.s3_config:
             self.logger.warning("S3 upload requested but not configured")
             return {}
 
@@ -390,7 +401,7 @@ class CICDIntegration:
 
                 # Upload file
                 with open(file_path, "rb") as f:
-                    self.s3_client.upload_fileobj(f, **upload_params)
+                    s3_client.upload_fileobj(f, **upload_params)
 
                 # Generate S3 URL
                 s3_url = f"https://{self.s3_config.bucket_name}.s3.{self.s3_config.region}.amazonaws.com/{s3_key}"
@@ -410,6 +421,10 @@ class CICDIntegration:
     def _set_s3_lifecycle_policy(self, s3_key: str):
         """Set lifecycle policy for uploaded S3 object."""
         try:
+            s3_client = self._get_s3_client()
+            if not s3_client:
+                return
+                
             lifecycle_config = {
                 "Rules": [
                     {
@@ -421,7 +436,7 @@ class CICDIntegration:
                 ]
             }
 
-            self.s3_client.put_bucket_lifecycle_configuration(
+            s3_client.put_bucket_lifecycle_configuration(
                 Bucket=self.s3_config.bucket_name,
                 LifecycleConfiguration=lifecycle_config,
             )

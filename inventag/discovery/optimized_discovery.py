@@ -15,6 +15,7 @@ This module provides optimized discovery with:
 """
 
 import re
+import threading
 import concurrent.futures
 from typing import Dict, List, Any, Optional
 from datetime import datetime
@@ -942,10 +943,34 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
 
         # Region handling
         self.specified_regions = regions
+        
+        # Use parent's circuit breaker for recursion protection
+        # (parent already initialized self._clients_in_progress)
         self.fallback_to_all_regions = True
 
         # S3 region cache for bucket location detection
         self.s3_region_cache = {}
+
+    def _create_client_safely(self, service_name: str, region: str):
+        """Safely create AWS client with recursion protection (thread-safe)."""
+        client_key = f"{service_name}:{region}"
+        
+        with self._client_lock:
+            if client_key in self._clients_in_progress:
+                self.logger.warning(f"Recursion detected during {service_name} client creation in {region}")
+                return None
+            
+            self._clients_in_progress.add(client_key)
+        
+        try:
+            client = self.session.client(service_name, region_name=region)
+            return client
+        except Exception as e:
+            self.logger.error(f"Failed to create {service_name} client in {region}: {e}")
+            return None
+        finally:
+            with self._client_lock:
+                self._clients_in_progress.discard(client_key)
 
     def discover_all_services(self) -> List[StandardResource]:
         """Optimized discovery with enhanced service coverage."""
@@ -1047,8 +1072,10 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                 if self._is_global_service(service_name) and region != "us-east-1":
                     continue
 
-                # Get service client
-                client = self.session.client(service_name, region_name=region)
+                # Get service client safely
+                client = self._create_client_safely(service_name, region)
+                if client is None:
+                    continue
 
                 # Get optimized operations for this service
                 operations = self._get_optimized_discovery_operations(
@@ -1125,13 +1152,16 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             f"Attempting discovery for {service_name} across all regions as fallback"
         )
 
-        # Temporarily override regions
+        # Temporarily override regions and disable fallback to prevent infinite loop
         original_regions = self.regions
+        original_fallback = self.fallback_to_all_regions
         try:
             self.regions = self._get_available_regions()
+            self.fallback_to_all_regions = False  # Prevent recursive fallback
             return self.discover_service(service_name)
         finally:
             self.regions = original_regions
+            self.fallback_to_all_regions = original_fallback
 
     def _discover_via_operation_enhanced(
         self, client, operation_name: str, service_name: str, region: str
@@ -1272,7 +1302,10 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
 
         # Create S3 client for bucket location detection
         try:
-            s3_client = self.session.client("s3", region_name="us-east-1")
+            s3_client = self._create_client_safely("s3", "us-east-1")
+            if not s3_client:
+                self.logger.warning("Could not create S3 client for bucket location detection")
+                return s3_buckets
 
             for bucket_resource in s3_buckets:
                 try:

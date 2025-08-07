@@ -94,9 +94,9 @@ class AWSResourceInventory:
         # Store original regions for fallback logic
         self.original_regions = self.regions.copy() if self.regions else None
 
-        # Discovery modes - use optimized discovery by default
-        self.use_intelligent_discovery = True  # Enable optimized intelligent discovery
-        self.use_optimized_discovery = True  # Use optimized discovery system
+        # Discovery modes - Re-enabled with circuit breaker protection
+        self.use_intelligent_discovery = True  # Re-enabled with recursion protection
+        self.use_optimized_discovery = True  # Re-enabled with recursion protection
         self.standardized_output = True  # Use standardized output format
 
         # AI prediction and state management
@@ -153,18 +153,26 @@ class AWSResourceInventory:
 
     def _get_available_regions(self) -> List[str]:
         """Get all available AWS regions with fallback."""
-        try:
-            ec2 = self.session.client("ec2", region_name="us-east-1")
-            regions = ec2.describe_regions()["Regions"]
-            region_list = [region["RegionName"] for region in regions]
-            self.logger.info(f"Successfully retrieved {len(region_list)} AWS regions")
-            return region_list
-        except Exception as e:
-            self.logger.warning(f"Failed to get all regions: {e}")
-            self.logger.info(
-                "Falling back to default regions: us-east-1, ap-southeast-1"
-            )
-            return ["us-east-1", "ap-southeast-1"]  # Fallback to key regions
+        # Return static list to avoid recursion when creating EC2 client
+        # This prevents infinite recursion during discovery initialization
+        fallback_regions = [
+            "us-east-1",
+            "us-west-2",
+            "eu-west-1", 
+            "eu-central-1",
+            "ap-southeast-1",
+            "ap-northeast-1",
+            "us-east-2",
+            "us-west-1",
+            "eu-west-2",
+            "eu-west-3",
+            "ap-southeast-2",
+            "ap-northeast-2",
+            "ca-central-1",
+            "sa-east-1"
+        ]
+        self.logger.info(f"Using static region list with {len(fallback_regions)} AWS regions")
+        return fallback_regions
 
     def discover_resources(self) -> List[Dict[str, Any]]:
         """Discover all AWS resources across regions and services with billing validation and intelligent discovery."""
