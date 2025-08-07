@@ -87,9 +87,9 @@ class AWSResourceInventory:
             session=self.session, regions=self.regions
         )
 
-        # Discovery modes
-        self.use_intelligent_discovery = True  # Enable AI-capable discovery by default
-        self.standardized_output = True  # Enable standardized column output
+        # Discovery modes - revert to legacy for now to fix specific issues
+        self.use_intelligent_discovery = False  # Disable intelligent discovery until issues fixed
+        self.standardized_output = False  # Use legacy output format
 
     def configure_discovery_mode(
         self, use_intelligent: bool = True, standardized_output: bool = True
@@ -229,11 +229,15 @@ class AWSResourceInventory:
                 finally:
                     spinner.stop()
 
-        # Step 5: If still very few resources, try basic service discovery
-        total_resources_after_dynamic = len(self.resources)
-        if total_resources_after_dynamic < 10:
+        # Step 5: Service-specific discovery for enhanced details (always run for legacy mode)
+        if not self.use_intelligent_discovery:
+            self._discover_service_specific_resources()
+
+        # Step 6: If still very few resources, try basic service discovery
+        total_resources_after_service_specific = len(self.resources)
+        if total_resources_after_service_specific < 10:
             self.logger.warning(
-                "Still few resources after dynamic discovery. Trying basic services."
+                "Still few resources after service-specific discovery. Trying basic services."
             )
             basic_services = ["EC2", "S3", "RDS", "Lambda", "CloudWatch", "IAM"]
             for service in basic_services:
@@ -242,10 +246,10 @@ class AWSResourceInventory:
                 except Exception as e:
                     self.logger.debug(f"Basic discovery failed for {service}: {e}")
 
-        # Step 6: Remove duplicates based on ARN
+        # Step 7: Remove duplicates based on ARN
         self._deduplicate_resources()
 
-        # Step 7: Add billing metadata to resources
+        # Step 8: Add billing metadata to resources
         if self.enable_billing_validation:
             self._add_billing_metadata()
 
@@ -1454,20 +1458,21 @@ class AWSResourceInventory:
         for region in self.regions:
             self.logger.info(f"Enhanced scanning region: {region}")
 
-            # Only run service-specific discovery for services we found via RGT API
-            if "EC2" in discovered_services:
-                self._enhance_ec2_resources(region)
-                self._enhance_vpc_resources(
-                    region
-                )  # VPC resources are part of EC2 service
-            if "S3" in discovered_services and region == "us-east-1":  # S3 is global
-                self._enhance_s3_resources(region)
+            # Always run core service discovery (these might not have tags)
+            self._enhance_ec2_resources(region)
+            self._enhance_vpc_resources(region)  # VPCs often don't have tags
+            
+            if region == "us-east-1":  # Global services
+                self._enhance_s3_resources(region)  # S3 buckets might not have tags
+                self._enhance_iam_resources(region)
+                self._discover_route53_resources(region)  # Add Route53 discovery
+                self._discover_cloudfront_resources(region)  # Add CloudFront discovery
+
+            # Only run other service-specific discovery if found via RGT API
             if "RDS" in discovered_services:
                 self._enhance_rds_resources(region)
             if "LAMBDA" in discovered_services:
                 self._enhance_lambda_resources(region)
-            if "IAM" in discovered_services and region == "us-east-1":  # IAM is global
-                self._enhance_iam_resources(region)
             if "CLOUDFORMATION" in discovered_services:
                 self._enhance_cloudformation_resources(region)
             if "ECS" in discovered_services:
