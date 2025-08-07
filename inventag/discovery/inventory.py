@@ -87,7 +87,9 @@ class AWSResourceInventory:
         self.intelligent_discovery = IntelligentAWSDiscovery(
             session=self.session, regions=self.regions
         )
-        self.optimized_discovery = OptimizedAWSDiscovery(session=self.session, regions=self.regions)
+        self.optimized_discovery = OptimizedAWSDiscovery(
+            session=self.session, regions=self.regions
+        )
 
         # Store original regions for fallback logic
         self.original_regions = self.regions.copy() if self.regions else None
@@ -99,7 +101,9 @@ class AWSResourceInventory:
 
         # AI prediction and state management
         self.enable_ai_prediction = True  # Enable AI-based resource prediction
-        self.ensure_consistent_results = True  # Ensure consistent results for state management
+        self.ensure_consistent_results = (
+            True  # Ensure consistent results for state management
+        )
         self.resource_prediction_cache = {}  # Cache for AI predictions
 
     def configure_discovery_mode(
@@ -157,7 +161,9 @@ class AWSResourceInventory:
             return region_list
         except Exception as e:
             self.logger.warning(f"Failed to get all regions: {e}")
-            self.logger.info("Falling back to default regions: us-east-1, ap-southeast-1")
+            self.logger.info(
+                "Falling back to default regions: us-east-1, ap-southeast-1"
+            )
             return ["us-east-1", "ap-southeast-1"]  # Fallback to key regions
 
     def discover_resources(self) -> List[Dict[str, Any]]:
@@ -169,7 +175,9 @@ class AWSResourceInventory:
 
         # Step 1: Discover services with actual usage via billing data
         if self.enable_billing_validation:
-            spinner = ProgressSpinner("🔍 Analyzing billing data to identify services with usage")
+            spinner = ProgressSpinner(
+                "🔍 Analyzing billing data to identify services with usage"
+            )
             spinner.start()
             try:
                 self._discover_services_via_billing()
@@ -188,7 +196,9 @@ class AWSResourceInventory:
                 finally:
                     spinner.stop()
             else:
-                spinner = ProgressSpinner("🧠 AI-capable intelligent resource discovery")
+                spinner = ProgressSpinner(
+                    "🧠 AI-capable intelligent resource discovery"
+                )
                 spinner.start()
                 try:
                     self._perform_intelligent_discovery()
@@ -202,7 +212,9 @@ class AWSResourceInventory:
 
         # Step 3: Use ResourceGroupsTagging API for comprehensive discovery (recommended)
         initial_resource_count = len(self.resources)
-        spinner = ProgressSpinner("📋 Discovering resources via ResourceGroupsTagging API")
+        spinner = ProgressSpinner(
+            "📋 Discovering resources via ResourceGroupsTagging API"
+        )
         spinner.start()
         try:
             self._discover_via_resource_groups_tagging_api()
@@ -247,7 +259,9 @@ class AWSResourceInventory:
                         try:
                             self._discover_service_by_name(service_name)
                         except Exception as e:
-                            self.logger.warning(f"Dynamic discovery failed for {service_name}: {e}")
+                            self.logger.warning(
+                                f"Dynamic discovery failed for {service_name}: {e}"
+                            )
                 finally:
                     spinner.stop()
 
@@ -304,7 +318,9 @@ class AWSResourceInventory:
 
     def _perform_intelligent_discovery(self):
         """Perform AI-capable intelligent resource discovery with standardized output."""
-        self.logger.info("Starting intelligent AWS discovery with standardized columns...")
+        self.logger.info(
+            "Starting intelligent AWS discovery with standardized columns..."
+        )
 
         try:
             # Use the intelligent discovery system
@@ -312,7 +328,9 @@ class AWSResourceInventory:
 
             if self.standardized_output:
                 # Convert StandardResource objects to standardized dictionaries
-                standardized_data = self.intelligent_discovery.export_standardized_data()
+                standardized_data = (
+                    self.intelligent_discovery.export_standardized_data()
+                )
 
                 # Convert to our internal format while preserving standardized structure
                 for standard_data in standardized_data:
@@ -391,12 +409,16 @@ class AWSResourceInventory:
 
     def _perform_optimized_discovery(self):
         """Perform optimized AI-capable intelligent resource discovery with enhanced service coverage."""
-        self.logger.info("Starting optimized AWS discovery with enhanced service coverage...")
+        self.logger.info(
+            "Starting optimized AWS discovery with enhanced service coverage..."
+        )
 
         try:
             # Use the optimized discovery system with AI predictions
             if self.enable_ai_prediction:
-                standard_resources = self.optimized_discovery.discover_all_services_with_ai()
+                standard_resources = (
+                    self.optimized_discovery.discover_all_services_with_ai()
+                )
             else:
                 standard_resources = self.optimized_discovery.discover_all_services()
 
@@ -478,7 +500,9 @@ class AWSResourceInventory:
             try:
                 self._perform_intelligent_discovery()
             except Exception as fallback_error:
-                self.logger.error(f"Fallback intelligent discovery also failed: {fallback_error}")
+                self.logger.error(
+                    f"Fallback intelligent discovery also failed: {fallback_error}"
+                )
                 self.logger.info("Continuing with traditional discovery methods...")
 
     def _ensure_consistent_results(self):
@@ -641,14 +665,19 @@ class AWSResourceInventory:
         predicted = []
 
         # If we have resources in multiple regions, predict default VPCs
-        regions_with_resources = [r for r in region_patterns.keys() if r and r != "global"]
+        regions_with_resources = [
+            r for r in region_patterns.keys() if r and r != "global"
+        ]
 
         if len(regions_with_resources) > 1:
             # Check if we have VPCs in all regions where we have resources
             vpc_regions = set()
             for region, resources in region_patterns.items():
                 for resource in resources:
-                    if resource.get("service") == "EC2" and resource.get("type") == "VPC":
+                    if (
+                        resource.get("service") == "EC2"
+                        and resource.get("type") == "VPC"
+                    ):
                         vpc_regions.add(region)
 
             # Predict missing default VPCs (but these would be filtered out as AWS managed)
@@ -692,7 +721,9 @@ class AWSResourceInventory:
                     if (
                         cost_amount > 0.01 or usage_quantity > 0
                     ):  # Services with minimal spend or usage
-                        normalized_service = self._normalize_billing_service_name(service_name)
+                        normalized_service = self._normalize_billing_service_name(
+                            service_name
+                        )
                         services_with_usage[normalized_service] = {
                             "billing_name": service_name,
                             "cost": cost_amount,
@@ -727,7 +758,9 @@ class AWSResourceInventory:
                     "No permission for Cost Explorer API. Skipping billing validation."
                 )
             elif error_code == "OptInRequired":
-                self.logger.warning("Cost Explorer not enabled. Skipping billing validation.")
+                self.logger.warning(
+                    "Cost Explorer not enabled. Skipping billing validation."
+                )
             else:
                 self.logger.warning(f"Cost Explorer API failed: {e}")
             self.enable_billing_validation = False
@@ -812,11 +845,15 @@ class AWSResourceInventory:
 
         # Extract service name from billing strings
         if "amazon" in billing_lower:
-            service_part = billing_service_name.replace("Amazon ", "").replace("AWS ", "")
+            service_part = billing_service_name.replace("Amazon ", "").replace(
+                "AWS ", ""
+            )
             # Convert to uppercase and replace spaces/hyphens
             return service_part.upper().replace(" ", "").replace("-", "")[:20]
         elif "aws" in billing_lower:
-            service_part = billing_service_name.replace("AWS ", "").replace("Amazon ", "")
+            service_part = billing_service_name.replace("AWS ", "").replace(
+                "Amazon ", ""
+            )
             return service_part.upper().replace(" ", "").replace("-", "")[:20]
 
         # Fallback: return cleaned up version
@@ -838,7 +875,9 @@ class AWSResourceInventory:
             )
             for service in sorted(missing_services):
                 spend = self.billing_spend_by_service.get(service, 0)
-                self.logger.warning(f"  💸 {service}: ${spend:.2f} (may have untagged resources)")
+                self.logger.warning(
+                    f"  💸 {service}: ${spend:.2f} (may have untagged resources)"
+                )
 
         # Find services with discovered resources but no billing usage
         unbilled_services = discovered_services - self.billing_validated_services
@@ -891,9 +930,13 @@ class AWSResourceInventory:
 
         for region in self.regions:
             try:
-                self._discover_service_dynamically(service_client_name, service_normalized, region)
+                self._discover_service_dynamically(
+                    service_client_name, service_normalized, region
+                )
             except Exception as e:
-                self.logger.warning(f"Dynamic discovery failed for {service_name} in {region}: {e}")
+                self.logger.warning(
+                    f"Dynamic discovery failed for {service_name} in {region}: {e}"
+                )
 
     def _get_discovered_services(self) -> Set[str]:
         """Get set of services that have been discovered."""
@@ -908,7 +951,9 @@ class AWSResourceInventory:
             service = resource.get("service", "").upper()
             if service in self.billing_spend_by_service:
                 resource["billing_validated"] = True
-                resource["service_monthly_spend"] = self.billing_spend_by_service[service]
+                resource["service_monthly_spend"] = self.billing_spend_by_service[
+                    service
+                ]
             else:
                 resource["billing_validated"] = False
                 resource["service_monthly_spend"] = 0.0
@@ -919,7 +964,9 @@ class AWSResourceInventory:
 
         for region in self.regions:
             try:
-                rgt_client = self.session.client("resourcegroupstaggingapi", region_name=region)
+                rgt_client = self.session.client(
+                    "resourcegroupstaggingapi", region_name=region
+                )
 
                 # Get all resources (paginated)
                 paginator = rgt_client.get_paginator("get_resources")
@@ -940,21 +987,28 @@ class AWSResourceInventory:
 
                                 # Extract resource type and ID
                                 if "/" in resource_part:
-                                    resource_type, resource_id = resource_part.split("/", 1)
+                                    resource_type, resource_id = resource_part.split(
+                                        "/", 1
+                                    )
                                 else:
                                     resource_type = resource_part
                                     resource_id = resource_part
 
                                 # Convert tag list to dictionary
                                 tags = {
-                                    tag["Key"]: tag["Value"] for tag in resource.get("Tags", [])
+                                    tag["Key"]: tag["Value"]
+                                    for tag in resource.get("Tags", [])
                                 }
 
                                 # Create resource entry with normalized service name
-                                normalized_service = self._normalize_service_name(service)
+                                normalized_service = self._normalize_service_name(
+                                    service
+                                )
                                 resource_entry = {
                                     "service": normalized_service,
-                                    "type": self._normalize_resource_type(service, resource_type),
+                                    "type": self._normalize_resource_type(
+                                        service, resource_type
+                                    ),
                                     "region": region_from_arn,
                                     "id": resource_id,
                                     "name": tags.get("Name", ""),
@@ -972,7 +1026,9 @@ class AWSResourceInventory:
                                     continue
 
                                 # Apply tag filters if specified
-                                if self.tag_filters and not self._matches_tag_filters(tags):
+                                if self.tag_filters and not self._matches_tag_filters(
+                                    tags
+                                ):
                                     continue
 
                                 self.resources.append(resource_entry)
@@ -995,9 +1051,13 @@ class AWSResourceInventory:
                         f"No permission for ResourceGroupsTagging API in region {region}"
                     )
                 else:
-                    self.logger.warning(f"ResourceGroupsTagging API failed in region {region}: {e}")
+                    self.logger.warning(
+                        f"ResourceGroupsTagging API failed in region {region}: {e}"
+                    )
             except Exception as e:
-                self.logger.warning(f"ResourceGroupsTagging API failed in region {region}: {e}")
+                self.logger.warning(
+                    f"ResourceGroupsTagging API failed in region {region}: {e}"
+                )
 
     def _normalize_service_name(self, service: str) -> str:
         """Normalize service names for consistent display across discovery methods."""
@@ -1179,7 +1239,8 @@ class AWSResourceInventory:
                 for op in available_operations
                 if op.startswith(("List", "Describe", "Get"))
                 and not any(
-                    skip in op for skip in ["Policy", "Version", "Status", "Health", "Metrics"]
+                    skip in op
+                    for skip in ["Policy", "Version", "Status", "Health", "Metrics"]
                 )
             ]
 
@@ -1229,7 +1290,9 @@ class AWSResourceInventory:
                     continue
 
         except Exception as e:
-            self.logger.warning(f"Failed to create client for {client_name} in {region}: {e}")
+            self.logger.warning(
+                f"Failed to create client for {client_name} in {region}: {e}"
+            )
 
     def _call_operation_and_extract_resources(
         self, client, operation_name: str, service_name: str, region: str
@@ -1336,7 +1399,9 @@ class AWSResourceInventory:
                 return  # Skip if we can't identify the resource
 
             # Determine resource type from the operation name and data
-            resource_type = self._determine_resource_type(operation_name, list_key, resource_data)
+            resource_type = self._determine_resource_type(
+                operation_name, list_key, resource_data
+            )
 
             # Extract tags if present
             tags = self._extract_tags(resource_data)
@@ -1691,7 +1756,9 @@ class AWSResourceInventory:
                 return False
             if isinstance(filter_value, str) and tags[filter_key] != filter_value:
                 return False
-            elif isinstance(filter_value, list) and tags[filter_key] not in filter_value:
+            elif (
+                isinstance(filter_value, list) and tags[filter_key] not in filter_value
+            ):
                 return False
 
         return True
@@ -1715,7 +1782,9 @@ class AWSResourceInventory:
 
     def _discover_service_specific_resources(self):
         """Discover additional resources using service-specific APIs for enhanced details."""
-        self.logger.info("Running service-specific discovery for enhanced resource details...")
+        self.logger.info(
+            "Running service-specific discovery for enhanced resource details..."
+        )
 
         # Get existing services from ResourceGroupsTagging discovery
         discovered_services = set(r.get("service", "").upper() for r in self.resources)
@@ -1930,7 +1999,9 @@ class AWSResourceInventory:
                     )
                     resources_found.append("DB Instance")
             except Exception as e:
-                self.logger.warning(f"Failed to discover RDS instances in {region}: {e}")
+                self.logger.warning(
+                    f"Failed to discover RDS instances in {region}: {e}"
+                )
 
             # DB Clusters
             try:
@@ -2017,7 +2088,9 @@ class AWSResourceInventory:
                         }
                     )
             except Exception as e:
-                self.logger.warning(f"Failed to discover ElastiCache clusters in {region}: {e}")
+                self.logger.warning(
+                    f"Failed to discover ElastiCache clusters in {region}: {e}"
+                )
 
         except ClientError as e:
             self.logger.warning(f"ElastiCache discovery failed in {region}: {e}")
@@ -2233,7 +2306,9 @@ class AWSResourceInventory:
                         }
                     )
             except Exception as e:
-                self.logger.warning(f"Failed to discover SSM parameters in {region}: {e}")
+                self.logger.warning(
+                    f"Failed to discover SSM parameters in {region}: {e}"
+                )
 
         except ClientError as e:
             self.logger.warning(f"SSM discovery failed in {region}: {e}")
@@ -2352,7 +2427,9 @@ class AWSResourceInventory:
                             "type": "Instance",
                             "region": region,
                             "id": instance["InstanceId"],
-                            "name": self._get_tag_value(instance.get("Tags", []), "Name"),
+                            "name": self._get_tag_value(
+                                instance.get("Tags", []), "Name"
+                            ),
                             "state": instance["State"]["Name"],
                             "instance_type": instance["InstanceType"],
                             "vpc_id": instance.get("VpcId"),
@@ -2362,7 +2439,10 @@ class AWSResourceInventory:
                                 if "LaunchTime" in instance
                                 else None
                             ),
-                            "tags": {tag["Key"]: tag["Value"] for tag in instance.get("Tags", [])},
+                            "tags": {
+                                tag["Key"]: tag["Value"]
+                                for tag in instance.get("Tags", [])
+                            },
                             "discovered_at": datetime.utcnow().isoformat(),
                         }
                     )
@@ -2382,7 +2462,9 @@ class AWSResourceInventory:
                         "volume_type": volume["VolumeType"],
                         "availability_zone": volume["AvailabilityZone"],
                         "encrypted": volume["Encrypted"],
-                        "tags": {tag["Key"]: tag["Value"] for tag in volume.get("Tags", [])},
+                        "tags": {
+                            tag["Key"]: tag["Value"] for tag in volume.get("Tags", [])
+                        },
                         "discovered_at": datetime.utcnow().isoformat(),
                     }
                 )
@@ -2399,7 +2481,9 @@ class AWSResourceInventory:
                         "name": sg["GroupName"],
                         "description": sg["Description"],
                         "vpc_id": sg.get("VpcId"),
-                        "tags": {tag["Key"]: tag["Value"] for tag in sg.get("Tags", [])},
+                        "tags": {
+                            tag["Key"]: tag["Value"] for tag in sg.get("Tags", [])
+                        },
                         "discovered_at": datetime.utcnow().isoformat(),
                     }
                 )
@@ -2426,7 +2510,8 @@ class AWSResourceInventory:
                         try:
                             tags_response = s3.get_bucket_tagging(Bucket=bucket["Name"])
                             tags = {
-                                tag["Key"]: tag["Value"] for tag in tags_response.get("TagSet", [])
+                                tag["Key"]: tag["Value"]
+                                for tag in tags_response.get("TagSet", [])
                             }
                         except ClientError:
                             tags = {}
@@ -2464,7 +2549,10 @@ class AWSResourceInventory:
                     tags_response = rds.list_tags_for_resource(
                         ResourceName=instance["DBInstanceArn"]
                     )
-                    tags = {tag["Key"]: tag["Value"] for tag in tags_response.get("TagList", [])}
+                    tags = {
+                        tag["Key"]: tag["Value"]
+                        for tag in tags_response.get("TagList", [])
+                    }
                 except ClientError:
                     tags = {}
 
@@ -2498,7 +2586,9 @@ class AWSResourceInventory:
             for function in functions["Functions"]:
                 # Get tags
                 try:
-                    tags_response = lambda_client.list_tags(Resource=function["FunctionArn"])
+                    tags_response = lambda_client.list_tags(
+                        Resource=function["FunctionArn"]
+                    )
                     tags = tags_response.get("Tags", {})
                 except ClientError:
                     tags = {}
@@ -2536,7 +2626,10 @@ class AWSResourceInventory:
                 # Get tags
                 try:
                     tags_response = iam.list_role_tags(RoleName=role["RoleName"])
-                    tags = {tag["Key"]: tag["Value"] for tag in tags_response.get("Tags", [])}
+                    tags = {
+                        tag["Key"]: tag["Value"]
+                        for tag in tags_response.get("Tags", [])
+                    }
                 except ClientError:
                     tags = {}
 
@@ -2560,7 +2653,10 @@ class AWSResourceInventory:
                 # Get tags
                 try:
                     tags_response = iam.list_user_tags(UserName=user["UserName"])
-                    tags = {tag["Key"]: tag["Value"] for tag in tags_response.get("Tags", [])}
+                    tags = {
+                        tag["Key"]: tag["Value"]
+                        for tag in tags_response.get("Tags", [])
+                    }
                 except ClientError:
                     tags = {}
 
@@ -2599,7 +2695,9 @@ class AWSResourceInventory:
                         "cidr_block": vpc["CidrBlock"],
                         "state": vpc["State"],
                         "is_default": vpc["IsDefault"],
-                        "tags": {tag["Key"]: tag["Value"] for tag in vpc.get("Tags", [])},
+                        "tags": {
+                            tag["Key"]: tag["Value"] for tag in vpc.get("Tags", [])
+                        },
                         "discovered_at": datetime.utcnow().isoformat(),
                     }
                 )
@@ -2618,7 +2716,9 @@ class AWSResourceInventory:
                         "cidr_block": subnet["CidrBlock"],
                         "availability_zone": subnet["AvailabilityZone"],
                         "available_ip_count": subnet["AvailableIpAddressCount"],
-                        "tags": {tag["Key"]: tag["Value"] for tag in subnet.get("Tags", [])},
+                        "tags": {
+                            tag["Key"]: tag["Value"] for tag in subnet.get("Tags", [])
+                        },
                         "discovered_at": datetime.utcnow().isoformat(),
                     }
                 )
@@ -2664,7 +2764,9 @@ class AWSResourceInventory:
                 )
 
         except ClientError as e:
-            self.logger.warning(f"Failed to discover CloudFormation resources in {region}: {e}")
+            self.logger.warning(
+                f"Failed to discover CloudFormation resources in {region}: {e}"
+            )
 
     def _enhance_ecs_resources(self, region: str):
         """Enhance ECS resources with additional details from ECS API."""
@@ -2678,8 +2780,13 @@ class AWSResourceInventory:
                 for cluster in cluster_details["clusters"]:
                     # Get tags
                     try:
-                        tags_response = ecs.list_tags_for_resource(resourceArn=cluster_arn)
-                        tags = {tag["key"]: tag["value"] for tag in tags_response.get("tags", [])}
+                        tags_response = ecs.list_tags_for_resource(
+                            resourceArn=cluster_arn
+                        )
+                        tags = {
+                            tag["key"]: tag["value"]
+                            for tag in tags_response.get("tags", [])
+                        }
                     except ClientError:
                         tags = {}
 
@@ -2723,7 +2830,9 @@ class AWSResourceInventory:
                         "version": cluster["version"],
                         "endpoint": cluster.get("endpoint"),
                         "created_at": (
-                            cluster["createdAt"].isoformat() if "createdAt" in cluster else None
+                            cluster["createdAt"].isoformat()
+                            if "createdAt" in cluster
+                            else None
                         ),
                         "tags": cluster.get("tags", {}),
                         "discovered_at": datetime.utcnow().isoformat(),
@@ -2757,7 +2866,9 @@ class AWSResourceInventory:
                 )
 
         except ClientError as e:
-            self.logger.warning(f"Failed to discover CloudWatch resources in {region}: {e}")
+            self.logger.warning(
+                f"Failed to discover CloudWatch resources in {region}: {e}"
+            )
 
     def _get_tag_value(self, tags: List[Dict], key: str) -> Optional[str]:
         """Get tag value by key."""
@@ -2783,13 +2894,17 @@ class AWSResourceInventory:
                         "name": trail["Name"],
                         "arn": trail.get("TrailARN", ""),
                         "home_region": trail.get("HomeRegion", ""),
-                        "is_multi_region": trail.get("IncludeGlobalServiceEvents", False),
+                        "is_multi_region": trail.get(
+                            "IncludeGlobalServiceEvents", False
+                        ),
                         "discovered_at": datetime.utcnow().isoformat(),
                     }
                 )
 
         except ClientError as e:
-            self.logger.warning(f"Failed to discover CloudTrail resources in {region}: {e}")
+            self.logger.warning(
+                f"Failed to discover CloudTrail resources in {region}: {e}"
+            )
 
     def _discover_kms_resources(self, region: str):
         """Discover KMS resources."""
@@ -2905,7 +3020,9 @@ class AWSResourceInventory:
                 )
 
         except ClientError as e:
-            self.logger.warning(f"Failed to discover CloudWatch Events resources in {region}: {e}")
+            self.logger.warning(
+                f"Failed to discover CloudWatch Events resources in {region}: {e}"
+            )
 
     def _discover_workmail_resources(self, region: str):
         """Discover WorkMail resources."""
@@ -2928,14 +3045,19 @@ class AWSResourceInventory:
                         }
                     )
             except ClientError as e:
-                if e.response.get("Error", {}).get("Code") == "OrganizationNotFoundException":
+                if (
+                    e.response.get("Error", {}).get("Code")
+                    == "OrganizationNotFoundException"
+                ):
                     # No WorkMail organizations in this region
                     pass
                 else:
                     raise
 
         except ClientError as e:
-            self.logger.warning(f"Failed to discover WorkMail resources in {region}: {e}")
+            self.logger.warning(
+                f"Failed to discover WorkMail resources in {region}: {e}"
+            )
 
     def save_to_file(self, filename: str, format_type: str = "json"):
         """Save resources to file."""
@@ -2975,7 +3097,9 @@ class AWSResourceInventory:
             else:
                 raise ValueError("Format must be 'json' or 'yaml'")
 
-            s3.put_object(Bucket=bucket_name, Key=key, Body=content, ContentType=content_type)
+            s3.put_object(
+                Bucket=bucket_name, Key=key, Body=content, ContentType=content_type
+            )
 
             self.logger.info(f"Resources uploaded to s3://{bucket_name}/{key}")
 

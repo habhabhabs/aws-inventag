@@ -186,9 +186,7 @@ class CICDIntegration:
             )
 
             if not bom_results.get("success", False):
-                result.error_message = (
-                    f"BOM generation failed: {bom_results.get('error', 'Unknown error')}"
-                )
+                result.error_message = f"BOM generation failed: {bom_results.get('error', 'Unknown error')}"
                 return result
 
             result.generated_documents = bom_results.get("bom_generation", {}).get(
@@ -198,7 +196,9 @@ class CICDIntegration:
             # Step 2: Check compliance gate
             self.logger.info("Checking compliance gate")
             compliance_results = bom_results.get("compliance_analysis", {})
-            result.compliance_gate_passed = self._check_compliance_gate(compliance_results)
+            result.compliance_gate_passed = self._check_compliance_gate(
+                compliance_results
+            )
 
             # Step 3: Upload documents to S3 if configured
             if upload_to_s3 and self.s3_config and result.generated_documents:
@@ -222,7 +222,9 @@ class CICDIntegration:
                 self.logger.info("Exporting Prometheus metrics")
                 metrics = self._generate_prometheus_metrics(bom_results, result)
                 result.metrics = metrics
-                self._export_prometheus_metrics(metrics, self.prometheus_config.push_gateway_url)
+                self._export_prometheus_metrics(
+                    metrics, self.prometheus_config.push_gateway_url
+                )
 
             # Calculate execution time
             end_time = datetime.now(timezone.utc)
@@ -253,7 +255,9 @@ class CICDIntegration:
                 try:
                     self._send_failure_notification(result)
                 except Exception as notify_error:
-                    self.logger.error(f"Failed to send failure notification: {notify_error}")
+                    self.logger.error(
+                        f"Failed to send failure notification: {notify_error}"
+                    )
 
             return result
 
@@ -282,7 +286,10 @@ class CICDIntegration:
 
             compliance_percentage = (compliant_resources / total_resources) * 100
 
-            if compliance_percentage < self.compliance_gate_config.minimum_compliance_percentage:
+            if (
+                compliance_percentage
+                < self.compliance_gate_config.minimum_compliance_percentage
+            ):
                 self.logger.warning(
                     f"Compliance percentage {compliance_percentage:.1f}% below threshold "
                     f"{self.compliance_gate_config.minimum_compliance_percentage}%"
@@ -291,7 +298,10 @@ class CICDIntegration:
 
             # Check critical violations threshold
             critical_violations = compliance_results.get("critical_violations", 0)
-            if critical_violations > self.compliance_gate_config.critical_violations_threshold:
+            if (
+                critical_violations
+                > self.compliance_gate_config.critical_violations_threshold
+            ):
                 self.logger.warning(
                     f"Critical violations {critical_violations} exceed threshold "
                     f"{self.compliance_gate_config.critical_violations_threshold}"
@@ -300,9 +310,13 @@ class CICDIntegration:
 
             # Check required tags compliance
             if self.compliance_gate_config.required_tags:
-                missing_required_tags = compliance_results.get("missing_required_tags", [])
+                missing_required_tags = compliance_results.get(
+                    "missing_required_tags", []
+                )
                 if missing_required_tags:
-                    self.logger.warning(f"Missing required tags: {missing_required_tags}")
+                    self.logger.warning(
+                        f"Missing required tags: {missing_required_tags}"
+                    )
                     return False
 
             # Check security issues if configured
@@ -319,7 +333,9 @@ class CICDIntegration:
                     self.logger.warning(f"Network issues found: {network_issues}")
                     return False
 
-            self.logger.info(f"Compliance gate passed: {compliance_percentage:.1f}% compliance")
+            self.logger.info(
+                f"Compliance gate passed: {compliance_percentage:.1f}% compliance"
+            )
             return True
 
         except Exception as e:
@@ -446,7 +462,9 @@ class CICDIntegration:
             pipeline_summary.update(
                 {
                     "total_accounts": processing_stats.get("total_accounts", 0),
-                    "successful_accounts": processing_stats.get("successful_accounts", 0),
+                    "successful_accounts": processing_stats.get(
+                        "successful_accounts", 0
+                    ),
                     "failed_accounts": processing_stats.get("failed_accounts", 0),
                     "total_resources": processing_stats.get("total_resources", 0),
                 }
@@ -489,7 +507,9 @@ class CICDIntegration:
                         "account_id": acc_id,
                         "account_name": ctx.get("account_name", ""),
                         "resource_count": ctx.get("resource_count", 0),
-                        "processing_time_seconds": ctx.get("processing_time_seconds", 0),
+                        "processing_time_seconds": ctx.get(
+                            "processing_time_seconds", 0
+                        ),
                         "error_count": ctx.get("error_count", 0),
                         "accessible_regions": ctx.get("accessible_regions", []),
                         "discovered_services": ctx.get("discovered_services", []),
@@ -534,7 +554,9 @@ class CICDIntegration:
 
         try:
             # Prepare notification content
-            notification_content = self._prepare_notification_content(bom_results, cicd_result)
+            notification_content = self._prepare_notification_content(
+                bom_results, cicd_result
+            )
 
             # Send Slack notification
             if self.notification_config.slack_webhook_url:
@@ -583,7 +605,9 @@ class CICDIntegration:
         content = {
             "title": "InvenTag Multi-Account BOM Generation Complete",
             "status": "SUCCESS" if cicd_result.success else "FAILED",
-            "compliance_gate": ("PASSED" if cicd_result.compliance_gate_passed else "FAILED"),
+            "compliance_gate": (
+                "PASSED" if cicd_result.compliance_gate_passed else "FAILED"
+            ),
             "summary": {
                 "total_accounts": processing_stats.get("total_accounts", 0),
                 "successful_accounts": processing_stats.get("successful_accounts", 0),
@@ -595,7 +619,9 @@ class CICDIntegration:
                 "s3_uploads": len(cicd_result.s3_uploads),
             },
             "document_links": (
-                cicd_result.s3_uploads if self.notification_config.include_document_links else {}
+                cicd_result.s3_uploads
+                if self.notification_config.include_document_links
+                else {}
             ),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
@@ -860,7 +886,9 @@ inventag_s3_upload_time_seconds {metrics.s3_upload_time}
             self.logger.info(f"Exported Prometheus metrics to: {metrics_file}")
 
             # Push to Prometheus Push Gateway if configured
-            gateway_url = push_gateway_url or os.environ.get("PROMETHEUS_PUSH_GATEWAY_URL")
+            gateway_url = push_gateway_url or os.environ.get(
+                "PROMETHEUS_PUSH_GATEWAY_URL"
+            )
             if gateway_url:
                 self._push_to_prometheus_gateway(metrics_content, gateway_url)
 
@@ -885,7 +913,9 @@ inventag_s3_upload_time_seconds {metrics.s3_upload_time}
             )
             response.raise_for_status()
 
-            self.logger.info(f"Successfully pushed metrics to Prometheus Push Gateway: {push_url}")
+            self.logger.info(
+                f"Successfully pushed metrics to Prometheus Push Gateway: {push_url}"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to push metrics to Prometheus Push Gateway: {e}")

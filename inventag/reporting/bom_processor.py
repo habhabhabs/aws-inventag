@@ -95,7 +95,9 @@ class BOMDataProcessor:
     - Comprehensive logging and monitoring for data processing pipeline
     """
 
-    def __init__(self, config: BOMProcessingConfig, session: Optional[boto3.Session] = None):
+    def __init__(
+        self, config: BOMProcessingConfig, session: Optional[boto3.Session] = None
+    ):
         """Initialize the BOM data processor."""
         self.config = config
         self.session = session or boto3.Session()
@@ -144,14 +146,18 @@ class BOMDataProcessor:
 
             # Tag mapping engine
             if self.config.enable_tag_mapping:
-                self.tag_mapping_engine = TagMappingEngine(self.config.tag_mappings_config)
+                self.tag_mapping_engine = TagMappingEngine(
+                    self.config.tag_mappings_config
+                )
                 self.logger.info("Initialized TagMappingEngine")
             else:
                 self.tag_mapping_engine = None
 
             # Cost analyzer (optional feature)
             if self.config.enable_cost_analysis:
-                self.cost_analyzer = CostAnalyzer(self.session, self.config.cost_thresholds)
+                self.cost_analyzer = CostAnalyzer(
+                    self.session, self.config.cost_thresholds
+                )
                 self.logger.info("Initialized CostAnalyzer")
             else:
                 self.cost_analyzer = None
@@ -175,17 +181,25 @@ class BOMDataProcessor:
         self.statistics = ProcessingStatistics()
         self.statistics.total_resources = len(inventory_data)
 
-        self.logger.info(f"Starting BOM data processing for {len(inventory_data)} resources")
+        self.logger.info(
+            f"Starting BOM data processing for {len(inventory_data)} resources"
+        )
 
         try:
             # Step 1: Extract and standardize resources (from bom_converter.py patterns)
-            processed_resources = self._extract_and_standardize_resources(inventory_data)
+            processed_resources = self._extract_and_standardize_resources(
+                inventory_data
+            )
 
             # Step 2: Parallel enrichment processing
             if self.config.enable_parallel_processing:
-                enriched_resources = self._parallel_enrichment_processing(processed_resources)
+                enriched_resources = self._parallel_enrichment_processing(
+                    processed_resources
+                )
             else:
-                enriched_resources = self._sequential_enrichment_processing(processed_resources)
+                enriched_resources = self._sequential_enrichment_processing(
+                    processed_resources
+                )
 
             # Step 3: Generate analysis summaries
             network_analysis = self._generate_network_analysis(enriched_resources)
@@ -247,7 +261,9 @@ class BOMDataProcessor:
             self.statistics.errors.append(f"Standardization error: {e}")
             raise
 
-    def _extract_resources_from_data(self, raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _extract_resources_from_data(
+        self, raw_data: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Extract resources from different data structures."""
         resources = []
 
@@ -283,7 +299,9 @@ class BOMDataProcessor:
 
         return resources
 
-    def _reclassify_vpc_resources(self, resources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _reclassify_vpc_resources(
+        self, resources: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Reclassify VPC-related resources from EC2 to VPC service."""
         vpc_resource_types = {
             "VPC",
@@ -303,7 +321,10 @@ class BOMDataProcessor:
 
         reclassified_count = 0
         for resource in resources:
-            if resource.get("service") == "EC2" and resource.get("type") in vpc_resource_types:
+            if (
+                resource.get("service") == "EC2"
+                and resource.get("type") in vpc_resource_types
+            ):
                 resource["service"] = "VPC"
                 reclassified_count += 1
 
@@ -312,7 +333,9 @@ class BOMDataProcessor:
 
         return resources
 
-    def _standardize_service_names(self, resources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _standardize_service_names(
+        self, resources: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Standardize service names to avoid duplicates."""
         standardizations = {
             "CloudFormation": "CLOUDFORMATION",
@@ -335,7 +358,9 @@ class BOMDataProcessor:
 
         return resources
 
-    def _fix_resource_types(self, resources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _fix_resource_types(
+        self, resources: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Fix resource type inconsistencies."""
         # Enhanced implementation for resource type fixes
         type_fixes = {
@@ -357,7 +382,9 @@ class BOMDataProcessor:
 
         return resources
 
-    def _fix_id_and_name_parsing(self, resources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _fix_id_and_name_parsing(
+        self, resources: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Fix ID and name parsing issues by extracting correct values from ARNs."""
         fixed_count = 0
         for resource in resources:
@@ -378,7 +405,9 @@ class BOMDataProcessor:
 
         return resources
 
-    def _fix_account_id_from_arn(self, resources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _fix_account_id_from_arn(
+        self, resources: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Extract and set account_id from ARN for resources missing this field."""
         fixed_count = 0
         source_account_fixed = 0
@@ -416,7 +445,9 @@ class BOMDataProcessor:
 
         return resources
 
-    def _deduplicate_resources(self, resources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _deduplicate_resources(
+        self, resources: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Remove duplicate resources keeping the one with more complete information."""
         seen_resources = {}
         deduplicated = []
@@ -471,7 +502,9 @@ class BOMDataProcessor:
             }
 
             # Collect results
-            for future in as_completed(future_to_resource, timeout=self.config.processing_timeout):
+            for future in as_completed(
+                future_to_resource, timeout=self.config.processing_timeout
+            ):
                 try:
                     enriched_resource = future.result()
                     enriched_resources.append(enriched_resource)
@@ -531,15 +564,21 @@ class BOMDataProcessor:
         try:
             # Network analysis enrichment
             if self.network_analyzer:
-                enriched_resource = self._enrich_with_network_analysis(enriched_resource)
+                enriched_resource = self._enrich_with_network_analysis(
+                    enriched_resource
+                )
 
             # Security analysis enrichment
             if self.security_analyzer:
-                enriched_resource = self._enrich_with_security_analysis(enriched_resource)
+                enriched_resource = self._enrich_with_security_analysis(
+                    enriched_resource
+                )
 
             # Service attribute enrichment
             if self.service_enricher:
-                enriched_resource = self._enrich_with_service_attributes(enriched_resource)
+                enriched_resource = self._enrich_with_service_attributes(
+                    enriched_resource
+                )
 
             # Service descriptions
             if self.service_desc_manager:
@@ -565,20 +604,28 @@ class BOMDataProcessor:
         """Add network analysis to a resource."""
         try:
             if self.network_analyzer:
-                enriched = self.network_analyzer.enrich_resource_with_network_info(resource)
+                enriched = self.network_analyzer.enrich_resource_with_network_info(
+                    resource
+                )
                 if enriched != resource:
                     self.statistics.network_enriched += 1
                 return enriched
         except Exception as e:
-            self.logger.debug(f"Network enrichment failed for {resource.get('id', 'unknown')}: {e}")
+            self.logger.debug(
+                f"Network enrichment failed for {resource.get('id', 'unknown')}: {e}"
+            )
 
         return resource
 
-    def _enrich_with_security_analysis(self, resource: Dict[str, Any]) -> Dict[str, Any]:
+    def _enrich_with_security_analysis(
+        self, resource: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Add security analysis to a resource."""
         try:
             if self.security_analyzer:
-                enriched = self.security_analyzer.enrich_resource_with_security_info(resource)
+                enriched = self.security_analyzer.enrich_resource_with_security_info(
+                    resource
+                )
                 if enriched != resource:
                     self.statistics.security_enriched += 1
                 return enriched
@@ -589,7 +636,9 @@ class BOMDataProcessor:
 
         return resource
 
-    def _enrich_with_service_attributes(self, resource: Dict[str, Any]) -> Dict[str, Any]:
+    def _enrich_with_service_attributes(
+        self, resource: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Enrich resource with service-specific attributes."""
         try:
             if self.service_enricher:
@@ -598,7 +647,9 @@ class BOMDataProcessor:
                     self.statistics.service_enriched += 1
                 return enriched
         except Exception as e:
-            self.logger.debug(f"Service enrichment failed for {resource.get('id', 'unknown')}: {e}")
+            self.logger.debug(
+                f"Service enrichment failed for {resource.get('id', 'unknown')}: {e}"
+            )
 
         return resource
 
@@ -606,7 +657,9 @@ class BOMDataProcessor:
         """Add custom service descriptions to a resource."""
         try:
             if self.service_desc_manager:
-                enriched = self.service_desc_manager.apply_description_to_resource(resource)
+                enriched = self.service_desc_manager.apply_description_to_resource(
+                    resource
+                )
                 if enriched != resource:
                     self.statistics.description_enriched += 1
                 return enriched
@@ -626,11 +679,15 @@ class BOMDataProcessor:
                     self.statistics.tag_mapped += 1
                 return enriched
         except Exception as e:
-            self.logger.debug(f"Tag mapping failed for {resource.get('id', 'unknown')}: {e}")
+            self.logger.debug(
+                f"Tag mapping failed for {resource.get('id', 'unknown')}: {e}"
+            )
 
         return resource
 
-    def _generate_network_analysis(self, resources: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _generate_network_analysis(
+        self, resources: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Generate comprehensive network analysis summary."""
         if not self.network_analyzer:
             return {}
@@ -644,7 +701,9 @@ class BOMDataProcessor:
                 if r.get("service") == "VPC" and r.get("type") in ["VPC", "Subnet"]
             ]
             if vpc_resources:
-                vpc_analysis = self.network_analyzer.analyze_vpc_resources(vpc_resources)
+                vpc_analysis = self.network_analyzer.analyze_vpc_resources(
+                    vpc_resources
+                )
                 return self.network_analyzer.generate_network_summary(vpc_analysis)
             return {}
         except Exception as e:
@@ -652,7 +711,9 @@ class BOMDataProcessor:
             self.statistics.errors.append(f"Network analysis failed: {e}")
             return {}
 
-    def _generate_security_analysis(self, resources: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _generate_security_analysis(
+        self, resources: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Generate comprehensive security analysis summary."""
         if not self.security_analyzer:
             return {}
@@ -666,7 +727,9 @@ class BOMDataProcessor:
                 if r.get("service") == "VPC" and r.get("type") == "SecurityGroup"
             ]
             if sg_resources:
-                sg_analysis = self.security_analyzer.analyze_security_groups(sg_resources)
+                sg_analysis = self.security_analyzer.analyze_security_groups(
+                    sg_resources
+                )
                 return self.security_analyzer.generate_security_summary(sg_analysis)
             return {}
         except Exception as e:
@@ -728,7 +791,9 @@ class BOMDataProcessor:
             error_summary=error_summary,
         )
 
-    def _generate_compliance_summary(self, resources: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _generate_compliance_summary(
+        self, resources: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Generate compliance summary from processed resources."""
         total_resources = len(resources)
         compliant_resources = 0
@@ -750,7 +815,9 @@ class BOMDataProcessor:
             "total_resources": total_resources,
             "compliant_resources": compliant_resources,
             "non_compliant_resources": non_compliant_resources,
-            "unknown_compliance": total_resources - compliant_resources - non_compliant_resources,
+            "unknown_compliance": total_resources
+            - compliant_resources
+            - non_compliant_resources,
             "compliance_percentage": compliance_percentage,
         }
 
@@ -781,14 +848,20 @@ class BOMDataProcessor:
             if self.cost_analyzer:
                 enriched = self.cost_analyzer.enrich_resource_with_cost_info(resource)
                 if enriched != resource:
-                    self.statistics.cost_enriched = getattr(self.statistics, "cost_enriched", 0) + 1
+                    self.statistics.cost_enriched = (
+                        getattr(self.statistics, "cost_enriched", 0) + 1
+                    )
                 return enriched
         except Exception as e:
-            self.logger.debug(f"Cost enrichment failed for {resource.get('id', 'unknown')}: {e}")
+            self.logger.debug(
+                f"Cost enrichment failed for {resource.get('id', 'unknown')}: {e}"
+            )
 
         return resource
 
-    def _generate_cost_analysis(self, resources: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _generate_cost_analysis(
+        self, resources: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Generate comprehensive cost analysis summary."""
         if not self.cost_analyzer:
             return {}
@@ -800,17 +873,23 @@ class BOMDataProcessor:
             cost_estimates = self.cost_analyzer.estimate_resource_costs(resources)
 
             # Identify expensive resources
-            expensive_resources = self.cost_analyzer.identify_expensive_resources(cost_estimates)
+            expensive_resources = self.cost_analyzer.identify_expensive_resources(
+                cost_estimates
+            )
 
             # Detect forgotten resources
-            forgotten_resources = self.cost_analyzer.detect_forgotten_resources(resources)
+            forgotten_resources = self.cost_analyzer.detect_forgotten_resources(
+                resources
+            )
 
             # Analyze cost trends
             cost_trends = self.cost_analyzer.analyze_cost_trends(resources)
 
             # Generate optimization recommendations
-            recommendations = self.cost_analyzer.generate_cost_optimization_recommendations(
-                cost_estimates, forgotten_resources
+            recommendations = (
+                self.cost_analyzer.generate_cost_optimization_recommendations(
+                    cost_estimates, forgotten_resources
+                )
             )
 
             # Generate cost analysis summary
@@ -826,7 +905,9 @@ class BOMDataProcessor:
                         "service": est.service,
                         "region": est.region,
                         "estimated_monthly_cost": float(est.estimated_monthly_cost),
-                        "cost_breakdown": {k: float(v) for k, v in est.cost_breakdown.items()},
+                        "cost_breakdown": {
+                            k: float(v) for k, v in est.cost_breakdown.items()
+                        },
                         "pricing_model": est.pricing_model,
                         "confidence_level": est.confidence_level,
                     }
@@ -870,7 +951,9 @@ class BOMDataProcessor:
                         "service": rec.service,
                         "recommendation_type": rec.recommendation_type,
                         "current_monthly_cost": float(rec.current_monthly_cost),
-                        "potential_monthly_savings": float(rec.potential_monthly_savings),
+                        "potential_monthly_savings": float(
+                            rec.potential_monthly_savings
+                        ),
                         "confidence_level": rec.confidence_level,
                         "implementation_effort": rec.implementation_effort,
                         "description": rec.description,
@@ -884,12 +967,16 @@ class BOMDataProcessor:
                     ),
                     "expensive_resources_count": cost_summary.expensive_resources_count,
                     "forgotten_resources_count": cost_summary.forgotten_resources_count,
-                    "total_potential_savings": float(cost_summary.total_potential_savings),
+                    "total_potential_savings": float(
+                        cost_summary.total_potential_savings
+                    ),
                     "high_risk_resources": cost_summary.high_risk_resources,
                     "cost_by_service": {
                         k: float(v) for k, v in cost_summary.cost_by_service.items()
                     },
-                    "cost_by_region": {k: float(v) for k, v in cost_summary.cost_by_region.items()},
+                    "cost_by_region": {
+                        k: float(v) for k, v in cost_summary.cost_by_region.items()
+                    },
                     "optimization_opportunities": cost_summary.optimization_opportunities,
                     "analysis_timestamp": cost_summary.analysis_timestamp.isoformat(),
                 },

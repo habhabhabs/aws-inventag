@@ -79,7 +79,9 @@ def _validate_specific_configs(args, logger):
             if validate_aws_credentials_early():
                 logger.info("🎉 AWS credentials are also valid!")
             else:
-                logger.error("❌ Configuration files are valid but AWS credentials have issues")
+                logger.error(
+                    "❌ Configuration files are valid but AWS credentials have issues"
+                )
                 sys.exit(1)
     else:
         logger.error("❌ Some configuration files have validation errors")
@@ -215,7 +217,9 @@ Examples:
     )
 
     # Account-specific configuration overrides
-    override_group = parser.add_argument_group("Account-Specific Configuration Overrides")
+    override_group = parser.add_argument_group(
+        "Account-Specific Configuration Overrides"
+    )
     override_group.add_argument(
         "--account-regions",
         type=str,
@@ -505,14 +509,18 @@ def create_accounts_from_prompt() -> List[AccountCredentials]:
                     account.external_id = external_id
 
         # Optional settings
-        regions_input = input("Regions (comma-separated, empty for all regions): ").strip()
+        regions_input = input(
+            "Regions (comma-separated, empty for all regions): "
+        ).strip()
         if regions_input:
             account.regions = [r.strip() for r in regions_input.split(",")]
         else:
             # Auto-discover all regions
             account.regions = get_all_aws_regions()
 
-        services_input = input("Services to include (comma-separated, empty for all): ").strip()
+        services_input = input(
+            "Services to include (comma-separated, empty for all): "
+        ).strip()
         if services_input:
             account.services = [s.strip() for s in services_input.split(",")]
 
@@ -536,7 +544,9 @@ def create_multi_account_config(args) -> MultiAccountConfig:
         for account_data in accounts_config["accounts"]:
             account = AccountCredentials(
                 account_id=account_data["account_id"],
-                account_name=account_data.get("account_name", account_data["account_id"]),
+                account_name=account_data.get(
+                    "account_name", account_data["account_id"]
+                ),
                 access_key_id=account_data.get("access_key_id"),
                 secret_access_key=account_data.get("secret_access_key"),
                 session_token=account_data.get("session_token"),
@@ -551,8 +561,12 @@ def create_multi_account_config(args) -> MultiAccountConfig:
 
         # Apply global settings from file
         settings = accounts_config.get("settings", {})
-        max_concurrent = settings.get("max_concurrent_accounts", args.max_concurrent_accounts)
-        timeout = settings.get("account_processing_timeout", args.account_processing_timeout)
+        max_concurrent = settings.get(
+            "max_concurrent_accounts", args.max_concurrent_accounts
+        )
+        timeout = settings.get(
+            "account_processing_timeout", args.account_processing_timeout
+        )
         output_dir = settings.get("output_directory", args.output_directory)
 
     elif args.accounts_prompt:
@@ -612,7 +626,9 @@ def create_multi_account_config(args) -> MultiAccountConfig:
             actual_account_id = "default"
             account_name = "Default AWS Account"
 
-        account = AccountCredentials(account_id=actual_account_id, account_name=account_name)
+        account = AccountCredentials(
+            account_id=actual_account_id, account_name=account_name
+        )
         accounts = [account]
         max_concurrent = args.max_concurrent_accounts
         timeout = args.account_processing_timeout
@@ -669,8 +685,10 @@ def create_multi_account_config(args) -> MultiAccountConfig:
         account_processing_timeout=timeout,
         consolidate_accounts=True,
         generate_per_account_reports=args.per_account_reports,
-        enable_state_management=args.enable_state_management and not args.disable_state_management,
-        enable_delta_detection=args.enable_delta_detection and not args.disable_delta_detection,
+        enable_state_management=args.enable_state_management
+        and not args.disable_state_management,
+        enable_delta_detection=args.enable_delta_detection
+        and not args.disable_delta_detection,
         enable_changelog_generation=args.generate_changelog,
         bom_processing_config=bom_config,
         output_directory=output_dir,
@@ -727,7 +745,9 @@ def validate_aws_credentials_early() -> bool:
             logger.error("   Issue: Credentials don't have sufficient permissions")
             logger.error("   Solutions:")
             logger.error("   1. Ensure your IAM user/role has read permissions")
-            logger.error("   2. Check the IAM policy in config/defaults/iam-policy-read-only.json")
+            logger.error(
+                "   2. Check the IAM policy in config/defaults/iam-policy-read-only.json"
+            )
 
         elif error_code == "TokenRefreshRequired":
             logger.error("   Issue: AWS SSO token needs refresh")
@@ -791,7 +811,9 @@ def validate_credentials_only(config: MultiAccountConfig) -> bool:
                         f"✓ Credentials valid - Account: {result.account_id}, User: {result.user_arn}"
                     )
                 else:
-                    logger.error(f"✗ Credential validation failed: {result.error_message}")
+                    logger.error(
+                        f"✗ Credential validation failed: {result.error_message}"
+                    )
                     all_valid = False
 
             except Exception as e:
@@ -845,8 +867,12 @@ def main():
         ):
             if not validate_aws_credentials_early():
                 logger.error("❌ Cannot proceed with invalid AWS credentials")
-                logger.error("💡 Use --accounts-prompt for interactive credential setup")
-                logger.error("💡 Or use --skip-credential-validation to bypass this check")
+                logger.error(
+                    "💡 Use --accounts-prompt for interactive credential setup"
+                )
+                logger.error(
+                    "💡 Or use --skip-credential-validation to bypass this check"
+                )
                 sys.exit(1)
 
         # Create multi-account configuration
@@ -932,8 +958,12 @@ def main():
             processing_stats = results.get("processing_statistics", {})
             if processing_stats:
                 logger.info(f"Processing summary:")
-                logger.info(f"  - Total accounts: {processing_stats.get('total_accounts', 0)}")
-                logger.info(f"  - Total resources: {processing_stats.get('total_resources', 0)}")
+                logger.info(
+                    f"  - Total accounts: {processing_stats.get('total_accounts', 0)}"
+                )
+                logger.info(
+                    f"  - Total resources: {processing_stats.get('total_resources', 0)}"
+                )
                 logger.info(
                     f"  - Processing time: {processing_stats.get('processing_time_seconds', 0):.2f}s"
                 )
@@ -949,7 +979,9 @@ def main():
                 logger.error("Account-specific errors:")
                 for account_id, ctx in account_contexts.items():
                     if ctx.get("error_count", 0) > 0:
-                        logger.error(f"  - {account_id}: {ctx.get('error_count', 0)} errors")
+                        logger.error(
+                            f"  - {account_id}: {ctx.get('error_count', 0)} errors"
+                        )
 
             sys.exit(1)
 

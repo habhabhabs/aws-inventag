@@ -155,7 +155,10 @@ class BOMConverter:
 
             # If no resource arrays found, maybe the whole dict is a single resource
             # Check if it has typical resource fields
-            if any(field in raw_data for field in ["service", "type", "id", "arn", "region"]):
+            if any(
+                field in raw_data
+                for field in ["service", "type", "id", "arn", "region"]
+            ):
                 return [raw_data]
 
         # Fallback: return empty list
@@ -302,7 +305,9 @@ class BOMConverter:
             subnets = ec2.describe_subnets()
             for subnet in subnets["Subnets"]:
                 subnet_id = subnet["SubnetId"]
-                subnet_name = self._get_tag_value(subnet.get("Tags", []), "Name") or subnet_id
+                subnet_name = (
+                    self._get_tag_value(subnet.get("Tags", []), "Name") or subnet_id
+                )
                 self.vpc_cache[subnet_id] = {
                     "name": subnet_name,
                     "vpc_id": subnet["VpcId"],
@@ -383,7 +388,9 @@ class BOMConverter:
     def export_to_excel(self, filename: str):
         """Export data to Excel format with service-specific sheets."""
         if not OPENPYXL_AVAILABLE:
-            print("Error: openpyxl library not available. Please install it to export to Excel.")
+            print(
+                "Error: openpyxl library not available. Please install it to export to Excel."
+            )
             return
 
         if not self.data:
@@ -434,7 +441,9 @@ class BOMConverter:
 
         # Apply header formatting
         header_font = Font(bold=True)
-        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        header_fill = PatternFill(
+            start_color="366092", end_color="366092", fill_type="solid"
+        )
 
         for col in ["A1", "B1", "C1"]:
             ws[col].font = header_font
@@ -496,14 +505,18 @@ class BOMConverter:
         for col, header in enumerate(sorted_headers, 1):
             cell = ws.cell(row=1, column=col, value=header)
             cell.font = Font(bold=True)
-            cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+            cell.fill = PatternFill(
+                start_color="366092", end_color="366092", fill_type="solid"
+            )
 
         # Write data
         for row, resource in enumerate(resources, 2):
             flattened = self._flatten_dict(resource)
             for col, header in enumerate(sorted_headers, 1):
                 value = flattened.get(header, "")
-                ws.cell(row=row, column=col, value=str(value) if value is not None else "")
+                ws.cell(
+                    row=row, column=col, value=str(value) if value is not None else ""
+                )
 
         # Auto-adjust column widths
         for column in ws.columns:
@@ -545,7 +558,9 @@ class BOMConverter:
                     if vpc_id and vpc_id in self.network_analysis:
                         vpc_analysis = self.network_analysis[vpc_id]
                         resource["vpc_cidr_block"] = vpc_analysis.cidr_block
-                        resource["vpc_utilization"] = f"{vpc_analysis.utilization_percentage:.1f}%"
+                        resource["vpc_utilization"] = (
+                            f"{vpc_analysis.utilization_percentage:.1f}%"
+                        )
                         resource["vpc_available_ips"] = vpc_analysis.available_ips
 
                     if subnet_id:
@@ -557,11 +572,15 @@ class BOMConverter:
                                     resource["subnet_utilization"] = (
                                         f"{subnet.utilization_percentage:.1f}%"
                                     )
-                                    resource["subnet_available_ips"] = subnet.available_ips
+                                    resource["subnet_available_ips"] = (
+                                        subnet.available_ips
+                                    )
                                     resource["subnet_az"] = subnet.availability_zone
                                     break
 
-                print(f"Network analysis completed for {len(vpc_resources)} VPC resources")
+                print(
+                    f"Network analysis completed for {len(vpc_resources)} VPC resources"
+                )
 
         except ImportError:
             print("Warning: NetworkAnalyzer not available, skipping network analysis")
@@ -589,13 +608,20 @@ class BOMConverter:
 
                 # Enrich resources with security analysis data
                 for resource in self.data:
-                    if resource.get("service") == "VPC" and resource.get("type") == "SecurityGroup":
+                    if (
+                        resource.get("service") == "VPC"
+                        and resource.get("type") == "SecurityGroup"
+                    ):
                         sg_id = resource.get("id")
                         if sg_id and sg_id in self.security_analysis:
                             sg_analysis = self.security_analysis[sg_id]
                             resource["security_risk_level"] = sg_analysis.risk_level
-                            resource["inbound_rules_count"] = len(sg_analysis.inbound_rules)
-                            resource["outbound_rules_count"] = len(sg_analysis.outbound_rules)
+                            resource["inbound_rules_count"] = len(
+                                sg_analysis.inbound_rules
+                            )
+                            resource["outbound_rules_count"] = len(
+                                sg_analysis.outbound_rules
+                            )
                             resource["associated_resources_count"] = len(
                                 sg_analysis.associated_resources
                             )
@@ -604,15 +630,21 @@ class BOMConverter:
                             permissive_rules = []
                             for rule in sg_analysis.inbound_rules:
                                 if "0.0.0.0/0" in rule.source_destination:
-                                    permissive_rules.append(f"{rule.protocol}:{rule.port_range}")
+                                    permissive_rules.append(
+                                        f"{rule.protocol}:{rule.port_range}"
+                                    )
 
                             if permissive_rules:
-                                resource["permissive_rules"] = ", ".join(permissive_rules)
+                                resource["permissive_rules"] = ", ".join(
+                                    permissive_rules
+                                )
                                 resource["has_permissive_rules"] = "Yes"
                             else:
                                 resource["has_permissive_rules"] = "No"
 
-                print(f"Security analysis completed for {len(sg_resources)} security groups")
+                print(
+                    f"Security analysis completed for {len(sg_resources)} security groups"
+                )
 
         except ImportError:
             print("Warning: SecurityAnalyzer not available, skipping security analysis")
@@ -632,7 +664,9 @@ class BOMConverter:
             enriched_count = 0
             for resource in self.data:
                 try:
-                    enriched_resources = enricher.enrich_resources_with_attributes([resource])
+                    enriched_resources = enricher.enrich_resources_with_attributes(
+                        [resource]
+                    )
                     if enriched_resources:
                         enriched_resource = enriched_resources[0]
                     if enriched_resource != resource:
@@ -642,12 +676,18 @@ class BOMConverter:
                             if isinstance(value, (str, int, float, bool)):
                                 resource[f"service_{key}"] = value
                             elif isinstance(value, list):
-                                resource[f"service_{key}"] = ", ".join(str(v) for v in value)
+                                resource[f"service_{key}"] = ", ".join(
+                                    str(v) for v in value
+                                )
                             elif isinstance(value, dict):
                                 # Flatten nested attributes
                                 for nested_key, nested_value in value.items():
-                                    if isinstance(nested_value, (str, int, float, bool)):
-                                        resource[f"service_{key}_{nested_key}"] = nested_value
+                                    if isinstance(
+                                        nested_value, (str, int, float, bool)
+                                    ):
+                                        resource[f"service_{key}_{nested_key}"] = (
+                                            nested_value
+                                        )
 
                         enriched_count += 1
 
@@ -658,10 +698,14 @@ class BOMConverter:
                     continue
 
             if enriched_count > 0:
-                print(f"Service attribute enrichment completed for {enriched_count} resources")
+                print(
+                    f"Service attribute enrichment completed for {enriched_count} resources"
+                )
 
         except ImportError:
-            print("Warning: ServiceAttributeEnricher not available, skipping service enrichment")
+            print(
+                "Warning: ServiceAttributeEnricher not available, skipping service enrichment"
+            )
         except Exception as e:
             print(f"Warning: Service attribute enrichment failed: {e}")
 
@@ -701,7 +745,9 @@ class BOMConverter:
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=1, column=col, value=header)
             cell.font = Font(bold=True)
-            cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+            cell.fill = PatternFill(
+                start_color="366092", end_color="366092", fill_type="solid"
+            )
 
         # Write VPC analysis data
         row = 2
@@ -739,7 +785,9 @@ class BOMConverter:
             for col, header in enumerate(subnet_headers, 1):
                 cell = ws.cell(row=row, column=col, value=header)
                 cell.font = Font(bold=True)
-                cell.fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+                cell.fill = PatternFill(
+                    start_color="4F81BD", end_color="4F81BD", fill_type="solid"
+                )
             row += 1
 
             # Write subnet data
@@ -752,7 +800,9 @@ class BOMConverter:
                     ws.cell(row=row, column=5, value=subnet.availability_zone)
                     ws.cell(row=row, column=6, value=subnet.total_ips)
                     ws.cell(row=row, column=7, value=subnet.available_ips)
-                    ws.cell(row=row, column=8, value=f"{subnet.utilization_percentage:.1f}%")
+                    ws.cell(
+                        row=row, column=8, value=f"{subnet.utilization_percentage:.1f}%"
+                    )
                     ws.cell(row=row, column=9, value=len(subnet.associated_resources))
                     row += 1
 
@@ -790,7 +840,9 @@ class BOMConverter:
         for col, header in enumerate(headers, 1):
             cell = ws.cell(row=1, column=col, value=header)
             cell.font = Font(bold=True)
-            cell.fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+            cell.fill = PatternFill(
+                start_color="366092", end_color="366092", fill_type="solid"
+            )
 
         # Write security group analysis data
         row = 2
@@ -834,7 +886,9 @@ class BOMConverter:
         if self.security_analysis:
             # Add separator row
             row += 1
-            ws.cell(row=row, column=1, value="DETAILED SECURITY RULES").font = Font(bold=True)
+            ws.cell(row=row, column=1, value="DETAILED SECURITY RULES").font = Font(
+                bold=True
+            )
             row += 1
 
             # Rule headers
@@ -851,7 +905,9 @@ class BOMConverter:
             for col, header in enumerate(rule_headers, 1):
                 cell = ws.cell(row=row, column=col, value=header)
                 cell.font = Font(bold=True)
-                cell.fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+                cell.fill = PatternFill(
+                    start_color="4F81BD", end_color="4F81BD", fill_type="solid"
+                )
             row += 1
 
             # Write detailed rules
@@ -1109,7 +1165,9 @@ class BOMConverter:
     def export_to_word(self, filename: str):
         """Export data to Word format with professional formatting."""
         if not PYTHON_DOCX_AVAILABLE:
-            print("Error: python-docx library not available. Please install it to export to Word.")
+            print(
+                "Error: python-docx library not available. Please install it to export to Word."
+            )
             print("Run: pip install python-docx")
             return
 
@@ -1133,14 +1191,18 @@ class BOMConverter:
         title.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
         # Add generation timestamp
-        doc.add_paragraph(f"Generated on: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+        doc.add_paragraph(
+            f"Generated on: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC"
+        )
 
         # Add executive summary
         doc.add_heading("Executive Summary", level=1)
         total_resources = sum(len(resources) for resources in services.values())
         doc.add_paragraph(f"Total Resources: {total_resources}")
         doc.add_paragraph(f"Services Covered: {len(services)}")
-        doc.add_paragraph(f"AWS Regions: {len(set(r.get('region', 'Unknown') for r in self.data))}")
+        doc.add_paragraph(
+            f"AWS Regions: {len(set(r.get('region', 'Unknown') for r in self.data))}"
+        )
 
         # Add service summary table
         doc.add_heading("Service Summary", level=2)
@@ -1229,7 +1291,9 @@ class BOMConverter:
                         if isinstance(value, dict):
                             if header == "tags" and value:
                                 # Format tags nicely
-                                tag_str = ", ".join([f"{k}={v}" for k, v in value.items()])
+                                tag_str = ", ".join(
+                                    [f"{k}={v}" for k, v in value.items()]
+                                )
                                 row_cells[i].text = tag_str[:100] + (
                                     "..." if len(tag_str) > 100 else ""
                                 )
@@ -1238,9 +1302,9 @@ class BOMConverter:
                                     "..." if len(str(value)) > 50 else ""
                                 )
                         elif isinstance(value, list):
-                            row_cells[i].text = ", ".join(str(v) for v in value)[:100] + (
-                                "..." if len(str(value)) > 100 else ""
-                            )
+                            row_cells[i].text = ", ".join(str(v) for v in value)[
+                                :100
+                            ] + ("..." if len(str(value)) > 100 else "")
                         else:
                             row_cells[i].text = str(value)
 
@@ -1253,8 +1317,12 @@ class BOMConverter:
 
         # Add footer information
         doc.add_heading("Report Information", level=1)
-        doc.add_paragraph("This report was generated using InvenTag - AWS Resource Inventory Tool")
-        doc.add_paragraph("For more information, visit: https://github.com/habhabhabs/inventag-aws")
+        doc.add_paragraph(
+            "This report was generated using InvenTag - AWS Resource Inventory Tool"
+        )
+        doc.add_paragraph(
+            "For more information, visit: https://github.com/habhabhabs/inventag-aws"
+        )
 
         # Save the document
         doc.save(filename)

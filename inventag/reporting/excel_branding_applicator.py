@@ -109,10 +109,14 @@ class ExcelBrandingApplicator(BrandingApplicator):
             ),
             "non_compliant_fill": PatternFill(
                 start_color=self._hex_to_openpyxl_color(
-                    ColorUtilities.lighten_color(self.branding.colors.non_compliant, 0.8)
+                    ColorUtilities.lighten_color(
+                        self.branding.colors.non_compliant, 0.8
+                    )
                 ),
                 end_color=self._hex_to_openpyxl_color(
-                    ColorUtilities.lighten_color(self.branding.colors.non_compliant, 0.8)
+                    ColorUtilities.lighten_color(
+                        self.branding.colors.non_compliant, 0.8
+                    )
                 ),
                 fill_type="solid",
             ),
@@ -178,7 +182,9 @@ class ExcelBrandingApplicator(BrandingApplicator):
             self.logger.error(f"Failed to apply branding to Excel workbook: {e}")
             raise
 
-    def apply_logo(self, workbook: openpyxl.Workbook, position: Any) -> openpyxl.Workbook:
+    def apply_logo(
+        self, workbook: openpyxl.Workbook, position: Any
+    ) -> openpyxl.Workbook:
         """Apply logo to workbook (Excel has limited logo support)."""
         # Excel doesn't have the same logo placement options as Word
         # We can add logos as images to specific cells
@@ -253,7 +259,9 @@ class ExcelBrandingApplicator(BrandingApplicator):
         """Apply workbook-level properties."""
         try:
             # Set workbook properties
-            workbook.properties.title = f"{self.branding.company_name} - Cloud BOM Report"
+            workbook.properties.title = (
+                f"{self.branding.company_name} - Cloud BOM Report"
+            )
             workbook.properties.creator = self.branding.company_name
             workbook.properties.description = "Cloud Bill of Materials Report"
 
@@ -308,7 +316,9 @@ class ExcelBrandingApplicator(BrandingApplicator):
         """Apply professional table styling to worksheet."""
         try:
             # Apply borders to data range
-            data_range = f"A1:{get_column_letter(worksheet.max_column)}{worksheet.max_row}"
+            data_range = (
+                f"A1:{get_column_letter(worksheet.max_column)}{worksheet.max_row}"
+            )
 
             for row in worksheet[data_range]:
                 for cell in row:
@@ -329,21 +339,27 @@ class ExcelBrandingApplicator(BrandingApplicator):
         except Exception as e:
             self.logger.error(f"Failed to apply table styling: {e}")
 
-    def _apply_worksheet_conditional_formatting(self, worksheet, theme: ConditionalFormattingTheme):
+    def _apply_worksheet_conditional_formatting(
+        self, worksheet, theme: ConditionalFormattingTheme
+    ):
         """Apply conditional formatting to worksheet."""
         try:
             # Find data range
             if worksheet.max_row <= 1:
                 return
 
-            data_range = f"A2:{get_column_letter(worksheet.max_column)}{worksheet.max_row}"
+            data_range = (
+                f"A2:{get_column_letter(worksheet.max_column)}{worksheet.max_row}"
+            )
 
             # Apply compliance status formatting
             compliant_rule = CellIsRule(
                 operator="containsText",
                 formula=["compliant"],
                 fill=self.styles["compliant_fill"],
-                font=Font(color=self._hex_to_openpyxl_color(self.branding.colors.compliant)),
+                font=Font(
+                    color=self._hex_to_openpyxl_color(self.branding.colors.compliant)
+                ),
             )
             worksheet.conditional_formatting.add(data_range, compliant_rule)
 
@@ -351,7 +367,11 @@ class ExcelBrandingApplicator(BrandingApplicator):
                 operator="containsText",
                 formula=["non-compliant"],
                 fill=self.styles["non_compliant_fill"],
-                font=Font(color=self._hex_to_openpyxl_color(self.branding.colors.non_compliant)),
+                font=Font(
+                    color=self._hex_to_openpyxl_color(
+                        self.branding.colors.non_compliant
+                    )
+                ),
             )
             worksheet.conditional_formatting.add(data_range, non_compliant_rule)
 
@@ -426,7 +446,9 @@ class ExcelBrandingApplicator(BrandingApplicator):
         """Convert hex color to openpyxl color format."""
         return hex_color.lstrip("#").upper()
 
-    def create_branded_chart(self, worksheet, chart_type: str, data_range: str, title: str) -> Any:
+    def create_branded_chart(
+        self, worksheet, chart_type: str, data_range: str, title: str
+    ) -> Any:
         """Create a chart with branding applied."""
         try:
             # Create chart based on type
@@ -499,7 +521,9 @@ class ExcelBrandingApplicator(BrandingApplicator):
             # Add data
             for row_idx, row_data in enumerate(data):
                 for col_idx, cell_data in enumerate(row_data):
-                    cell = worksheet.cell(row=start_row + row_idx + 1, column=start_col + col_idx)
+                    cell = worksheet.cell(
+                        row=start_row + row_idx + 1, column=start_col + col_idx
+                    )
                     cell.value = cell_data
                     cell.font = self.styles["table_font"]
                     cell.border = self.styles["thin_border"]

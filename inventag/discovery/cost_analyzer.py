@@ -101,7 +101,9 @@ class CostAnalysisSummary:
     cost_by_service: Dict[str, Decimal] = field(default_factory=dict)
     cost_by_region: Dict[str, Decimal] = field(default_factory=dict)
     optimization_opportunities: int = 0
-    analysis_timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    analysis_timestamp: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
 
 class CostAnalyzer:
@@ -134,7 +136,9 @@ class CostAnalyzer:
         self._cache_lock = threading.Lock()
 
         # Historical cost data storage
-        self._historical_costs: Dict[str, List[Tuple[datetime, Decimal]]] = defaultdict(list)
+        self._historical_costs: Dict[str, List[Tuple[datetime, Decimal]]] = defaultdict(
+            list
+        )
 
     def _initialize_clients(self):
         """Initialize AWS service clients."""
@@ -192,7 +196,9 @@ class CostAnalyzer:
                         f"Cost estimation failed for resource {resource.get('id', 'unknown')}: {e}"
                     )
 
-        self.logger.info(f"Generated cost estimates for {len(cost_estimates)} resources")
+        self.logger.info(
+            f"Generated cost estimates for {len(cost_estimates)} resources"
+        )
         return cost_estimates
 
     def _estimate_single_resource_cost(
@@ -209,7 +215,9 @@ class CostAnalyzer:
                 return None
 
             # Get pricing information
-            pricing_info = self._get_pricing_info(service, resource_type, region, resource)
+            pricing_info = self._get_pricing_info(
+                service, resource_type, region, resource
+            )
 
             if not pricing_info:
                 return None
@@ -260,14 +268,18 @@ class CostAnalyzer:
                 return None
 
             # Build filters for pricing query
-            filters = self._build_pricing_filters(service, resource_type, region, resource)
+            filters = self._build_pricing_filters(
+                service, resource_type, region, resource
+            )
 
             # Query pricing API
             response = self.pricing_client.get_products(
                 ServiceCode=service_code, Filters=filters, MaxResults=10
             )
 
-            pricing_info = self._parse_pricing_response(response, service, resource_type)
+            pricing_info = self._parse_pricing_response(
+                response, service, resource_type
+            )
 
             with self._cache_lock:
                 self._pricing_cache[cache_key] = pricing_info
@@ -275,7 +287,9 @@ class CostAnalyzer:
             return pricing_info
 
         except Exception as e:
-            self.logger.debug(f"Pricing API query failed for {service}:{resource_type}: {e}")
+            self.logger.debug(
+                f"Pricing API query failed for {service}:{resource_type}: {e}"
+            )
             return None
 
     def _map_service_to_pricing_code(self, service: str) -> Optional[str]:
@@ -357,12 +371,20 @@ class CostAnalyzer:
         if resource_type == "Instance":
             # Get instance type from resource attributes
             instance_type = resource.get("instance_type", "t3.micro")
-            filters.append({"Type": "TERM_MATCH", "Field": "instanceType", "Value": instance_type})
-            filters.append({"Type": "TERM_MATCH", "Field": "tenancy", "Value": "Shared"})
-            filters.append({"Type": "TERM_MATCH", "Field": "operating-system", "Value": "Linux"})
+            filters.append(
+                {"Type": "TERM_MATCH", "Field": "instanceType", "Value": instance_type}
+            )
+            filters.append(
+                {"Type": "TERM_MATCH", "Field": "tenancy", "Value": "Shared"}
+            )
+            filters.append(
+                {"Type": "TERM_MATCH", "Field": "operating-system", "Value": "Linux"}
+            )
         elif resource_type == "Volume":
             volume_type = resource.get("volume_type", "gp3")
-            filters.append({"Type": "TERM_MATCH", "Field": "volumeType", "Value": volume_type})
+            filters.append(
+                {"Type": "TERM_MATCH", "Field": "volumeType", "Value": volume_type}
+            )
 
         return filters
 
@@ -397,7 +419,9 @@ class CostAnalyzer:
 
         if resource_type == "Bucket":
             storage_class = resource.get("storage_class", "Standard")
-            filters.append({"Type": "TERM_MATCH", "Field": "storageClass", "Value": storage_class})
+            filters.append(
+                {"Type": "TERM_MATCH", "Field": "storageClass", "Value": storage_class}
+            )
 
         return filters
 
@@ -408,7 +432,9 @@ class CostAnalyzer:
         filters = []
 
         if resource_type == "Function":
-            filters.append({"Type": "TERM_MATCH", "Field": "group", "Value": "AWS-Lambda-Requests"})
+            filters.append(
+                {"Type": "TERM_MATCH", "Field": "group", "Value": "AWS-Lambda-Requests"}
+            )
 
         return filters
 
@@ -522,7 +548,9 @@ class CostAnalyzer:
         elif service == "RDS":
             breakdown["database"] = price_per_unit * Decimal("730")
         elif service == "S3":
-            breakdown["storage"] = price_per_unit * Decimal(str(resource.get("size_gb", 20)))
+            breakdown["storage"] = price_per_unit * Decimal(
+                str(resource.get("size_gb", 20))
+            )
         else:
             breakdown["base_cost"] = price_per_unit
 
@@ -578,7 +606,9 @@ class CostAnalyzer:
         Returns:
             List of ForgottenResourceAnalysis objects
         """
-        self.logger.info(f"Analyzing {len(resources)} resources for forgotten resource detection")
+        self.logger.info(
+            f"Analyzing {len(resources)} resources for forgotten resource detection"
+        )
 
         forgotten_resources = []
 
@@ -596,7 +626,9 @@ class CostAnalyzer:
                     f"Activity analysis failed for resource {resource.get('id', 'unknown')}: {e}"
                 )
 
-        self.logger.info(f"Detected {len(forgotten_resources)} potentially forgotten resources")
+        self.logger.info(
+            f"Detected {len(forgotten_resources)} potentially forgotten resources"
+        )
         return forgotten_resources
 
     def _analyze_resource_activity(
@@ -614,7 +646,9 @@ class CostAnalyzer:
             )
 
             # Calculate days since last activity
-            days_since_activity = self._calculate_days_since_activity(activity_indicators)
+            days_since_activity = self._calculate_days_since_activity(
+                activity_indicators
+            )
 
             if days_since_activity < self.thresholds.forgotten_resource_days_threshold:
                 return None
@@ -657,7 +691,9 @@ class CostAnalyzer:
         """Get activity metrics from CloudWatch."""
         activity_indicators = {}
         end_time = datetime.now(timezone.utc)
-        start_time = end_time - timedelta(days=self.thresholds.forgotten_resource_days_threshold)
+        start_time = end_time - timedelta(
+            days=self.thresholds.forgotten_resource_days_threshold
+        )
 
         try:
             if service == "EC2" and resource_type == "Instance":
@@ -671,7 +707,9 @@ class CostAnalyzer:
                     Period=86400,  # Daily
                     Statistics=["Average", "Maximum"],
                 )
-                activity_indicators["cpu_utilization"] = cpu_metrics.get("Datapoints", [])
+                activity_indicators["cpu_utilization"] = cpu_metrics.get(
+                    "Datapoints", []
+                )
 
                 # Get network activity
                 network_metrics = self.cloudwatch_client.get_metric_statistics(
@@ -683,7 +721,9 @@ class CostAnalyzer:
                     Period=86400,
                     Statistics=["Sum"],
                 )
-                activity_indicators["network_activity"] = network_metrics.get("Datapoints", [])
+                activity_indicators["network_activity"] = network_metrics.get(
+                    "Datapoints", []
+                )
 
             elif service == "RDS" and resource_type == "DBInstance":
                 # Get database connections
@@ -712,7 +752,9 @@ class CostAnalyzer:
                         Period=86400,
                         Statistics=["Sum"],
                     )
-                    activity_indicators["s3_requests"] = request_metrics.get("Datapoints", [])
+                    activity_indicators["s3_requests"] = request_metrics.get(
+                        "Datapoints", []
+                    )
                 except Exception:
                     # S3 request metrics might not be enabled
                     activity_indicators["s3_requests"] = []
@@ -722,7 +764,9 @@ class CostAnalyzer:
 
         return activity_indicators
 
-    def _calculate_days_since_activity(self, activity_indicators: Dict[str, Any]) -> int:
+    def _calculate_days_since_activity(
+        self, activity_indicators: Dict[str, Any]
+    ) -> int:
         """Calculate days since last significant activity."""
         latest_activity = None
 
@@ -732,7 +776,9 @@ class CostAnalyzer:
 
             for datapoint in datapoints:
                 timestamp = datapoint.get("Timestamp")
-                value = datapoint.get("Average", datapoint.get("Sum", datapoint.get("Maximum", 0)))
+                value = datapoint.get(
+                    "Average", datapoint.get("Sum", datapoint.get("Maximum", 0))
+                )
 
                 # Consider activity significant if value is above threshold
                 if value > self._get_activity_threshold(metric_name):
@@ -741,7 +787,8 @@ class CostAnalyzer:
 
         if latest_activity:
             days_since = (
-                datetime.now(timezone.utc) - latest_activity.replace(tzinfo=timezone.utc)
+                datetime.now(timezone.utc)
+                - latest_activity.replace(tzinfo=timezone.utc)
             ).days
             return max(0, days_since)
         else:
@@ -804,7 +851,9 @@ class CostAnalyzer:
                 "Review if this resource is still needed - inactive for over 60 days"
             )
         else:
-            recommendations.append("Monitor resource usage to confirm if it's still needed")
+            recommendations.append(
+                "Monitor resource usage to confirm if it's still needed"
+            )
 
         if estimated_cost > Decimal("100.00"):
             recommendations.append(
@@ -827,7 +876,9 @@ class CostAnalyzer:
 
         return recommendations
 
-    def analyze_cost_trends(self, resources: List[Dict[str, Any]]) -> List[CostTrendAnalysis]:
+    def analyze_cost_trends(
+        self, resources: List[Dict[str, Any]]
+    ) -> List[CostTrendAnalysis]:
         """
         Analyze cost trends and generate alerts for significant changes.
 
@@ -842,7 +893,9 @@ class CostAnalyzer:
         trend_analyses = []
 
         if not self.cost_explorer_client:
-            self.logger.warning("Cost Explorer client not available - skipping trend analysis")
+            self.logger.warning(
+                "Cost Explorer client not available - skipping trend analysis"
+            )
             return trend_analyses
 
         try:
@@ -864,7 +917,9 @@ class CostAnalyzer:
                     if trend_analysis:
                         trend_analyses.extend(trend_analysis)
                 except Exception as e:
-                    self.logger.debug(f"Cost trend analysis failed for service {service}: {e}")
+                    self.logger.debug(
+                        f"Cost trend analysis failed for service {service}: {e}"
+                    )
 
         except Exception as e:
             self.logger.error(f"Cost trend analysis failed: {e}")
@@ -895,7 +950,9 @@ class CostAnalyzer:
                 for group in result.get("Groups", []):
                     if service.lower() in group.get("Keys", [""])[0].lower():
                         cost = Decimal(
-                            group.get("Metrics", {}).get("BlendedCost", {}).get("Amount", "0")
+                            group.get("Metrics", {})
+                            .get("BlendedCost", {})
+                            .get("Amount", "0")
                         )
                         service_costs.append(cost)
 
@@ -905,7 +962,9 @@ class CostAnalyzer:
 
                 # Calculate trend
                 if previous_cost > 0:
-                    change_percentage = float((current_cost - previous_cost) / previous_cost * 100)
+                    change_percentage = float(
+                        (current_cost - previous_cost) / previous_cost * 100
+                    )
                 else:
                     change_percentage = 100.0 if current_cost > 0 else 0.0
 
@@ -987,7 +1046,9 @@ class CostAnalyzer:
         )
         recommendations.extend(underutilized_recommendations)
 
-        self.logger.info(f"Generated {len(recommendations)} cost optimization recommendations")
+        self.logger.info(
+            f"Generated {len(recommendations)} cost optimization recommendations"
+        )
         return recommendations
 
     def _generate_expensive_resource_recommendation(
@@ -1090,7 +1151,8 @@ class CostAnalyzer:
                         service=estimate.service,
                         recommendation_type="utilization_review",
                         current_monthly_cost=estimate.estimated_monthly_cost,
-                        potential_monthly_savings=estimate.estimated_monthly_cost * Decimal("0.4"),
+                        potential_monthly_savings=estimate.estimated_monthly_cost
+                        * Decimal("0.4"),
                         confidence_level="low",
                         implementation_effort="medium",
                         description=f"Review utilization patterns for this high-cost {estimate.service} resource",
@@ -1128,13 +1190,17 @@ class CostAnalyzer:
         """
         try:
             # Calculate total estimated monthly cost
-            total_cost = sum(estimate.estimated_monthly_cost for estimate in cost_estimates)
+            total_cost = sum(
+                estimate.estimated_monthly_cost for estimate in cost_estimates
+            )
 
             # Count expensive resources
             expensive_count = len(self.identify_expensive_resources(cost_estimates))
 
             # Calculate total potential savings
-            total_savings = sum(rec.potential_monthly_savings for rec in recommendations)
+            total_savings = sum(
+                rec.potential_monthly_savings for rec in recommendations
+            )
 
             # Identify high-risk resources
             high_risk_resources = [
@@ -1173,7 +1239,9 @@ class CostAnalyzer:
                 total_potential_savings=Decimal("0"),
             )
 
-    def enrich_resource_with_cost_info(self, resource: Dict[str, Any]) -> Dict[str, Any]:
+    def enrich_resource_with_cost_info(
+        self, resource: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         Enrich a single resource with cost analysis information.
 
@@ -1190,7 +1258,9 @@ class CostAnalyzer:
             cost_estimate = self._estimate_single_resource_cost(resource)
             if cost_estimate:
                 enriched_resource["cost_analysis"] = {
-                    "estimated_monthly_cost": float(cost_estimate.estimated_monthly_cost),
+                    "estimated_monthly_cost": float(
+                        cost_estimate.estimated_monthly_cost
+                    ),
                     "cost_breakdown": {
                         k: float(v) for k, v in cost_estimate.cost_breakdown.items()
                     },

@@ -111,7 +111,9 @@ class ConfigValidator:
 
         return result
 
-    def _validate_account_config(self, account: Dict[str, Any], index: int) -> List[str]:
+    def _validate_account_config(
+        self, account: Dict[str, Any], index: int
+    ) -> List[str]:
         """Validate individual account configuration."""
         errors = []
         prefix = f"Account {index + 1}"
@@ -119,7 +121,10 @@ class ConfigValidator:
         # Required fields
         if "account_id" not in account:
             errors.append(f"{prefix}: 'account_id' is required")
-        elif not isinstance(account["account_id"], str) or not account["account_id"].strip():
+        elif (
+            not isinstance(account["account_id"], str)
+            or not account["account_id"].strip()
+        ):
             errors.append(f"{prefix}: 'account_id' must be a non-empty string")
 
         # Optional fields validation
@@ -142,7 +147,8 @@ class ConfigValidator:
             if not isinstance(account["tags"], dict):
                 errors.append(f"{prefix}: 'tags' must be a dictionary")
             elif not all(
-                isinstance(k, str) and isinstance(v, str) for k, v in account["tags"].items()
+                isinstance(k, str) and isinstance(v, str)
+                for k, v in account["tags"].items()
             ):
                 errors.append(f"{prefix}: all tag keys and values must be strings")
 
@@ -152,7 +158,9 @@ class ConfigValidator:
         has_role = "role_arn" in account
 
         if not (has_keys or has_profile or has_role):
-            errors.append(f"{prefix}: must specify either access keys, profile_name, or role_arn")
+            errors.append(
+                f"{prefix}: must specify either access keys, profile_name, or role_arn"
+            )
 
         if has_keys:
             if (
@@ -164,16 +172,23 @@ class ConfigValidator:
                 not isinstance(account["secret_access_key"], str)
                 or not account["secret_access_key"].strip()
             ):
-                errors.append(f"{prefix}: 'secret_access_key' must be a non-empty string")
+                errors.append(
+                    f"{prefix}: 'secret_access_key' must be a non-empty string"
+                )
 
-            if "session_token" in account and not isinstance(account["session_token"], str):
+            if "session_token" in account and not isinstance(
+                account["session_token"], str
+            ):
                 errors.append(f"{prefix}: 'session_token' must be a string")
 
         if has_profile and not isinstance(account["profile_name"], str):
             errors.append(f"{prefix}: 'profile_name' must be a string")
 
         if has_role:
-            if not isinstance(account["role_arn"], str) or not account["role_arn"].strip():
+            if (
+                not isinstance(account["role_arn"], str)
+                or not account["role_arn"].strip()
+            ):
                 errors.append(f"{prefix}: 'role_arn' must be a non-empty string")
             if "external_id" in account and not isinstance(account["external_id"], str):
                 errors.append(f"{prefix}: 'external_id' must be a string")
@@ -192,7 +207,9 @@ class ConfigValidator:
         if "account_processing_timeout" in settings:
             timeout = settings["account_processing_timeout"]
             if not isinstance(timeout, int) or timeout < 60:
-                errors.append("'account_processing_timeout' must be an integer >= 60 seconds")
+                errors.append(
+                    "'account_processing_timeout' must be an integer >= 60 seconds"
+                )
 
         if "output_directory" in settings:
             if not isinstance(settings["output_directory"], str):
@@ -207,7 +224,9 @@ class ConfigValidator:
         try:
             path = Path(file_path)
             if not path.exists():
-                result.errors.append(f"Service descriptions file not found: {file_path}")
+                result.errors.append(
+                    f"Service descriptions file not found: {file_path}"
+                )
                 return result
 
             with open(path, "r") as f:
@@ -232,7 +251,9 @@ class ConfigValidator:
                     continue
 
                 if not isinstance(service_config, dict):
-                    result.errors.append(f"Service '{service}' configuration must be a dictionary")
+                    result.errors.append(
+                        f"Service '{service}' configuration must be a dictionary"
+                    )
                     continue
 
                 # Validate service-level fields
@@ -324,13 +345,17 @@ class ConfigValidator:
             if "tag_mappings" in config:
                 tag_mappings = config["tag_mappings"]
                 if not isinstance(tag_mappings, list):
-                    result.errors.append("'tag_mappings' must be a list of mapping objects")
+                    result.errors.append(
+                        "'tag_mappings' must be a list of mapping objects"
+                    )
                     return result
 
                 # Validate each tag mapping in the list
                 for i, mapping in enumerate(tag_mappings):
                     if not isinstance(mapping, dict):
-                        result.errors.append(f"Tag mapping {i + 1} must be a dictionary")
+                        result.errors.append(
+                            f"Tag mapping {i + 1} must be a dictionary"
+                        )
                         continue
 
                     required_fields = ["tag", "name"]
@@ -358,7 +383,9 @@ class ConfigValidator:
                         continue
 
                     if not isinstance(mapping, dict):
-                        result.errors.append(f"Tag mapping for '{tag_key}' must be a dictionary")
+                        result.errors.append(
+                            f"Tag mapping for '{tag_key}' must be a dictionary"
+                        )
                         continue
 
                     required_fields = ["column_name"]
@@ -410,7 +437,9 @@ class ConfigValidator:
 
         # Validate S3 options
         if args.s3_bucket and not args.s3_key_prefix:
-            result.warnings.append("S3 bucket specified without key prefix. Using default prefix.")
+            result.warnings.append(
+                "S3 bucket specified without key prefix. Using default prefix."
+            )
 
         if args.s3_key_prefix and not args.s3_bucket:
             result.errors.append(
@@ -423,7 +452,9 @@ class ConfigValidator:
 
         # Validate timeout
         if args.account_processing_timeout and args.account_processing_timeout < 60:
-            result.errors.append("--account-processing-timeout must be at least 60 seconds")
+            result.errors.append(
+                "--account-processing-timeout must be at least 60 seconds"
+            )
 
         result.is_valid = len(result.errors) == 0
 

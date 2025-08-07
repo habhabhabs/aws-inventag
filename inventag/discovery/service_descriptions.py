@@ -55,7 +55,9 @@ class DescriptionTemplateEngine:
         self.templates[template.name] = template
         self.logger.debug(f"Registered template: {template.name}")
 
-    def render_template(self, template_name: str, resource: Dict[str, Any]) -> Optional[str]:
+    def render_template(
+        self, template_name: str, resource: Dict[str, Any]
+    ) -> Optional[str]:
         """Render a template with resource attributes."""
         if template_name not in self.templates:
             self.logger.warning(f"Template not found: {template_name}")
@@ -374,7 +376,9 @@ class ServiceDescriptionManager:
                 return False
 
             with open(config_path, "r", encoding="utf-8") as f:
-                if config_path.lower().endswith(".yaml") or config_path.lower().endswith(".yml"):
+                if config_path.lower().endswith(
+                    ".yaml"
+                ) or config_path.lower().endswith(".yml"):
                     config_data = yaml.safe_load(f)
                 else:
                     config_data = json.load(f)
@@ -386,11 +390,15 @@ class ServiceDescriptionManager:
             self.config_path = config_path
             self.last_reload = datetime.now(timezone.utc)
 
-            self.logger.info(f"Successfully loaded service descriptions from {config_path}")
+            self.logger.info(
+                f"Successfully loaded service descriptions from {config_path}"
+            )
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to load service descriptions from {config_path}: {e}")
+            self.logger.error(
+                f"Failed to load service descriptions from {config_path}: {e}"
+            )
             return False
 
     def _validate_config_schema(self, config_data: Dict[str, Any]) -> bool:
@@ -412,7 +420,9 @@ class ServiceDescriptionManager:
         # Validate each service description
         for service, descriptions in service_descriptions.items():
             if not isinstance(descriptions, dict):
-                self.logger.error(f"Service '{service}' descriptions must be a dictionary")
+                self.logger.error(
+                    f"Service '{service}' descriptions must be a dictionary"
+                )
                 return False
 
             for resource_type, desc_config in descriptions.items():
@@ -462,8 +472,13 @@ class ServiceDescriptionManager:
     def _parse_templates(self, templates_config: Dict[str, Any]):
         """Parse template configurations."""
         for template_name, template_config in templates_config.items():
-            if not isinstance(template_config, dict) or "template" not in template_config:
-                self.logger.warning(f"Invalid template configuration for {template_name}")
+            if (
+                not isinstance(template_config, dict)
+                or "template" not in template_config
+            ):
+                self.logger.warning(
+                    f"Invalid template configuration for {template_name}"
+                )
                 continue
 
             template = DescriptionTemplate(
@@ -476,7 +491,9 @@ class ServiceDescriptionManager:
 
             self.template_engine.register_template(template)
 
-    def get_service_description(self, service: str, resource_type: Optional[str] = None) -> str:
+    def get_service_description(
+        self, service: str, resource_type: Optional[str] = None
+    ) -> str:
         """Get custom description for AWS service/resource type with intelligent fallbacks."""
         service_upper = service.upper()
 
@@ -487,13 +504,19 @@ class ServiceDescriptionManager:
                 return desc.description
 
         # Strategy 2: Service default
-        if service_upper in self.descriptions and "default" in self.descriptions[service_upper]:
+        if (
+            service_upper in self.descriptions
+            and "default" in self.descriptions[service_upper]
+        ):
             desc = self.descriptions[service_upper]["default"]
             return desc.description
 
         # Strategy 3: Default descriptions (built-in)
         if service_upper in self._default_descriptions:
-            if resource_type and resource_type in self._default_descriptions[service_upper]:
+            if (
+                resource_type
+                and resource_type in self._default_descriptions[service_upper]
+            ):
                 desc = self._default_descriptions[service_upper][resource_type]
                 return desc.description
             elif "default" in self._default_descriptions[service_upper]:
@@ -643,14 +666,18 @@ class ServiceDescriptionManager:
             "last_reload": self.last_reload.isoformat() if self.last_reload else None,
             "custom_services": len(self.descriptions),
             "default_services": len(self._default_descriptions),
-            "total_custom_descriptions": sum(len(descs) for descs in self.descriptions.values()),
+            "total_custom_descriptions": sum(
+                len(descs) for descs in self.descriptions.values()
+            ),
             "total_default_descriptions": sum(
                 len(descs) for descs in self._default_descriptions.values()
             ),
             "registered_templates": self.template_engine.list_templates(),
         }
 
-    def export_configuration_template(self, output_path: str, format_type: str = "yaml") -> bool:
+    def export_configuration_template(
+        self, output_path: str, format_type: str = "yaml"
+    ) -> bool:
         """Export a configuration template with examples."""
         template_config = {
             "service_descriptions": {

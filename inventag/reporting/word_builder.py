@@ -71,7 +71,9 @@ class WordDocumentBuilder(DocumentBuilder):
     def validate_dependencies(self) -> List[str]:
         """Validate Word dependencies."""
         if not PYTHON_DOCX_AVAILABLE:
-            return ["python-docx library not available - install with: pip install python-docx"]
+            return [
+                "python-docx library not available - install with: pip install python-docx"
+            ]
         return []
 
     def _initialize_styles(self) -> Dict[str, Any]:
@@ -125,7 +127,9 @@ class WordDocumentBuilder(DocumentBuilder):
         except ValueError:
             return RGBColor(0, 0, 0)  # Default to black
 
-    def generate_document(self, bom_data: BOMData, output_path: str) -> DocumentGenerationResult:
+    def generate_document(
+        self, bom_data: BOMData, output_path: str
+    ) -> DocumentGenerationResult:
         """
         Generate Word document with professional formatting.
 
@@ -229,7 +233,9 @@ class WordDocumentBuilder(DocumentBuilder):
 
         except KeyError:
             # Styles might not exist in all templates
-            self.logger.warning("Some heading styles not available in document template")
+            self.logger.warning(
+                "Some heading styles not available in document template"
+            )
 
     def _add_title_page(self, doc: Document, bom_data: BOMData):
         """Add professional title page."""
@@ -467,14 +473,18 @@ class WordDocumentBuilder(DocumentBuilder):
         for service, resources in sorted(services.items()):
             self._add_single_service_section(doc, service, resources)
 
-    def _add_single_service_section(self, doc: Document, service: str, resources: List[Dict]):
+    def _add_single_service_section(
+        self, doc: Document, service: str, resources: List[Dict]
+    ):
         """Add section for a specific service."""
         # Service heading
         service_heading = doc.add_heading(f"{service} Resources", level=2)
         service_heading.runs[0].font.color.rgb = self.styles["primary_color"]
 
         # Service summary
-        compliant_count = sum(1 for r in resources if r.get("compliance_status") == "compliant")
+        compliant_count = sum(
+            1 for r in resources if r.get("compliance_status") == "compliant"
+        )
         non_compliant_count = len(resources) - compliant_count
 
         summary_para = doc.add_paragraph()
@@ -492,7 +502,9 @@ class WordDocumentBuilder(DocumentBuilder):
             common_fields = self._get_common_fields(resources)
 
             # Create table
-            resource_table = doc.add_table(rows=len(resources) + 1, cols=len(common_fields))
+            resource_table = doc.add_table(
+                rows=len(resources) + 1, cols=len(common_fields)
+            )
             resource_table.style = "Table Grid"
 
             # Headers
@@ -808,7 +820,9 @@ class WordDocumentBuilder(DocumentBuilder):
 
         # Non-compliant resources details
         non_compliant_resources = [
-            r for r in bom_data.resources if r.get("compliance_status") == "non_compliant"
+            r
+            for r in bom_data.resources
+            if r.get("compliance_status") == "non_compliant"
         ]
 
         if non_compliant_resources:
@@ -892,7 +906,9 @@ class WordDocumentBuilder(DocumentBuilder):
         core_props.title = f"{self.config.branding.company_name} - Cloud BOM Report"
         core_props.author = "InvenTag Cloud BOM Generator"
         core_props.subject = "AWS Resource Inventory and Compliance Report"
-        core_props.comments = "Professional AWS resource inventory and compliance report"
+        core_props.comments = (
+            "Professional AWS resource inventory and compliance report"
+        )
 
     def _get_common_fields(self, resources: List[Dict]) -> List[str]:
         """Get common fields across resources for table generation."""
@@ -984,8 +1000,12 @@ class WordDocumentBuilder(DocumentBuilder):
                 )
 
         # Service diversity
-        services = set(resource.get("service", "Unknown") for resource in bom_data.resources)
-        findings.append(f"Infrastructure utilizes {len(services)} different AWS services")
+        services = set(
+            resource.get("service", "Unknown") for resource in bom_data.resources
+        )
+        findings.append(
+            f"Infrastructure utilizes {len(services)} different AWS services"
+        )
 
         return findings
 
