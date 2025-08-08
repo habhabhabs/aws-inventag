@@ -75,6 +75,7 @@ class AWSResourceInventory:
         use_optimized: bool = True,
         standardized_output: bool = True,
         use_comprehensive: bool = True,
+        hide_fallback_resources: bool = False,
     ):
         """Initialize the AWS Resource Inventory tool."""
         self.session = session or boto3.Session()
@@ -83,6 +84,7 @@ class AWSResourceInventory:
         self.regions = regions if regions is not None else self._get_available_regions()
         self.services = services  # Specific services to scan, None means all
         self.tag_filters = tag_filters or {}  # Tag filters to apply
+        self.hide_fallback_resources = hide_fallback_resources
 
         # Billing-based discovery state
         self.billing_validated_services: Set[str] = set()
@@ -97,7 +99,7 @@ class AWSResourceInventory:
             session=self.session, regions=self.regions
         )
         self.comprehensive_discovery = ComprehensiveAWSDiscovery(
-            session=self.session, regions=self.regions
+            session=self.session, regions=self.regions, hide_fallback_resources=self.hide_fallback_resources
         )
 
         # Store original regions for fallback logic

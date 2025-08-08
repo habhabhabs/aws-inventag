@@ -30,11 +30,15 @@ class ComprehensiveAWSDiscovery:
     and validates against billing data.
     """
 
-    def __init__(self, session: boto3.Session = None, regions: List[str] = None):
+    def __init__(self, session: boto3.Session = None, regions: List[str] = None, hide_fallback_resources: bool = False):
         self.session = session or boto3.Session()
         self.logger = logging.getLogger(__name__)
         self.logger.propagate = False  # Prevent duplicate logging
         self.regions = regions or ["us-east-1"]
+        self.hide_fallback_resources = hide_fallback_resources
+        
+        if self.hide_fallback_resources:
+            self.logger.info("💡 Fallback resources from ResourceGroupsTagging API will be hidden")
 
         # Resource storage
         self.resources = []
@@ -857,41 +861,45 @@ class ComprehensiveAWSDiscovery:
                             enriched_count += 1
                         else:
                             # This is a resource we missed - add it as fallback only
-                            try:
-                                service = self._extract_service_from_arn(arn)
-                                if service:
-                                    resource_id = (
-                                        arn.split("/")[-1]
-                                        if "/" in arn
-                                        else arn.split(":")[-1]
-                                    )
+                            if not self.hide_fallback_resources:
+                                try:
+                                    service = self._extract_service_from_arn(arn)
+                                    if service:
+                                        resource_id = (
+                                            arn.split("/")[-1]
+                                            if "/" in arn
+                                            else arn.split(":")[-1]
+                                        )
 
-                                    # Apply the same service classification logic for fallback resources
-                                    actual_service = self._determine_actual_service(
-                                        service, "Unknown", resource_id, arn
-                                    )
+                                        # Apply the same service classification logic for fallback resources
+                                        actual_service = self._determine_actual_service(
+                                            service, "Unknown", resource_id, arn
+                                        )
 
-                                    new_resource = {
-                                        "service": actual_service.upper(),
-                                        "resource_type": "Unknown",
-                                        "resource_id": resource_id,
-                                        "resource_name": tags.get("Name"),
-                                        "arn": arn,
-                                        "region": region,
-                                        "account_id": self._extract_account_id(arn),
-                                        "tags": tags,
-                                        "raw_data": {"arn": arn},
-                                        "discovered_via": "ResourceGroupsTaggingAPI:Fallback",
-                                        "discovered_at": datetime.utcnow().isoformat(),
-                                        "tagged": True,
-                                        "priority": "fallback",  # Mark as lower priority
-                                    }
-                                    self.resources.append(new_resource)
-                                    new_resources_found += 1
-                            except Exception as e:
-                                self.logger.debug(
-                                    f"Failed to process tagged resource {arn}: {e}"
-                                )
+                                        new_resource = {
+                                            "service": actual_service.upper(),
+                                            "resource_type": "Unknown",
+                                            "resource_id": resource_id,
+                                            "resource_name": tags.get("Name"),
+                                            "arn": arn,
+                                            "region": region,
+                                            "account_id": self._extract_account_id(arn),
+                                            "tags": tags,
+                                            "raw_data": {"arn": arn},
+                                            "discovered_via": "ResourceGroupsTaggingAPI:Fallback",
+                                            "discovered_at": datetime.utcnow().isoformat(),
+                                            "tagged": True,
+                                            "priority": "fallback",  # Mark as lower priority
+                                        }
+                                        self.resources.append(new_resource)
+                                        new_resources_found += 1
+                                except Exception as e:
+                                    self.logger.debug(
+                                        f"Failed to process tagged resource {arn}: {e}"
+                                    )
+                            else:
+                                # Resource would have been added as fallback but is hidden
+                                pass  # Could add debug logging here if needed
 
             except Exception as e:
                 self.logger.warning(

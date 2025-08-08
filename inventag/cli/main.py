@@ -191,6 +191,11 @@ Examples:
         action="store_true",
         help="Enable cost analysis and optimization recommendations",
     )
+    analysis_group.add_argument(
+        "--hide-fallback-resources",
+        action="store_true",
+        help="Hide fallback resources discovered via ResourceGroupsTagging API (default: show all resources)",
+    )
 
     # S3 upload options for CI/CD
     s3_group = parser.add_argument_group("S3 Upload Options (CI/CD Integration)")
@@ -693,6 +698,7 @@ def create_multi_account_config(args) -> MultiAccountConfig:
         bom_processing_config=bom_config,
         output_directory=output_dir,
         credential_validation_timeout=args.credential_timeout,
+        hide_fallback_resources=args.hide_fallback_resources,
     )
 
     return config
