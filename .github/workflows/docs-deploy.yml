@@ -123,132 +123,101 @@ jobs:
           cd ..
           
           # Create SBOM summary for documentation
-          cat > docs/security/current/sbom-summary.md << EOF
-# Current SBOM Summary
-
-**Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')  
-**Repository**: ${{ github.repository }}  
-**Branch**: ${{ github.ref_name }}  
-**Commit**: ${{ github.sha }}
-
-## Components Overview
-
-### Repository-wide SBOM
-- **File**: [current-sbom.json](../sbom/current-sbom.json)
-- **Format**: Syft JSON
-- **Components**: $(jq '.artifacts | length' docs/security/sbom/current-sbom.json 2>/dev/null || echo "Unknown")
-
-### Python Dependencies
-$(if [ -f "docs/security/sbom/python-sbom.json" ]; then
-  echo "- **File**: [python-sbom.json](../sbom/python-sbom.json)"
-  echo "- **Components**: $(jq '.components | length' docs/security/sbom/python-sbom.json 2>/dev/null || echo "Unknown")"
-else
-  echo "- **Status**: No requirements.txt found"
-fi)
-
-### Node.js Dependencies (Website)
-$(if [ -f "docs/security/sbom/nodejs-website-sbom.json" ]; then
-  echo "- **File**: [nodejs-website-sbom.json](../sbom/nodejs-website-sbom.json)"  
-  echo "- **Components**: $(jq '.components | length' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null || echo "Unknown")"
-else
-  echo "- **Status**: No Node.js dependencies detected"
-fi)
-
-## SBOM Formats Available
-
-- **JSON (Syft)**: Machine-readable format for automated analysis
-- **CycloneDX**: Industry-standard SBOM format for supply chain security
-- **SPDX**: Software Package Data Exchange format for compliance
-- **XML**: Human and machine-readable structured format
-
-## Integration Status
-
-This SBOM is automatically generated and integrated into the documentation build process, ensuring:
-- Up-to-date dependency tracking
-- Security transparency
-- Compliance documentation
-- Version-specific component tracking
-- Supply chain security monitoring
-
-## Usage
-
-Download the SBOM files to:
-- Analyze dependencies and licenses
-- Track security vulnerabilities
-- Ensure compliance requirements
-- Monitor supply chain security
-- Compare component changes between versions
-
----
-
-*This SBOM summary is automatically updated during documentation builds.*
-EOF
+          echo "# Current SBOM Summary" > docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "**Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> docs/security/current/sbom-summary.md
+          echo "**Repository**: ${{ github.repository }}" >> docs/security/current/sbom-summary.md
+          echo "**Branch**: ${{ github.ref_name }}" >> docs/security/current/sbom-summary.md
+          echo "**Commit**: ${{ github.sha }}" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "## Components Overview" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "### Repository-wide SBOM" >> docs/security/current/sbom-summary.md
+          echo "- **File**: [current-sbom.json](../sbom/current-sbom.json)" >> docs/security/current/sbom-summary.md
+          echo "- **Format**: Syft JSON" >> docs/security/current/sbom-summary.md
           
-          # Create security index page
-          cat > docs/security/index.md << EOF
----
-title: Security Documentation
-description: Security information, SBOM, and vulnerability tracking for InvenTag
-sidebar_position: 1
----
-
-# Security Documentation
-
-This section contains comprehensive security information for InvenTag, including Software Bill of Materials (SBOM), vulnerability tracking, and security monitoring.
-
-## 📋 Current Security Status
-
-- **Last Updated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-- **Build**: ${{ github.sha }}
-- **Security Scanning**: Automated via GitHub Actions
-- **SBOM Generation**: Integrated with documentation build
-
-## 📦 Software Bill of Materials (SBOM)
-
-Our SBOM provides complete transparency into all components and dependencies:
-
-- [SBOM Summary](current/sbom-summary.md) - Overview of all components
-- [Current SBOM Files](sbom/) - Machine-readable SBOM formats
-
-### Available Formats
-
-| Format | Use Case | File |
-|--------|----------|------|
-| Syft JSON | Automated analysis | [current-sbom.json](sbom/current-sbom.json) |
-| CycloneDX | Industry standard | [current-sbom-cyclonedx.json](sbom/current-sbom-cyclonedx.json) |
-| SPDX | Compliance | [current-sbom-spdx.json](sbom/current-sbom-spdx.json) |
-| Python XML | Python-specific | [python-sbom.xml](sbom/python-sbom.xml) |
-
-## 🔒 Security Monitoring
-
-InvenTag implements comprehensive security monitoring:
-
-- **Automated Scanning**: Multi-language vulnerability detection
-- **Dependency Tracking**: Continuous monitoring of dependencies
-- **SBOM Integration**: Real-time component tracking
-- **Security Alerts**: Automated issue creation for high-severity findings
-
-## 📊 Security Workflows
-
-Our security infrastructure includes:
-
-1. **SBOM Generation**: Automated during documentation builds
-2. **CVE Tracking**: Comprehensive vulnerability analysis
-3. **Security Scanning**: Python, JavaScript, and infrastructure analysis
-4. **Documentation Integration**: Security information included in docs
-
-## 🛡️ Compliance
-
-The SBOM and security documentation support:
-- Supply chain security requirements
-- Vulnerability disclosure policies
-- Dependency license compliance
-- Security audit requirements
-
----
-
-*Security documentation is automatically maintained and updated with each build.*
-EOF
+          # Add component count
+          COMPONENTS=$(jq '.artifacts | length' docs/security/sbom/current-sbom.json 2>/dev/null || echo "Unknown")
+          echo "- **Components**: $COMPONENTS" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          
+          echo "### Python Dependencies" >> docs/security/current/sbom-summary.md
+          if [ -f "docs/security/sbom/python-sbom.json" ]; then
+            echo "- **File**: [python-sbom.json](../sbom/python-sbom.json)" >> docs/security/current/sbom-summary.md
+            PYTHON_COMPONENTS=$(jq '.components | length' docs/security/sbom/python-sbom.json 2>/dev/null || echo "Unknown")
+            echo "- **Components**: $PYTHON_COMPONENTS" >> docs/security/current/sbom-summary.md
+          else
+            echo "- **Status**: No requirements.txt found" >> docs/security/current/sbom-summary.md
+          fi
+          echo "" >> docs/security/current/sbom-summary.md
+          
+          echo "### Node.js Dependencies (Website)" >> docs/security/current/sbom-summary.md
+          if [ -f "docs/security/sbom/nodejs-website-sbom.json" ]; then
+            echo "- **File**: [nodejs-website-sbom.json](../sbom/nodejs-website-sbom.json)" >> docs/security/current/sbom-summary.md
+            NODEJS_COMPONENTS=$(jq '.components | length' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null || echo "Unknown")
+            echo "- **Components**: $NODEJS_COMPONENTS" >> docs/security/current/sbom-summary.md
+          else
+            echo "- **Status**: No Node.js dependencies detected" >> docs/security/current/sbom-summary.md
+          fi
+          echo "" >> docs/security/current/sbom-summary.md
+          
+          echo "## SBOM Formats Available" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "- **JSON (Syft)**: Machine-readable format for automated analysis" >> docs/security/current/sbom-summary.md
+          echo "- **CycloneDX**: Industry-standard SBOM format for supply chain security" >> docs/security/current/sbom-summary.md
+          echo "- **SPDX**: Software Package Data Exchange format for compliance" >> docs/security/current/sbom-summary.md
+          echo "- **XML**: Human and machine-readable structured format" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          
+          echo "## Integration Status" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "This SBOM is automatically generated and integrated into the documentation build process, ensuring:" >> docs/security/current/sbom-summary.md
+          echo "- Up-to-date dependency tracking" >> docs/security/current/sbom-summary.md
+          echo "- Security transparency" >> docs/security/current/sbom-summary.md
+          echo "- Compliance documentation" >> docs/security/current/sbom-summary.md
+          echo "- Version-specific component tracking" >> docs/security/current/sbom-summary.md
+          echo "- Supply chain security monitoring" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          
+          echo "## Usage" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "Download the SBOM files to:" >> docs/security/current/sbom-summary.md
+          echo "- Analyze dependencies and licenses" >> docs/security/current/sbom-summary.md
+          echo "- Track security vulnerabilities" >> docs/security/current/sbom-summary.md
+          echo "- Ensure compliance requirements" >> docs/security/current/sbom-summary.md
+          echo "- Monitor supply chain security" >> docs/security/current/sbom-summary.md
+          echo "- Compare component changes between versions" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "---" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "*This SBOM summary is automatically updated during documentation builds.*" >> docs/security/current/sbom-summary.md
+          
+          # Create security index page (if it doesn't exist)
+          if [ ! -f "docs/security/index.md" ]; then
+            echo "Creating security index page..."
+            mkdir -p docs/security
+            
+            echo "---" > docs/security/index.md
+            echo "title: Security Documentation" >> docs/security/index.md
+            echo "description: Security information, SBOM, and vulnerability tracking for InvenTag" >> docs/security/index.md
+            echo "sidebar_position: 1" >> docs/security/index.md
+            echo "---" >> docs/security/index.md
+            echo "" >> docs/security/index.md
+            echo "# Security Documentation" >> docs/security/index.md
+            echo "" >> docs/security/index.md
+            echo "This section contains comprehensive security information for InvenTag, including Software Bill of Materials (SBOM), vulnerability tracking, and security monitoring." >> docs/security/index.md
+            echo "" >> docs/security/index.md
+            echo "## 📋 Current Security Status" >> docs/security/index.md
+            echo "" >> docs/security/index.md
+            echo "- **Last Updated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> docs/security/index.md
+            echo "- **Build**: ${{ github.sha }}" >> docs/security/index.md
+            echo "- **Security Scanning**: Automated via GitHub Actions" >> docs/security/index.md
+            echo "- **SBOM Generation**: Integrated with documentation build" >> docs/security/index.md
+            echo "" >> docs/security/index.md
+            echo "*Security documentation is automatically maintained and updated with each build.*" >> docs/security/index.md
+          else
+            echo "ℹ️ Security index page already exists, skipping creation"
+          fi
           
           echo "✅ SBOM generated and integrated into documentation structure"
           echo "📊 Documentation now includes current security and dependency information"
