@@ -112,17 +112,22 @@ jobs:
           
           echo "Documentation structure validation passed"
 
-      - name: Run documentation transformation pipeline
+      - name: Run GitHub → Docusaurus transformation pipeline
         id: transform
         run: |
-          echo "Running comprehensive documentation transformation pipeline..."
+          echo "Running GitHub → Docusaurus documentation transformation pipeline..."
+          echo "This will convert GitHub-compatible relative links to Docusaurus absolute paths"
           
           # Set environment variables for transformation
           export VERBOSE=true
           export DRY_RUN=false
           
-          # Run the transformation pipeline
+          # Run the transformation pipeline with enhanced logging
+          echo "Converting GitHub-style relative links to Docusaurus absolute paths..."
           node scripts/transform-docs.js
+          
+          echo "Transformation completed successfully!"
+          echo "GitHub links have been converted to Docusaurus-compatible format"
           
           # Check if any files were transformed
           if [ -f "transform.log" ]; then

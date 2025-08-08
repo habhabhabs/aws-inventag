@@ -590,6 +590,6 @@ result = generator.generate_comprehensive_bom(
 ```
 
 For more detailed information, see:
-- [State Management Documentation](state-management)
+- [State Management Documentation](/architecture/state-management)
 - [CI/CD Integration Guide](../development/cicd-integration)
 - [CLI User Guide](../user-guides/cli-user-guide)

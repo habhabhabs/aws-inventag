@@ -87,11 +87,11 @@ Override regions for all accounts:
 
 All example configuration files are available in the centralized assets directory:
 
-- [Account Configuration Example](../assets/files/accounts-example.json)
-- [Service Descriptions Example](../assets/files/service-descriptions-example.yaml)
-- [Tag Mappings Example](../assets/files/tag-mappings-example.yaml)
-- [Excel Template](../assets/files/default_excel_template.json)
-- [Word Template](../assets/files/default_word_template.yaml)
+- [Account Configuration Example](/files/accounts-example.json)
+- [Service Descriptions Example](/files/service-descriptions-example.yaml)
+- [Tag Mappings Example](/files/tag-mappings-example.yaml)
+- [Excel Template](/files/default_excel_template.json)
+- [Word Template](/files/default_word_template.yaml)
 
 Copy these example files and modify them for your environment:
 

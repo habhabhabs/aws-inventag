@@ -592,8 +592,8 @@ The framework maintains backward compatibility:
 
 ### Available Template Examples
 
-- [`assets/files/default_word_template.yaml`](../assets/files/default_word_template.yaml): Professional Word document template
-- [`assets/files/default_excel_template.json`](../assets/files/default_excel_template.json): Excel workbook template with dashboards
+- [`assets/files/default_word_template.yaml`](/files/default_word_template.yaml): Professional Word document template
+- [`assets/files/default_excel_template.json`](/files/default_excel_template.json): Excel workbook template with dashboards
 - `templates/minimal_template.yaml`: Simple template for basic reports
 - `templates/executive_template.yaml`: Executive summary focused template
 

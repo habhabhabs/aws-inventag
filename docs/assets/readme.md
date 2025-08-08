@@ -18,7 +18,7 @@ This directory contains all images, diagrams, and other static assets used in th
 1. Place images in the appropriate subdirectory under `images/`
 2. Use descriptive filenames (e.g., `cli-output-example.png`, `architecture-diagram.svg`)
 3. Optimize images for web viewing (reasonable file sizes)
-4. Use relative paths in markdown: `![Alt text](../assets/filename.png)`
+4. Use relative paths in markdown: `![Alt text](/img/filename.png)`
 
 ### Supported Formats
 
@@ -67,11 +67,11 @@ To verify that all assets are accessible from both GitHub and Docusaurus:
 
 ```markdown
 # In any documentation file
-![InvenTag Logo](../assets/inventag-logo-placeholder.svg)
-![CLI Output Example](../assets/cli-output.png)
-![Architecture Diagram](../assets/architecture-overview.svg)
+![InvenTag Logo](/img/inventag-logo-placeholder.svg)
+![CLI Output Example](/img/cli-output.png)
+![Architecture Diagram](/img/architecture-overview.svg)
 
-[Download Excel Template](assets/files/default_excel_template.json)
-[Download Word Template](assets/files/default_word_template.yaml)
-[Download Account Example](assets/files/accounts-example.json)
+[Download Excel Template](/files/default_excel_template.json)
+[Download Word Template](/files/default_word_template.yaml)
+[Download Account Example](/files/accounts-example.json)
 ```

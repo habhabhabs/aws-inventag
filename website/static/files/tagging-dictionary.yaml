@@ -1,0 +1,326 @@
+# AWS Prescriptive Guidance - Cost Allocation Tagging Dictionary
+# Reference: https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/
+# 
+# This template follows AWS best practices for cost allocation and resource governance
+# Updated: 2025-08-08
+
+tagging_dictionary:
+  version: "1.0"
+  last_updated: "2025-08-08"
+  compliance_frameworks:
+    - "AWS Prescriptive Guidance"
+    - "AWS Cost Allocation Best Practices"
+    - "AWS Well-Architected Framework"
+
+  # REQUIRED TAGS - These must be present on all resources
+  required_tags:
+    # Financial Management Tags
+    - key: "CostCenter"
+      description: "Cost center responsible for resource charges"
+      format: "CC-XXXX"
+      example: "CC-1001"
+      validation_pattern: "^CC-[0-9]{4}$"
+      category: "financial"
+      enforcement: "mandatory"
+      
+    - key: "Project"
+      description: "Project identifier for cost allocation"
+      format: "PROJ-XXXX"
+      example: "PROJ-2024-WEBAPP"
+      validation_pattern: "^PROJ-[0-9]{4}-[A-Z0-9]+$"
+      category: "financial"
+      enforcement: "mandatory"
+      
+    - key: "Environment"
+      description: "Deployment environment"
+      allowed_values: ["prod", "staging", "test", "dev", "sandbox"]
+      example: "prod"
+      category: "operational"
+      enforcement: "mandatory"
+      
+    - key: "BusinessUnit"
+      description: "Business unit or department"
+      format: "Free text, max 50 characters"
+      example: "Engineering"
+      category: "organizational"
+      enforcement: "mandatory"
+      
+    - key: "Application"
+      description: "Application name or service identifier"
+      format: "kebab-case, max 63 characters"
+      example: "user-authentication-service"
+      validation_pattern: "^[a-z0-9-]+$"
+      category: "technical"
+      enforcement: "mandatory"
+
+  # RECOMMENDED TAGS - Should be applied when applicable
+  recommended_tags:
+    # Technical Management
+    - key: "ApplicationVersion"
+      description: "Version of the application or service"
+      format: "Semantic versioning (x.y.z)"
+      example: "1.2.3"
+      validation_pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+      category: "technical"
+      
+    - key: "DataClassification"
+      description: "Data sensitivity classification"
+      allowed_values: ["public", "internal", "confidential", "restricted"]
+      example: "confidential"
+      category: "security"
+      
+    - key: "BackupRequired"
+      description: "Indicates if resource requires backup"
+      allowed_values: ["true", "false"]
+      example: "true"
+      category: "operational"
+      
+    - key: "DisasterRecovery"
+      description: "Disaster recovery requirements"
+      allowed_values: ["critical", "important", "normal", "low"]
+      example: "critical"
+      category: "operational"
+      
+    # Financial Management
+    - key: "ChargebackCode"
+      description: "Internal chargeback or billing code"
+      format: "CHG-XXXX-XXXX"
+      example: "CHG-2024-0001"
+      validation_pattern: "^CHG-[0-9]{4}-[0-9]{4}$"
+      category: "financial"
+      
+    - key: "BudgetCategory"
+      description: "Budget category for cost tracking"
+      allowed_values: ["infrastructure", "development", "operations", "security"]
+      example: "infrastructure"
+      category: "financial"
+      
+    # Organizational
+    - key: "TeamName"
+      description: "Team responsible for the resource"
+      format: "Free text, max 50 characters"
+      example: "Platform Engineering"
+      category: "organizational"
+      
+    - key: "ContactEmail"
+      description: "Primary contact for the resource"
+      format: "Valid email address"
+      example: "platform-team@company.com"
+      validation_pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+      category: "organizational"
+
+  # CONDITIONAL TAGS - Required under specific circumstances
+  conditional_tags:
+    # For production resources
+    production_required:
+      condition: "Environment == 'prod'"
+      tags:
+        - key: "MaintenanceWindow"
+          description: "Scheduled maintenance window"
+          format: "Day-HHMM-HHMM (UTC)"
+          example: "Sunday-0200-0400"
+          category: "operational"
+          
+        - key: "SLALevel"
+          description: "Service Level Agreement classification"
+          allowed_values: ["gold", "silver", "bronze"]
+          example: "gold"
+          category: "operational"
+          
+        - key: "ComplianceFramework"
+          description: "Applicable compliance framework"
+          allowed_values: ["soc2", "pci", "hipaa", "gdpr", "none"]
+          example: "soc2"
+          category: "compliance"
+
+    # For data storage resources
+    data_resources:
+      condition: "ResourceType in ['s3', 'rds', 'dynamodb', 'efs', 'fsx']"
+      tags:
+        - key: "DataRetentionPeriod"
+          description: "Data retention period in days"
+          format: "Number of days"
+          example: "2555"  # 7 years
+          validation_pattern: "^[0-9]+$"
+          category: "governance"
+          
+        - key: "EncryptionRequired"
+          description: "Encryption requirement"
+          allowed_values: ["true", "false"]
+          example: "true"
+          category: "security"
+
+    # For compute resources
+    compute_resources:
+      condition: "ResourceType in ['ec2', 'lambda', 'ecs', 'eks']"
+      tags:
+        - key: "AutoScaling"
+          description: "Auto-scaling configuration"
+          allowed_values: ["enabled", "disabled", "scheduled"]
+          example: "enabled"
+          category: "operational"
+          
+        - key: "ScheduledShutdown"
+          description: "Automatic shutdown schedule"
+          format: "Cron expression or 'none'"
+          example: "0 18 * * 1-5"  # Weekdays at 6 PM
+          category: "cost-optimization"
+
+# TAG VALIDATION RULES
+validation_rules:
+  # Format validation
+  format_validation:
+    enabled: true
+    strict_mode: false  # Warning vs error for violations
+    
+  # Required tag validation
+  required_tag_validation:
+    enabled: true
+    enforcement_level: "error"  # error, warning, or info
+    
+  # Value validation
+  value_validation:
+    enabled: true
+    case_sensitive: false
+    
+  # Length validation
+  length_validation:
+    max_key_length: 128
+    max_value_length: 256
+    
+# COST ALLOCATION MAPPING
+cost_allocation:
+  primary_dimensions:
+    - "CostCenter"
+    - "Project" 
+    - "BusinessUnit"
+    - "Environment"
+    
+  secondary_dimensions:
+    - "Application"
+    - "TeamName"
+    - "BudgetCategory"
+    
+  reporting_hierarchy:
+    level_1: "BusinessUnit"
+    level_2: "CostCenter" 
+    level_3: "Project"
+    level_4: "Application"
+    
+# GOVERNANCE FRAMEWORK
+governance:
+  # Tag policies and enforcement
+  enforcement:
+    # Service Control Policies
+    scp_enforcement:
+      enabled: true
+      deny_untagged_resources: false  # Warning mode initially
+      required_tags: ["CostCenter", "Project", "Environment", "BusinessUnit"]
+      
+    # AWS Tag Policies
+    tag_policies:
+      enabled: true
+      case_enforcement: "lowercase"
+      allowed_values_enforcement: true
+      
+  # Monitoring and compliance
+  monitoring:
+    compliance_reporting:
+      frequency: "daily"
+      metrics:
+        - "percentage_tagged_resources"
+        - "cost_allocation_coverage"
+        - "tag_compliance_score"
+        
+    dashboards:
+      - name: "Tag Compliance Dashboard"
+        metrics: ["compliance_percentage", "untagged_resources", "cost_allocation"]
+      - name: "Cost Allocation Dashboard" 
+        metrics: ["cost_by_project", "cost_by_environment", "cost_by_team"]
+
+# IMPLEMENTATION GUIDELINES
+implementation:
+  rollout_phases:
+    phase_1:
+      description: "Required tags only"
+      duration: "30 days"
+      scope: "Production resources"
+      success_criteria: "90% compliance on required tags"
+      
+    phase_2:
+      description: "Add recommended tags"
+      duration: "60 days" 
+      scope: "All environments"
+      success_criteria: "85% compliance on recommended tags"
+      
+    phase_3:
+      description: "Full enforcement with conditional tags"
+      duration: "30 days"
+      scope: "All resources"
+      success_criteria: "95% overall compliance"
+      
+  tools_and_automation:
+    tagging_tools:
+      - "AWS Resource Groups Tag Editor"
+      - "AWS CloudFormation"
+      - "AWS CDK"
+      - "Terraform"
+      - "Custom automation scripts"
+      
+    validation_tools:
+      - "AWS Config Rules"
+      - "AWS Tag Policies"
+      - "Custom compliance scanners"
+      - "InvenTag AWS (for reporting)"
+      
+# EXCEPTION HANDLING
+exceptions:
+  # Resources that may be exempt from certain tag requirements
+  exempt_resource_types:
+    - resource_type: "aws::ec2::networkacl"
+      exempt_tags: ["Application"]  # Network ACLs may not map to specific applications
+      justification: "Network infrastructure component"
+      
+    - resource_type: "aws::iam::role"  
+      exempt_tags: ["Project"]  # IAM roles may be shared across projects
+      justification: "Shared security component"
+      
+  # Emergency tagging bypass
+  emergency_bypass:
+    enabled: true
+    approval_required: true
+    max_duration: "7 days"
+    notification_required: true
+    
+# TRAINING AND DOCUMENTATION
+training:
+  required_roles:
+    - "Cloud Engineers"
+    - "DevOps Engineers" 
+    - "Solution Architects"
+    - "Project Managers"
+    
+  training_materials:
+    - "AWS Tagging Best Practices"
+    - "Cost Allocation Strategy"
+    - "Compliance Requirements"
+    - "Tool Usage Guides"
+    
+  certification_requirements:
+    - "AWS Cloud Practitioner (recommended)"
+    - "Internal Tagging Certification (required)"
+
+# REVIEW AND EVOLUTION
+review_process:
+  review_frequency: "quarterly"
+  review_participants:
+    - "Cloud Center of Excellence"
+    - "Finance Team"
+    - "Engineering Leadership"
+    - "Compliance Team"
+    
+  evolution_criteria:
+    - "New business requirements"
+    - "Regulatory changes"
+    - "AWS service updates"
+    - "Cost optimization opportunities"

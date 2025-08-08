@@ -288,7 +288,7 @@ npm run docs:pipeline:test
 
 - **Asset Management**: Place images and files in `docs/assets/`:
   ```markdown
-  ![Architecture Diagram](../assets/architecture-overview.png)
+  ![Architecture Diagram](/img/architecture-overview.png)
   ```
 
 #### 4. **Testing Documentation Changes**

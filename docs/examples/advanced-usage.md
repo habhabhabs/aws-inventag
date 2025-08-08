@@ -511,4 +511,4 @@ aws s3 sync "$OUTPUT_DIR" s3://enterprise-reports-bucket/reports/$TIMESTAMP/
 - [CLI User Guide](../user-guides/cli-user-guide) - Complete CLI reference
 - [Configuration Examples](../user-guides/configuration-examples) - Basic configuration patterns
 - [Production Safety Guide](../user-guides/production-safety) - Security and compliance features
-- [CI/CD Integration](cicd-integration) - Automated deployment patterns
+- [CI/CD Integration](/examples/cicd-integration) - Automated deployment patterns

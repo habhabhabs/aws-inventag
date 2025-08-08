@@ -39,21 +39,50 @@ pip install -r requirements.txt
 - 🚀 **Multi-Account & CI/CD Ready** - Parallel processing across accounts with S3 upload, role assumption, and pipeline integration
 - ⚡ **Flexible Deployment Options** - Cross-platform support, interactive setup, credential management, and enterprise scaling
 
+## 🏛️ AWS Prescriptive Guidance Templates
+
+**NEW**: Professional templates following [AWS Prescriptive Guidance for Cost Allocation Tagging](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/)
+
+```bash
+# Generate compliance reports using AWS Prescriptive Guidance templates
+./inventag.sh --accounts-file accounts.json \
+  --create-excel --create-word \
+  --tag-mappings config/aws-prescriptive-guidance/tag-mappings.yaml \
+  --service-descriptions config/aws-prescriptive-guidance/service-descriptions.yaml \
+  --compliance-standard aws-prescriptive-guidance \
+  --enable-cost-analysis --enable-governance-reporting
+
+# Cost allocation focused reporting with financial governance
+./inventag.sh --accounts-file accounts.json \
+  --create-excel --create-word \
+  --tag-mappings config/aws-prescriptive-guidance/tag-mappings.yaml \
+  --cost-allocation-focus --financial-governance \
+  --budget-tracking --chargeback-reporting
+```
+
+**📋 Available AWS Prescriptive Guidance Templates:**
+- **[Tagging Dictionary](/files/tagging-dictionary.yaml)** - Comprehensive tag definitions with cost allocation focus
+- **[Service Descriptions](/files/service-descriptions.yaml)** - Enhanced service descriptions with cost factors
+- **[Tag Mappings](/files/tag-mappings.yaml)** - Financial governance optimized column mappings
+- **Cost Allocation Hierarchy** - Multi-level business unit → cost center → project → application
+- **Compliance Frameworks** - SOC 2, PCI, HIPAA, GDPR integration
+- **Governance Automation** - SCP enforcement, tag policies, monitoring dashboards
+
 ## 💼 Enterprise Examples
 
 ```bash
 # Multi-account BOM with comprehensive analysis and compliance
 ./inventag.sh --accounts-file accounts.json \
   --create-excel --create-word \
-  --tag-mappings config/defaults/mappings/tag_to_column_mappings_example.yaml \
-  --service-descriptions config/defaults/services/service_descriptions_example.yaml \
+  --tag-mappings config/aws-prescriptive-guidance/tag-mappings.yaml \
+  --service-descriptions config/aws-prescriptive-guidance/service-descriptions.yaml \
   --enable-network-analysis --enable-security-analysis --enable-cost-analysis \
   --compliance-standard soc2 --audit-output compliance-report.json
 
 # Interactive multi-account setup with state management
 ./inventag.sh --accounts-prompt \
   --create-excel --create-google-docs \
-  --tag-mappings config/defaults/mappings/tag_to_column_mappings_example.yaml \
+  --tag-mappings config/aws-prescriptive-guidance/tag-mappings.yaml \
   --enable-state-management --generate-changelog \
   --per-account-reports --verbose
 
@@ -109,15 +138,15 @@ InvenTag includes enterprise-grade security features:
 - **Risk Assessment** - Automated security risk evaluation
 - **Production Safety** - Real-time monitoring and validation
 
-See [Production Safety Guide](user-guides/production-safety) for complete details.
+See [Production Safety Guide](/user-guides/production-safety) for complete details.
 
 ## 🚀 Getting Started
 
 New to InvenTag? Start here to get up and running quickly.
 
-- **[Introduction](getting-started/introduction)** - Overview of InvenTag and its key features
-- **[Installation](getting-started/installation)** - How to install and set up InvenTag
-- **[Quick Start Guide](getting-started/quick-start)** - Get started in minutes with basic examples
+- **[Introduction](/getting-started/introduction)** - Overview of InvenTag and its key features
+- **[Installation](/getting-started/installation)** - How to install and set up InvenTag
+- **[Quick Start Guide](/getting-started/quick-start)** - Get started in minutes with basic examples
 
 ## 📖 User Guides
 
