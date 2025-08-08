@@ -4,12 +4,15 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import styles from './styles.module.css';
 
-// Import version dynamically
+// Import version from main branch (ensured by GitHub Action dependency)
 let versionInfo;
 try {
+  // This requires version.json to be updated in main branch first
+  // GitHub Action should fail if version.json is not available
   versionInfo = require('../../../../version.json');
 } catch (error) {
-  versionInfo = { version: '4.0.0' }; // fallback
+  // This fallback should cause build failure in production
+  throw new Error('version.json not found - ensure main branch version.json is updated before building docs');
 }
 
 function HomepageHero() {

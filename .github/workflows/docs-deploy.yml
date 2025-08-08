@@ -6,12 +6,14 @@ name: Documentation Deployment
     paths:
       - 'docs/**'
       - 'website/**'
+      - 'version.json'
       - '.github/workflows/docs-deploy.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'docs/**'
       - 'website/**'
+      - 'version.json'
       - '.github/workflows/docs-deploy.yml'
   workflow_dispatch: # Allow manual triggering
 
@@ -49,6 +51,35 @@ jobs:
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v4
+
+      - name: Verify version.json dependency
+        run: |
+          echo "Verifying version.json is available from main branch..."
+          
+          # Check if version.json exists and is valid
+          if [ ! -f "version.json" ]; then
+            echo "❌ Error: version.json not found in main branch"
+            echo "The documentation site requires version.json to be updated in main branch first"
+            echo "Please ensure the release workflow has completed before building docs"
+            exit 1
+          fi
+          
+          # Validate version.json format
+          if ! python3 -m json.tool version.json > /dev/null 2>&1; then
+            echo "❌ Error: version.json is not valid JSON"
+            exit 1
+          fi
+          
+          # Extract version for validation
+          VERSION=$(python3 -c "import json; print(json.load(open('version.json'))['version'])" 2>/dev/null || echo "")
+          
+          if [ -z "$VERSION" ]; then
+            echo "❌ Error: Could not extract version from version.json"
+            exit 1
+          fi
+          
+          echo "✅ Found valid version.json with version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_ENV
 
       - name: Install dependencies
         working-directory: ./website
