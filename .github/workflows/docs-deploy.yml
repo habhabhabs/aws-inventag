@@ -83,9 +83,180 @@ jobs:
           echo "✅ Found valid version.json with version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_ENV
 
+      - name: Install Python for SBOM generation
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generate SBOM for documentation inclusion
+        shell: bash
+        run: |
+          echo "🔒 Generating SBOM for Documentation Integration"
+          echo "==============================================="
+          
+          # Install SBOM generation tools
+          pip install cyclonedx-bom syft-py cyclonedx-python-lib
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          
+          # Create docs security directory
+          mkdir -p docs/security/{current,sbom,monitoring}
+          
+          # Generate current SBOM
+          echo "📄 Generating Software Bill of Materials..."
+          syft . -o json=docs/security/sbom/current-sbom.json
+          syft . -o cyclonedx-json=docs/security/sbom/current-sbom-cyclonedx.json
+          syft . -o spdx-json=docs/security/sbom/current-sbom-spdx.json
+          
+          # Generate Python-specific SBOM
+          if [ -f "requirements.txt" ]; then
+            cyclonedx-py -r requirements.txt -o docs/security/sbom/python-sbom.json --format json
+            cyclonedx-py -r requirements.txt -o docs/security/sbom/python-sbom.xml --format xml
+          fi
+          
+          # Generate Node.js SBOM for website
+          cd website
+          npm install -g @cyclonedx/cyclonedx-npm
+          if [ -f "package.json" ]; then
+            npm ci --prefer-offline --no-audit
+            cyclonedx-npm --output-file ../docs/security/sbom/nodejs-website-sbom.json || true
+          fi
+          cd ..
+          
+          # Create SBOM summary for documentation
+          cat > docs/security/current/sbom-summary.md << EOF
+# Current SBOM Summary
+
+**Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')  
+**Repository**: ${{ github.repository }}  
+**Branch**: ${{ github.ref_name }}  
+**Commit**: ${{ github.sha }}
+
+## Components Overview
+
+### Repository-wide SBOM
+- **File**: [current-sbom.json](../sbom/current-sbom.json)
+- **Format**: Syft JSON
+- **Components**: $(jq '.artifacts | length' docs/security/sbom/current-sbom.json 2>/dev/null || echo "Unknown")
+
+### Python Dependencies
+$(if [ -f "docs/security/sbom/python-sbom.json" ]; then
+  echo "- **File**: [python-sbom.json](../sbom/python-sbom.json)"
+  echo "- **Components**: $(jq '.components | length' docs/security/sbom/python-sbom.json 2>/dev/null || echo "Unknown")"
+else
+  echo "- **Status**: No requirements.txt found"
+fi)
+
+### Node.js Dependencies (Website)
+$(if [ -f "docs/security/sbom/nodejs-website-sbom.json" ]; then
+  echo "- **File**: [nodejs-website-sbom.json](../sbom/nodejs-website-sbom.json)"  
+  echo "- **Components**: $(jq '.components | length' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null || echo "Unknown")"
+else
+  echo "- **Status**: No Node.js dependencies detected"
+fi)
+
+## SBOM Formats Available
+
+- **JSON (Syft)**: Machine-readable format for automated analysis
+- **CycloneDX**: Industry-standard SBOM format for supply chain security
+- **SPDX**: Software Package Data Exchange format for compliance
+- **XML**: Human and machine-readable structured format
+
+## Integration Status
+
+This SBOM is automatically generated and integrated into the documentation build process, ensuring:
+- Up-to-date dependency tracking
+- Security transparency
+- Compliance documentation
+- Version-specific component tracking
+- Supply chain security monitoring
+
+## Usage
+
+Download the SBOM files to:
+- Analyze dependencies and licenses
+- Track security vulnerabilities
+- Ensure compliance requirements
+- Monitor supply chain security
+- Compare component changes between versions
+
+---
+
+*This SBOM summary is automatically updated during documentation builds.*
+EOF
+          
+          # Create security index page
+          cat > docs/security/index.md << EOF
+---
+title: Security Documentation
+description: Security information, SBOM, and vulnerability tracking for InvenTag
+sidebar_position: 1
+---
+
+# Security Documentation
+
+This section contains comprehensive security information for InvenTag, including Software Bill of Materials (SBOM), vulnerability tracking, and security monitoring.
+
+## 📋 Current Security Status
+
+- **Last Updated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+- **Build**: ${{ github.sha }}
+- **Security Scanning**: Automated via GitHub Actions
+- **SBOM Generation**: Integrated with documentation build
+
+## 📦 Software Bill of Materials (SBOM)
+
+Our SBOM provides complete transparency into all components and dependencies:
+
+- [SBOM Summary](current/sbom-summary.md) - Overview of all components
+- [Current SBOM Files](sbom/) - Machine-readable SBOM formats
+
+### Available Formats
+
+| Format | Use Case | File |
+|--------|----------|------|
+| Syft JSON | Automated analysis | [current-sbom.json](sbom/current-sbom.json) |
+| CycloneDX | Industry standard | [current-sbom-cyclonedx.json](sbom/current-sbom-cyclonedx.json) |
+| SPDX | Compliance | [current-sbom-spdx.json](sbom/current-sbom-spdx.json) |
+| Python XML | Python-specific | [python-sbom.xml](sbom/python-sbom.xml) |
+
+## 🔒 Security Monitoring
+
+InvenTag implements comprehensive security monitoring:
+
+- **Automated Scanning**: Multi-language vulnerability detection
+- **Dependency Tracking**: Continuous monitoring of dependencies
+- **SBOM Integration**: Real-time component tracking
+- **Security Alerts**: Automated issue creation for high-severity findings
+
+## 📊 Security Workflows
+
+Our security infrastructure includes:
+
+1. **SBOM Generation**: Automated during documentation builds
+2. **CVE Tracking**: Comprehensive vulnerability analysis
+3. **Security Scanning**: Python, JavaScript, and infrastructure analysis
+4. **Documentation Integration**: Security information included in docs
+
+## 🛡️ Compliance
+
+The SBOM and security documentation support:
+- Supply chain security requirements
+- Vulnerability disclosure policies
+- Dependency license compliance
+- Security audit requirements
+
+---
+
+*Security documentation is automatically maintained and updated with each build.*
+EOF
+          
+          echo "✅ SBOM generated and integrated into documentation structure"
+          echo "📊 Documentation now includes current security and dependency information"
+
       - name: Install dependencies
         working-directory: ./website
         run: |
+          echo "📦 Installing website dependencies (after SBOM generation)..."
           npm ci --prefer-offline --no-audit
 
       - name: Validate documentation structure

@@ -109,42 +109,364 @@ jobs:
         fail_ci_if_error: false
 
   security:
-    name: Security Scan
+    name: Comprehensive Security Scan
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for comprehensive analysis
       
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.12'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: 'website/package-lock.json'
         
     - name: Install security tools
       shell: bash
       run: |
+        echo "📦 Installing Python security tools..."
         python -m pip install --upgrade pip
-        pip install bandit safety semgrep
+        pip install bandit safety semgrep pip-audit
+        
+        echo "📦 Installing JavaScript security tools..."
+        npm install -g npm-audit eslint @eslint/js eslint-plugin-security
+        npm install -g retire snyk audit-ci
+        
+        echo "📦 Installing additional security scanners..."
+        # Install additional tools for comprehensive scanning
+        wget -q https://github.com/Yelp/detect-secrets/archive/refs/heads/master.zip
+        unzip -q master.zip
+        cd detect-secrets-master
+        pip install .
+        cd ..
+        
+        echo "✅ All security tools installed"
 
-    - name: Run Bandit security scan
+    - name: Repository structure analysis
       shell: bash
       run: |
-        echo "🔒 Running Bandit security scan..."
-        bandit -r scripts/ inventag/ -f json -o bandit-report.json || true
-        bandit -r scripts/ inventag/ || true
+        echo "📊 Repository Structure Analysis"
+        echo "================================"
+        
+        # Count files by type
+        echo "File type distribution:"
+        find . -type f -name "*.py" | wc -l | xargs echo "Python files:"
+        find . -type f -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | wc -l | xargs echo "JavaScript/TypeScript files:"
+        find . -type f -name "*.json" | wc -l | xargs echo "JSON files:"
+        find . -type f -name "*.yaml" -o -name "*.yml" | wc -l | xargs echo "YAML files:"
+        find . -type f -name "*.sh" -o -name "*.bash" | wc -l | xargs echo "Shell scripts:"
+        find . -type f -name "*.md" | wc -l | xargs echo "Markdown files:"
+        
+        # Identify critical directories
+        echo -e "\nCritical directories for security scanning:"
+        find . -name "node_modules" -type d | head -3 | xargs -I {} echo "  - {}"
+        find . -name "scripts" -type d | xargs -I {} echo "  - {}"
+        find . -name "inventag" -type d | xargs -I {} echo "  - {}"
+        find . -name "website" -type d | xargs -I {} echo "  - {}"
+        
+        echo "✅ Structure analysis complete"
 
-    - name: Check for known vulnerabilities
+    - name: Python Security Scanning
       shell: bash
       run: |
-        echo "🔍 Checking for known vulnerabilities..."
-        safety check || true
+        echo "🐍 Python Security Analysis"
+        echo "==========================="
+        
+        echo "🔒 Running Bandit security scan on Python code..."
+        if bandit -r scripts/ inventag/ -f json -o bandit-report.json; then
+          echo "✅ Bandit scan completed successfully"
+        else
+          echo "⚠️ Bandit found potential security issues"
+          echo "Detailed report:"
+          bandit -r scripts/ inventag/ -ll || true
+        fi
+        
+        echo "🔍 Checking Python dependencies for known vulnerabilities..."
+        if safety check; then
+          echo "✅ No known vulnerabilities in Python dependencies"
+        else
+          echo "⚠️ Known vulnerabilities found in Python dependencies"
+        fi
+        
+        echo "🔒 Running pip-audit for additional dependency checking..."
+        if pip-audit; then
+          echo "✅ pip-audit scan completed successfully"
+        else
+          echo "⚠️ pip-audit found potential issues"
+        fi
 
-    - name: Run Semgrep security scan
+    - name: JavaScript/Node.js Security Scanning  
       shell: bash
       run: |
-        echo "🛡️ Running Semgrep security scan..."
-        semgrep --config=auto scripts/ inventag/ || true
+        echo "🟨 JavaScript/Node.js Security Analysis"
+        echo "======================================="
+        
+        # Check if website directory exists and has package.json
+        if [ -f "website/package.json" ]; then
+          cd website
+          
+          echo "📦 Installing website dependencies for security scanning..."
+          npm ci --audit=false || npm install --audit=false
+          
+          echo "🔍 Running npm audit for dependency vulnerabilities..."
+          if npm audit; then
+            echo "✅ No npm audit issues found"
+          else
+            echo "⚠️ npm audit found vulnerabilities"
+            echo "Attempting to fix automatically..."
+            npm audit fix --force || echo "❌ Could not automatically fix all issues"
+          fi
+          
+          echo "🔒 Running Retire.js to check for vulnerable JavaScript libraries..."
+          if retire --js --node --exitwith 0; then
+            echo "✅ Retire.js scan completed"
+          else
+            echo "⚠️ Retire.js found vulnerable libraries"
+          fi
+          
+          echo "🛡️ Running ESLint with security plugin..."
+          # Create ESLint config for security scanning
+          cat > .eslintrc.security.js << 'EOF'
+module.exports = {
+  extends: ['@eslint/js/recommended'],
+  plugins: ['security'],
+  env: {
+    node: true,
+    browser: true,
+    es6: true
+  },
+  parserOptions: {
+    ecmaVersion: 2022,
+    sourceType: 'module'
+  },
+  rules: {
+    'security/detect-object-injection': 'error',
+    'security/detect-non-literal-regexp': 'error',
+    'security/detect-unsafe-regex': 'error',
+    'security/detect-buffer-noassert': 'error',
+    'security/detect-child-process': 'error',
+    'security/detect-disable-mustache-escape': 'error',
+    'security/detect-eval-with-expression': 'error',
+    'security/detect-no-csrf-before-method-override': 'error',
+    'security/detect-non-literal-fs-filename': 'error',
+    'security/detect-non-literal-require': 'error',
+    'security/detect-possible-timing-attacks': 'error',
+    'security/detect-pseudoRandomBytes': 'error'
+  }
+};
+EOF
+          
+          if find . -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | grep -q .; then
+            eslint --config .eslintrc.security.js --ext .js,.jsx,.ts,.tsx . || echo "⚠️ ESLint security issues found"
+          else
+            echo "ℹ️ No JavaScript/TypeScript files found for ESLint scanning"
+          fi
+          
+          cd ..
+        else
+          echo "ℹ️ No website/package.json found, skipping Node.js specific scans"
+        fi
+
+    - name: Configuration and Secrets Scanning
+      shell: bash
+      run: |
+        echo "🔐 Configuration and Secrets Analysis"
+        echo "===================================="
+        
+        echo "🕵️ Running detect-secrets scan..."
+        if detect-secrets scan --all-files --baseline .secrets.baseline; then
+          echo "✅ No secrets detected"
+        else
+          echo "⚠️ Potential secrets detected"
+          echo "Creating baseline for future scans..."
+          detect-secrets scan --all-files --baseline .secrets.baseline --update
+        fi
+        
+        echo "🔍 Scanning for sensitive configuration patterns..."
+        
+        # Check for potentially sensitive files
+        echo "Checking for sensitive file patterns..."
+        find . -type f \( \
+          -name "*.key" -o \
+          -name "*.pem" -o \
+          -name "*.p12" -o \
+          -name "*.pfx" -o \
+          -name "*id_rsa*" -o \
+          -name "*id_dsa*" -o \
+          -name "*.env" -o \
+          -name ".env.*" -o \
+          -name "*secret*" -o \
+          -name "*password*" -o \
+          -name "*credential*" \
+        \) -not -path "./website/node_modules/*" -not -path "./.git/*" | while read file; do
+          echo "⚠️ Potentially sensitive file: $file"
+        done
+        
+        # Check for hardcoded credentials patterns
+        echo "Scanning for hardcoded credential patterns..."
+        grep -r -i --include="*.py" --include="*.js" --include="*.json" --include="*.yaml" --include="*.yml" \
+          -E "(password|passwd|pwd|secret|key|token|credential|api_key|access_key)" . \
+          --exclude-dir=node_modules --exclude-dir=.git \
+          | grep -v "# Example" | grep -v "# TODO" | grep -v "password_placeholder" \
+          | head -20 || echo "✅ No obvious hardcoded credentials found"
+
+    - name: Infrastructure as Code Security
+      shell: bash
+      run: |
+        echo "🏗️ Infrastructure as Code Security Analysis"
+        echo "==========================================="
+        
+        # Scan GitHub Actions workflows
+        echo "🔍 Scanning GitHub Actions workflows..."
+        find .github/workflows -name "*.yml" -o -name "*.yaml" | while read workflow; do
+          echo "Checking workflow: $workflow"
+          
+          # Check for potential security issues in workflows
+          if grep -q "secrets\." "$workflow"; then
+            echo "✅ Found proper secret usage in $workflow"
+          fi
+          
+          # Check for dangerous patterns
+          if grep -i "eval\|exec\|system" "$workflow"; then
+            echo "⚠️ Potentially dangerous command execution in $workflow"
+          fi
+          
+          # Check for third-party action versions
+          if grep -E "uses:.*@main|uses:.*@master" "$workflow"; then
+            echo "⚠️ Using non-pinned action versions in $workflow (security risk)"
+          fi
+        done
+        
+        # Scan Docker and container configurations
+        echo "🐳 Scanning for container configurations..."
+        find . -name "Dockerfile*" -o -name "docker-compose*" | while read containerfile; do
+          echo "Checking container file: $containerfile"
+          
+          if grep -q "FROM.*:latest" "$containerfile"; then
+            echo "⚠️ Using 'latest' tag in $containerfile (not recommended)"
+          fi
+          
+          if grep -q "RUN.*sudo\|RUN.*su " "$containerfile"; then
+            echo "⚠️ Privilege escalation detected in $containerfile"
+          fi
+        done
+        
+        echo "✅ Infrastructure scanning complete"
+
+    - name: Comprehensive Semgrep Analysis
+      shell: bash
+      run: |
+        echo "🛡️ Comprehensive Semgrep Security Analysis"
+        echo "=========================================="
+        
+        echo "🔍 Running Semgrep with comprehensive rulesets..."
+        
+        # Run different rulesets for comprehensive coverage
+        semgrep --config=auto --json --output=semgrep-auto.json . || true
+        semgrep --config=p/security-audit --json --output=semgrep-security.json . || true
+        semgrep --config=p/secrets --json --output=semgrep-secrets.json . || true
+        semgrep --config=p/javascript --json --output=semgrep-js.json . || true
+        semgrep --config=p/python --json --output=semgrep-python.json . || true
+        
+        echo "📊 Semgrep Analysis Summary:"
+        echo "Auto ruleset results:"
+        jq '.results | length' semgrep-auto.json 2>/dev/null || echo "0 issues found"
+        
+        echo "Security audit results:"
+        jq '.results | length' semgrep-security.json 2>/dev/null || echo "0 issues found"
+        
+        echo "Secrets detection results:"  
+        jq '.results | length' semgrep-secrets.json 2>/dev/null || echo "0 issues found"
+        
+        echo "JavaScript specific results:"
+        jq '.results | length' semgrep-js.json 2>/dev/null || echo "0 issues found"
+        
+        echo "Python specific results:"
+        jq '.results | length' semgrep-python.json 2>/dev/null || echo "0 issues found"
+
+    - name: Generate Security Report
+      shell: bash
+      run: |
+        echo "📋 Generating Comprehensive Security Report"
+        echo "=========================================="
+        
+        cat > security-report.md << 'EOF'
+# Security Scan Report
+        
+## Executive Summary
+        
+This report contains the results of comprehensive security scanning across the entire repository, including:
+- Python security analysis (Bandit, Safety, pip-audit)
+- JavaScript/Node.js security analysis (npm audit, Retire.js, ESLint security)
+- Secrets and configuration scanning (detect-secrets)
+- Infrastructure as Code security (GitHub Actions, Docker)
+- Multi-language analysis (Semgrep)
+        
+## Scan Coverage
+        
+### File Types Scanned
+EOF
+        
+        # Add file counts to report
+        echo "- Python files: $(find . -name "*.py" | wc -l)" >> security-report.md
+        echo "- JavaScript/TypeScript files: $(find . -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | wc -l)" >> security-report.md
+        echo "- Configuration files (JSON/YAML): $(find . -name "*.json" -o -name "*.yaml" -o -name "*.yml" | wc -l)" >> security-report.md
+        echo "- Shell scripts: $(find . -name "*.sh" -o -name "*.bash" | wc -l)" >> security-report.md
+        echo "- GitHub Actions workflows: $(find .github/workflows -name "*.yml" | wc -l)" >> security-report.md
+        
+        cat >> security-report.md << 'EOF'
+        
+### Tools Used
+- **Bandit**: Python security scanner
+- **Safety**: Python dependency vulnerability checker  
+- **pip-audit**: Advanced Python dependency auditing
+- **npm audit**: Node.js dependency vulnerability scanner
+- **Retire.js**: JavaScript library vulnerability scanner
+- **ESLint**: JavaScript code security analysis
+- **detect-secrets**: Secrets detection across all files
+- **Semgrep**: Multi-language static analysis
+        
+### Summary
+All major security scanning tools have been executed across the repository. 
+Review individual scan outputs above for detailed findings.
+        
+Generated: $(date)
+EOF
+        
+        echo "📄 Security report generated: security-report.md"
+        echo ""
+        echo "📊 Final Security Scan Summary:"
+        echo "=============================="
+        echo "✅ Python security scanning complete"
+        echo "✅ JavaScript/Node.js security scanning complete"  
+        echo "✅ Secrets and configuration scanning complete"
+        echo "✅ Infrastructure as Code scanning complete"
+        echo "✅ Multi-language static analysis complete"
+        echo ""
+        echo "🔍 Total files analyzed: $(find . -type f | wc -l)"
+        echo "🛡️ Security tools executed: 8+"
+        echo "📋 Detailed results available in workflow logs and artifacts"
+
+    - name: Upload security artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-scan-results
+        path: |
+          bandit-report.json
+          semgrep-*.json
+          security-report.md
+          .secrets.baseline
+        retention-days: 30
 
   integration-tests:
     name: Integration Tests

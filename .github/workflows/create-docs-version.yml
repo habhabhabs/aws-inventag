@@ -34,6 +34,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'website/package-lock.json'
 
+      - name: Setup Python for SBOM generation
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Validate version input
         id: validate
         run: |
@@ -110,6 +115,87 @@ jobs:
               echo "✅ Found: $file"
             fi
           done
+
+      - name: Generate version-specific SBOM
+        run: |
+          VERSION="${{ steps.validate.outputs.version }}"
+          echo "🔒 Generating SBOM for Version $VERSION"
+          echo "======================================"
+          
+          # Install SBOM generation tools
+          pip install cyclonedx-bom syft-py cyclonedx-python-lib
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+          
+          # Create version-specific security directory
+          mkdir -p "docs/security/versions/$VERSION"
+          
+          # Generate SBOM for this specific version
+          echo "📄 Generating version-specific SBOM..."
+          syft . -o json="docs/security/versions/$VERSION/sbom-$VERSION.json"
+          syft . -o cyclonedx-json="docs/security/versions/$VERSION/sbom-$VERSION-cyclonedx.json"
+          
+          # Generate Python SBOM if requirements exist
+          if [ -f "requirements.txt" ]; then
+            cyclonedx-py -r requirements.txt -o "docs/security/versions/$VERSION/python-sbom-$VERSION.json" --format json
+          fi
+          
+          # Generate Node.js SBOM for website
+          cd website
+          npm install -g @cyclonedx/cyclonedx-npm
+          if [ -f "package.json" ]; then
+            npm ci --prefer-offline --no-audit
+            cyclonedx-npm --output-file "../docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" || true
+          fi
+          cd ..
+          
+          # Create version-specific SBOM summary
+          cat > "docs/security/versions/$VERSION/README.md" << EOF
+# SBOM for Version $VERSION
+
+**Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')  
+**Version**: $VERSION  
+**Repository**: ${{ github.repository }}  
+**Git Tag**: $VERSION
+
+## Version-Specific Components
+
+This SBOM was generated at the time of version $VERSION creation and represents the exact components and dependencies included in this release.
+
+### Available SBOM Files
+
+- [sbom-$VERSION.json](sbom-$VERSION.json) - Syft JSON format
+- [sbom-$VERSION-cyclonedx.json](sbom-$VERSION-cyclonedx.json) - CycloneDX format
+$(if [ -f "docs/security/versions/$VERSION/python-sbom-$VERSION.json" ]; then
+  echo "- [python-sbom-$VERSION.json](python-sbom-$VERSION.json) - Python dependencies"
+fi)
+$(if [ -f "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" ]; then
+  echo "- [nodejs-website-sbom-$VERSION.json](nodejs-website-sbom-$VERSION.json) - Node.js website dependencies"
+fi)
+
+## Component Summary
+
+- **Repository Components**: $(jq '.artifacts | length' "docs/security/versions/$VERSION/sbom-$VERSION.json" 2>/dev/null || echo "Unknown")
+$(if [ -f "docs/security/versions/$VERSION/python-sbom-$VERSION.json" ]; then
+  echo "- **Python Components**: $(jq '.components | length' "docs/security/versions/$VERSION/python-sbom-$VERSION.json" 2>/dev/null || echo "Unknown")"
+fi)
+$(if [ -f "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" ]; then
+  echo "- **Node.js Components**: $(jq '.components | length' "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" 2>/dev/null || echo "Unknown")"
+fi)
+
+## Version Tracking
+
+This SBOM enables:
+- Supply chain security tracking for this specific version
+- Vulnerability analysis at the version level
+- License compliance for this release
+- Change tracking between versions
+
+---
+
+*This SBOM is part of InvenTag's comprehensive security documentation and was generated during the version creation process.*
+EOF
+          
+          echo "✅ Version-specific SBOM generated for $VERSION"
 
       - name: Create documentation version
         working-directory: ./website
@@ -247,18 +333,21 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # Add all version-related changes
+          # Add all version-related changes including SBOM
           git add website/versioned_docs/
           git add website/versioned_sidebars/
           git add website/versions.json
           git add website/docusaurus.config.js
+          git add docs/security/versions/
           
           # Create commit
-          git commit -m "docs: create documentation version $VERSION
+          git commit -m "docs: create documentation version $VERSION with SBOM
 
           - Add versioned documentation for $VERSION
+          - Generate version-specific SBOM and security documentation
           - Update configuration for next development cycle
           - Generated $(find website/versioned_docs/version-$VERSION -name "*.md" | wc -l) documentation files
+          - Generated version-specific security documentation
           
           🤖 Generated with GitHub Actions"
           

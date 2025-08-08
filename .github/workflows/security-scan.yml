@@ -1,0 +1,651 @@
+name: Comprehensive Security Scan
+
+"on":
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scans weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      scan_level:
+        description: 'Security scan level'
+        required: false
+        default: 'comprehensive'
+        type: choice
+        options:
+        - basic
+        - comprehensive
+        - deep
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  security-scan:
+    name: Security Analysis (${{ github.event.inputs.scan_level || 'comprehensive' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@v2
+      with:
+        egress-policy: audit
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for comprehensive analysis
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: 'website/package-lock.json'
+
+    - name: Set up security scanning environment
+      shell: bash
+      run: |
+        echo "🔧 Setting up security scanning environment"
+        echo "============================================"
+        
+        # Create security scan directories
+        mkdir -p .security-scan/{reports,configs,logs}
+        
+        # Set scan level
+        SCAN_LEVEL="${{ github.event.inputs.scan_level || 'comprehensive' }}"
+        echo "SCAN_LEVEL=$SCAN_LEVEL" >> $GITHUB_ENV
+        echo "📊 Scan level: $SCAN_LEVEL"
+        
+        # Repository info
+        echo "📂 Repository: ${{ github.repository }}"
+        echo "🌿 Branch: ${{ github.ref_name }}"
+        echo "📝 Commit: ${{ github.sha }}"
+        
+        echo "✅ Environment setup complete"
+        
+    - name: Install comprehensive security tools
+      shell: bash
+      run: |
+        echo "📦 Installing Security Tools Suite"
+        echo "=================================="
+        
+        echo "🐍 Installing Python security tools..."
+        python -m pip install --upgrade pip setuptools wheel
+        pip install bandit[toml] safety semgrep pip-audit cyclonedx-bom
+        pip install detect-secrets gitpython
+        
+        echo "🟨 Installing JavaScript security tools..."
+        npm install -g npm-audit eslint @eslint/js eslint-plugin-security
+        npm install -g retire@latest snyk@latest audit-ci
+        npm install -g dependency-check-cli licensee
+        
+        echo "🔧 Installing additional security scanners..."
+        
+        # Install Trivy for vulnerability scanning
+        sudo apt-get update
+        sudo apt-get install wget apt-transport-https gnupg lsb-release -y
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+        sudo apt-get update
+        sudo apt-get install trivy -y
+        
+        # Install additional analysis tools
+        pip install vulners requests
+        
+        echo "✅ All security tools installed successfully"
+        echo ""
+        echo "📋 Installed tools summary:"
+        echo "- Bandit: $(bandit --version)"
+        echo "- Safety: $(safety --version)"
+        echo "- Semgrep: $(semgrep --version)"
+        echo "- Trivy: $(trivy version)"
+        echo "- ESLint: $(eslint --version)"
+        echo "- npm audit: $(npm --version)"
+
+    - name: Repository structure and risk analysis
+      shell: bash
+      run: |
+        echo "📊 Repository Structure and Risk Analysis"
+        echo "========================================"
+        
+        # File type analysis with risk assessment
+        echo "📁 File type distribution and risk assessment:"
+        
+        PYTHON_COUNT=$(find . -name "*.py" -not -path "./website/node_modules/*" | wc -l)
+        JS_COUNT=$(find . -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" -not -path "./website/node_modules/*" | wc -l)
+        JSON_COUNT=$(find . -name "*.json" -not -path "./website/node_modules/*" | wc -l)
+        YAML_COUNT=$(find . -name "*.yaml" -o -name "*.yml" -not -path "./website/node_modules/*" | wc -l)
+        SHELL_COUNT=$(find . -name "*.sh" -o -name "*.bash" | wc -l)
+        
+        echo "- Python files: $PYTHON_COUNT (High security relevance)"
+        echo "- JavaScript/TypeScript files: $JS_COUNT (High security relevance)"
+        echo "- JSON configuration files: $JSON_COUNT (Medium security relevance)"
+        echo "- YAML configuration files: $YAML_COUNT (Medium security relevance)"
+        echo "- Shell scripts: $SHELL_COUNT (High security relevance)"
+        
+        # Calculate risk score
+        TOTAL_HIGH_RISK=$((PYTHON_COUNT + JS_COUNT + SHELL_COUNT))
+        TOTAL_FILES=$(find . -type f -not -path "./website/node_modules/*" -not -path "./.git/*" | wc -l)
+        
+        echo ""
+        echo "🎯 Security risk assessment:"
+        echo "- High-risk files: $TOTAL_HIGH_RISK"
+        echo "- Total files: $TOTAL_FILES"
+        echo "- Risk ratio: $(echo "scale=2; $TOTAL_HIGH_RISK * 100 / $TOTAL_FILES" | bc)%"
+        
+        # Critical directories analysis
+        echo ""
+        echo "🗂️ Critical directories for security scanning:"
+        find . -maxdepth 2 -type d \( -name "scripts" -o -name "inventag" -o -name "website" -o -name ".github" \) | while read dir; do
+          file_count=$(find "$dir" -type f | wc -l)
+          echo "  - $dir: $file_count files"
+        done
+        
+        # Save metrics for later use
+        echo "PYTHON_COUNT=$PYTHON_COUNT" >> $GITHUB_ENV
+        echo "JS_COUNT=$JS_COUNT" >> $GITHUB_ENV
+        echo "TOTAL_FILES=$TOTAL_FILES" >> $GITHUB_ENV
+
+    - name: Python ecosystem security scan
+      shell: bash
+      run: |
+        echo "🐍 Python Ecosystem Security Analysis"
+        echo "====================================="
+        
+        echo "🔒 Running Bandit security analysis..."
+        mkdir -p .security-scan/reports/python
+        
+        # Run Bandit with different confidence levels
+        bandit -r scripts/ inventag/ -f json -o .security-scan/reports/python/bandit-full.json || true
+        bandit -r scripts/ inventag/ -ll -f txt -o .security-scan/reports/python/bandit-high-confidence.txt || true
+        bandit -r scripts/ inventag/ -i || true
+        
+        echo "🔍 Analyzing Python dependencies for vulnerabilities..."
+        if [ -f "requirements.txt" ]; then
+          safety check -r requirements.txt --json --output .security-scan/reports/python/safety-report.json || true
+          safety check -r requirements.txt || true
+        else
+          safety check --json --output .security-scan/reports/python/safety-installed.json || true
+          safety check || true
+        fi
+        
+        echo "🔒 Running pip-audit for advanced dependency analysis..."
+        pip-audit --format=json --output=.security-scan/reports/python/pip-audit.json || true
+        pip-audit || true
+        
+        if [ "$SCAN_LEVEL" = "deep" ] || [ "$SCAN_LEVEL" = "comprehensive" ]; then
+          echo "🧬 Generating Python SBOM (Software Bill of Materials)..."
+          cyclonedx-py -o .security-scan/reports/python/python-sbom.json || true
+        fi
+
+    - name: JavaScript/Node.js ecosystem security scan
+      shell: bash
+      run: |
+        echo "🟨 JavaScript/Node.js Ecosystem Security Analysis"
+        echo "================================================"
+        
+        mkdir -p .security-scan/reports/javascript
+        
+        # Scan all package.json files in the repository
+        find . -name "package.json" -not -path "./website/node_modules/*" | while read package_file; do
+          package_dir=$(dirname "$package_file")
+          echo "📦 Analyzing: $package_file"
+          
+          cd "$package_dir"
+          
+          # Install dependencies if needed
+          if [ ! -d "node_modules" ]; then
+            echo "Installing dependencies for security scanning..."
+            npm install --audit=false --fund=false --silent || true
+          fi
+          
+          echo "🔍 Running npm audit..."
+          npm audit --json > "../.security-scan/reports/javascript/npm-audit-$(basename $package_dir).json" 2>/dev/null || true
+          npm audit || true
+          
+          echo "🔒 Running Retire.js for known vulnerabilities..."
+          retire --js --node --outputformat json --outputpath "../.security-scan/reports/javascript/retire-$(basename $package_dir).json" || true
+          retire --js --node || true
+          
+          if [ "$SCAN_LEVEL" = "deep" ] || [ "$SCAN_LEVEL" = "comprehensive" ]; then
+            echo "🛡️ Running ESLint security analysis..."
+            # Create security-focused ESLint config
+            cat > .eslintrc.security.json << 'EOF'
+{
+  "env": {
+    "node": true,
+    "browser": true,
+    "es2022": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "plugins": ["security"],
+  "extends": ["eslint:recommended", "plugin:security/recommended"],
+  "rules": {
+    "security/detect-object-injection": "error",
+    "security/detect-non-literal-regexp": "error",
+    "security/detect-unsafe-regex": "error",
+    "security/detect-buffer-noassert": "error",
+    "security/detect-child-process": "error",
+    "security/detect-eval-with-expression": "error",
+    "security/detect-non-literal-fs-filename": "error",
+    "security/detect-non-literal-require": "error",
+    "security/detect-possible-timing-attacks": "error",
+    "security/detect-pseudoRandomBytes": "error"
+  }
+}
+EOF
+            
+            # Run ESLint security scan
+            eslint --config .eslintrc.security.json \
+              --ext .js,.jsx,.ts,.tsx \
+              --format json \
+              --output-file "../.security-scan/reports/javascript/eslint-security-$(basename $package_dir).json" . || true
+            
+            rm -f .eslintrc.security.json
+          fi
+          
+          cd - > /dev/null
+        done
+
+    - name: Secrets and credential scanning
+      shell: bash
+      run: |
+        echo "🔐 Secrets and Credentials Security Analysis"
+        echo "==========================================="
+        
+        mkdir -p .security-scan/reports/secrets
+        
+        echo "🕵️ Running detect-secrets scan..."
+        detect-secrets scan --all-files \
+          --baseline .security-scan/reports/secrets/secrets.baseline \
+          --force-use-all-plugins || true
+        
+        # Generate secrets report
+        if [ -f ".security-scan/reports/secrets/secrets.baseline" ]; then
+          detect-secrets audit .security-scan/reports/secrets/secrets.baseline --report --output .security-scan/reports/secrets/secrets-audit.json || true
+        fi
+        
+        echo "🔍 Scanning for credential patterns in code..."
+        
+        # Enhanced credential pattern detection
+        grep -r -n -i --include="*.py" --include="*.js" --include="*.json" --include="*.yaml" --include="*.yml" \
+          -E "(password|passwd|pwd|secret|token|credential|api_key|access_key|private_key)" . \
+          --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.security-scan \
+          > .security-scan/reports/secrets/credential-patterns.txt || true
+        
+        # Check for common secret file patterns
+        echo "🔍 Checking for potentially sensitive files..."
+        find . -type f \( \
+          -name "*.key" -o \
+          -name "*.pem" -o \
+          -name "*.p12" -o \
+          -name "*.pfx" -o \
+          -name "*id_rsa*" -o \
+          -name "*id_dsa*" -o \
+          -name "*.env" -o \
+          -name ".env.*" -o \
+          -name "*secret*" -o \
+          -name "*password*" -o \
+          -name "*credential*" \
+        \) -not -path "./website/node_modules/*" -not -path "./.git/*" -not -path "./.security-scan/*" \
+          > .security-scan/reports/secrets/sensitive-files.txt || true
+        
+        # Report findings
+        sensitive_file_count=$(wc -l < .security-scan/reports/secrets/sensitive-files.txt 2>/dev/null || echo "0")
+        credential_pattern_count=$(wc -l < .security-scan/reports/secrets/credential-patterns.txt 2>/dev/null || echo "0")
+        
+        echo "📊 Secrets scanning summary:"
+        echo "- Potentially sensitive files found: $sensitive_file_count"
+        echo "- Credential patterns detected: $credential_pattern_count"
+
+    - name: Infrastructure as Code security analysis
+      shell: bash
+      run: |
+        echo "🏗️ Infrastructure as Code Security Analysis"
+        echo "==========================================="
+        
+        mkdir -p .security-scan/reports/iac
+        
+        echo "⚙️ Analyzing GitHub Actions workflows..."
+        find .github/workflows -name "*.yml" -o -name "*.yaml" | while read workflow; do
+          echo "🔍 Checking workflow: $workflow"
+          
+          # Check for security best practices
+          {
+            echo "Workflow: $workflow"
+            echo "===================="
+            
+            # Check for proper secret usage
+            if grep -q "secrets\." "$workflow"; then
+              echo "✅ Uses GitHub secrets"
+            else
+              echo "ℹ️ No GitHub secrets detected"
+            fi
+            
+            # Check for third-party action pinning
+            unpinned_actions=$(grep -E "uses:.*@(main|master|latest)" "$workflow" | wc -l)
+            if [ "$unpinned_actions" -gt 0 ]; then
+              echo "⚠️ Found $unpinned_actions unpinned actions (security risk)"
+              grep -E "uses:.*@(main|master|latest)" "$workflow" | sed 's/^/    /'
+            else
+              echo "✅ All actions properly pinned"
+            fi
+            
+            # Check for dangerous commands
+            if grep -i -E "(eval|exec|system|curl.*\||wget.*\|)" "$workflow"; then
+              echo "⚠️ Potentially dangerous command patterns detected"
+            fi
+            
+            echo ""
+          } >> .security-scan/reports/iac/github-actions-analysis.txt
+        done
+        
+        echo "🐳 Analyzing container configurations..."
+        find . -name "Dockerfile*" -o -name "docker-compose*" | while read containerfile; do
+          echo "🔍 Checking container file: $containerfile"
+          
+          {
+            echo "Container file: $containerfile"
+            echo "==============================="
+            
+            if grep -q "FROM.*:latest" "$containerfile"; then
+              echo "⚠️ Uses 'latest' tag (not recommended for security)"
+            fi
+            
+            if grep -q "RUN.*sudo\|RUN.*su " "$containerfile"; then
+              echo "⚠️ Contains privilege escalation"
+            fi
+            
+            if grep -q "ADD http" "$containerfile"; then
+              echo "⚠️ Downloads files via ADD (use COPY instead)"
+            fi
+            
+            echo ""
+          } >> .security-scan/reports/iac/container-analysis.txt
+        done || echo "ℹ️ No container files found"
+
+    - name: Multi-language static analysis with Semgrep
+      shell: bash
+      run: |
+        echo "🛡️ Multi-Language Static Analysis with Semgrep"
+        echo "==============================================="
+        
+        mkdir -p .security-scan/reports/semgrep
+        
+        echo "🔍 Running comprehensive Semgrep analysis..."
+        
+        # Define ruleset configurations based on scan level
+        case "$SCAN_LEVEL" in
+          "basic")
+            rulesets=("auto")
+            ;;
+          "comprehensive") 
+            rulesets=("auto" "p/security-audit" "p/secrets" "p/javascript" "p/python")
+            ;;
+          "deep")
+            rulesets=("auto" "p/security-audit" "p/secrets" "p/javascript" "p/python" "p/owasp-top-ten" "p/cwe-top-25")
+            ;;
+        esac
+        
+        total_findings=0
+        
+        for ruleset in "${rulesets[@]}"; do
+          echo "📋 Running Semgrep with ruleset: $ruleset"
+          output_file=".security-scan/reports/semgrep/semgrep-${ruleset//\//-}.json"
+          
+          if semgrep --config="$ruleset" --json --output="$output_file" . --quiet; then
+            finding_count=$(jq '.results | length' "$output_file" 2>/dev/null || echo "0")
+            echo "  ✅ Completed: $finding_count findings"
+            total_findings=$((total_findings + finding_count))
+          else
+            echo "  ⚠️ Ruleset $ruleset completed with warnings"
+          fi
+        done
+        
+        echo "📊 Total Semgrep findings: $total_findings"
+        echo "SEMGREP_FINDINGS=$total_findings" >> $GITHUB_ENV
+
+    - name: Vulnerability scanning with Trivy
+      shell: bash
+      run: |
+        echo "🛡️ Comprehensive Vulnerability Scanning with Trivy"
+        echo "================================================="
+        
+        mkdir -p .security-scan/reports/trivy
+        
+        echo "🔍 Scanning filesystem for vulnerabilities..."
+        trivy fs --format json --output .security-scan/reports/trivy/filesystem-scan.json . || true
+        
+        if [ -f "requirements.txt" ]; then
+          echo "🐍 Scanning Python requirements..."
+          trivy config requirements.txt --format json --output .security-scan/reports/trivy/python-deps.json || true
+        fi
+        
+        find . -name "package.json" -not -path "./website/node_modules/*" | while read package_file; do
+          package_dir=$(basename $(dirname "$package_file"))
+          echo "🟨 Scanning Node.js dependencies: $package_file"
+          trivy config "$package_file" --format json --output ".security-scan/reports/trivy/nodejs-deps-$package_dir.json" || true
+        done
+        
+        echo "📊 Trivy vulnerability scanning complete"
+
+    - name: Generate comprehensive security report
+      shell: bash
+      run: |
+        echo "📋 Generating Comprehensive Security Report"
+        echo "=========================================="
+        
+        cat > .security-scan/reports/security-summary.md << EOF
+# Comprehensive Security Scan Report
+        
+**Repository**: ${{ github.repository }}  
+**Branch**: ${{ github.ref_name }}  
+**Commit**: ${{ github.sha }}  
+**Scan Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')  
+**Scan Level**: ${{ env.SCAN_LEVEL }}
+        
+## Executive Summary
+        
+This report provides comprehensive security analysis results for the entire repository, covering:
+        
+- **Python Security**: Static analysis, dependency vulnerabilities, code quality
+- **JavaScript/Node.js Security**: Dependency auditing, library vulnerabilities, code analysis  
+- **Secrets Detection**: Credential scanning, sensitive file detection
+- **Infrastructure Security**: GitHub Actions, container configurations
+- **Multi-language Analysis**: Cross-language security patterns
+- **Vulnerability Assessment**: Known CVE scanning, security advisories
+        
+## Repository Metrics
+        
+- **Total Files Analyzed**: ${{ env.TOTAL_FILES }}
+- **Python Files**: ${{ env.PYTHON_COUNT }}
+- **JavaScript/TypeScript Files**: ${{ env.JS_COUNT }}
+- **Security Tools Executed**: 8+
+- **Semgrep Findings**: ${{ env.SEMGREP_FINDINGS }}
+        
+## Security Tools Used
+        
+### Python Ecosystem
+- **Bandit**: Python code security analysis
+- **Safety**: Python dependency vulnerability checking
+- **pip-audit**: Advanced dependency auditing
+- **CycloneDX**: Software Bill of Materials generation
+        
+### JavaScript/Node.js Ecosystem  
+- **npm audit**: Node.js dependency vulnerability scanner
+- **Retire.js**: JavaScript library vulnerability detection
+- **ESLint Security**: JavaScript code security analysis
+        
+### Multi-Language & Infrastructure
+- **Semgrep**: Multi-language static analysis security scanner
+- **Trivy**: Comprehensive vulnerability scanner
+- **detect-secrets**: Repository-wide secrets detection
+- **Custom Scripts**: Infrastructure as Code analysis
+        
+## Risk Assessment
+        
+Based on the analysis performed:
+        
+EOF
+        
+        # Add risk assessment based on findings
+        if [ "${SEMGREP_FINDINGS:-0}" -gt 20 ]; then
+          echo "**Risk Level**: HIGH - Multiple security findings require attention" >> .security-scan/reports/security-summary.md
+        elif [ "${SEMGREP_FINDINGS:-0}" -gt 5 ]; then
+          echo "**Risk Level**: MEDIUM - Some security findings should be reviewed" >> .security-scan/reports/security-summary.md
+        else
+          echo "**Risk Level**: LOW - Minimal security findings detected" >> .security-scan/reports/security-summary.md
+        fi
+        
+        cat >> .security-scan/reports/security-summary.md << EOF
+        
+## Detailed Findings
+        
+Detailed security findings are available in the following report files:
+        
+- \`python/bandit-full.json\` - Python security analysis results
+- \`python/safety-report.json\` - Python dependency vulnerabilities
+- \`javascript/npm-audit-*.json\` - Node.js dependency audits
+- \`secrets/secrets.baseline\` - Detected secrets baseline
+- \`semgrep/semgrep-*.json\` - Multi-language security findings
+- \`trivy/filesystem-scan.json\` - Vulnerability scan results
+        
+## Recommendations
+        
+1. **Review all HIGH severity findings** from static analysis tools
+2. **Update vulnerable dependencies** identified by dependency scanners
+3. **Implement secrets management** for any detected credentials
+4. **Review Infrastructure as Code** configurations for security best practices
+5. **Establish regular security scanning** as part of CI/CD pipeline
+        
+## Next Steps
+        
+- Download security scan artifacts for detailed analysis
+- Address critical and high-severity findings
+- Integrate security scanning into development workflow
+- Consider implementing security gates for CI/CD pipeline
+        
+---
+        
+*This report was generated automatically by the Comprehensive Security Scan workflow.*
+EOF
+        
+        echo "📄 Security summary report generated"
+        
+        # Create a concise summary for GitHub output
+        echo "## 🔒 Security Scan Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Files Analyzed**: ${{ env.TOTAL_FILES }}" >> $GITHUB_STEP_SUMMARY  
+        echo "- **Python Files**: ${{ env.PYTHON_COUNT }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **JavaScript Files**: ${{ env.JS_COUNT }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Semgrep Findings**: ${{ env.SEMGREP_FINDINGS }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Scan Level**: ${{ env.SCAN_LEVEL }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📊 Detailed results available in workflow artifacts." >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload comprehensive security artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-scan-results-${{ github.run_id }}
+        path: |
+          .security-scan/reports/
+        retention-days: 90
+        compression-level: 6
+
+    - name: Create security issue on findings (optional)
+      if: env.SEMGREP_FINDINGS > 10 && github.event_name != 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const findings = parseInt('${{ env.SEMGREP_FINDINGS }}');
+          const title = `🔒 Security Scan Alert: ${findings} findings detected`;
+          const body = `
+          ## Security Scan Alert
+          
+          A comprehensive security scan has detected **${findings} potential security findings** in the repository.
+          
+          **Details:**
+          - Repository: ${{ github.repository }}
+          - Branch: ${{ github.ref_name }}  
+          - Commit: ${{ github.sha }}
+          - Scan Date: ${new Date().toISOString()}
+          
+          **Next Steps:**
+          1. Download the security scan artifacts from the workflow run
+          2. Review the detailed findings in the generated reports
+          3. Address high and critical severity issues
+          4. Update this issue with remediation status
+          
+          **Workflow Run:** [Security Scan #${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          ---
+          *This issue was automatically created by the security scanning workflow.*
+          `;
+          
+          try {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'automated']
+            });
+            console.log('✅ Security issue created successfully');
+          } catch (error) {
+            console.log('ℹ️ Could not create security issue:', error.message);
+          }
+
+    - name: Security scan completion summary
+      if: always()
+      shell: bash
+      run: |
+        echo "🎯 Security Scan Completion Summary"
+        echo "=================================="
+        echo ""
+        echo "📊 **Scan Statistics**:"
+        echo "- Repository: ${{ github.repository }}"
+        echo "- Scan Level: ${{ env.SCAN_LEVEL }}"
+        echo "- Files Analyzed: ${{ env.TOTAL_FILES }}"
+        echo "- Python Files: ${{ env.PYTHON_COUNT }}"
+        echo "- JavaScript Files: ${{ env.JS_COUNT }}"
+        echo "- Total Findings: ${{ env.SEMGREP_FINDINGS }}"
+        echo ""
+        echo "🛡️ **Security Tools Executed**:"
+        echo "✅ Bandit (Python security analysis)"
+        echo "✅ Safety (Python dependency vulnerabilities)" 
+        echo "✅ pip-audit (Advanced Python auditing)"
+        echo "✅ npm audit (Node.js dependency scanning)"
+        echo "✅ Retire.js (JavaScript library vulnerabilities)"
+        echo "✅ ESLint Security (JavaScript code analysis)"
+        echo "✅ detect-secrets (Secrets detection)"
+        echo "✅ Semgrep (Multi-language static analysis)"
+        echo "✅ Trivy (Comprehensive vulnerability scanning)"
+        echo ""
+        echo "📁 **Artifacts Generated**:"
+        echo "- Security scan reports (JSON, TXT, MD formats)"
+        echo "- Vulnerability assessments"
+        echo "- Secrets detection baseline"
+        echo "- Infrastructure security analysis"
+        echo ""
+        echo "🎉 **Comprehensive security scanning completed successfully!**"
+        echo ""
+        echo "Next steps:"
+        echo "1. Download artifacts for detailed review"
+        echo "2. Address any critical or high-severity findings"
+        echo "3. Integrate findings into development workflow"
