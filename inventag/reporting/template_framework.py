@@ -197,9 +197,7 @@ class TemplateVariableResolver:
                                 return value.strftime(date_format)
                             elif isinstance(value, str):
                                 # Try to parse as ISO date
-                                dt = datetime.fromisoformat(
-                                    value.replace("Z", "+00:00")
-                                )
+                                dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
                                 return dt.strftime(date_format)
                         elif format_spec.startswith("number:"):
                             number_format = format_spec[7:]
@@ -211,9 +209,7 @@ class TemplateVariableResolver:
                         elif format_spec == "title":
                             return str(value).title()
                     except Exception as e:
-                        self.logger.warning(
-                            f"Failed to format variable {var_name}: {e}"
-                        )
+                        self.logger.warning(f"Failed to format variable {var_name}: {e}")
 
                 return str(value) if value is not None else ""
             else:
@@ -393,12 +389,8 @@ class TemplateLoader:
                 include_logo=header_footer_data.get("include_logo", False),
                 logo_position=header_footer_data.get("logo_position", "left"),
                 logo_size=tuple(header_footer_data.get("logo_size", [1.0, 0.5])),
-                include_page_numbers=header_footer_data.get(
-                    "include_page_numbers", True
-                ),
-                page_number_position=header_footer_data.get(
-                    "page_number_position", "right"
-                ),
+                include_page_numbers=header_footer_data.get("include_page_numbers", True),
+                page_number_position=header_footer_data.get("page_number_position", "right"),
                 include_date=header_footer_data.get("include_date", True),
                 date_format=header_footer_data.get("date_format", "%Y-%m-%d"),
                 custom_fields=header_footer_data.get("custom_fields", {}),
@@ -425,9 +417,7 @@ class TemplateLoader:
 
         return template
 
-    def _parse_sections(
-        self, sections_data: List[Dict[str, Any]]
-    ) -> List[DocumentSection]:
+    def _parse_sections(self, sections_data: List[Dict[str, Any]]) -> List[DocumentSection]:
         """Parse sections data into DocumentSection objects."""
         sections = []
 
@@ -614,13 +604,9 @@ class TemplateManager:
             # Save based on file extension
             with open(output_path, "w", encoding="utf-8") as f:
                 if output_path.endswith(".json"):
-                    json.dump(
-                        template_data, f, indent=2, ensure_ascii=False, default=str
-                    )
+                    json.dump(template_data, f, indent=2, ensure_ascii=False, default=str)
                 elif output_path.endswith((".yaml", ".yml")):
-                    yaml.dump(
-                        template_data, f, default_flow_style=False, allow_unicode=True
-                    )
+                    yaml.dump(template_data, f, default_flow_style=False, allow_unicode=True)
                 else:
                     raise ValueError(f"Unsupported output format: {output_path}")
 
@@ -698,9 +684,7 @@ class TemplateManager:
 
         return data
 
-    def _sections_to_dict(
-        self, sections: List[DocumentSection]
-    ) -> List[Dict[str, Any]]:
+    def _sections_to_dict(self, sections: List[DocumentSection]) -> List[Dict[str, Any]]:
         """Convert sections to dictionary format."""
         sections_data = []
 
@@ -719,9 +703,7 @@ class TemplateManager:
 
             # Add subsections recursively
             if section.subsections:
-                section_data["subsections"] = self._sections_to_dict(
-                    section.subsections
-                )
+                section_data["subsections"] = self._sections_to_dict(section.subsections)
 
             sections_data.append(section_data)
 

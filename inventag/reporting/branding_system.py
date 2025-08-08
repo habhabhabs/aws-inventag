@@ -288,9 +288,7 @@ class AdvancedBrandingConfig:
     layout: PageLayoutConfiguration = field(default_factory=PageLayoutConfiguration)
 
     # Conditional formatting themes
-    formatting_themes: Dict[str, ConditionalFormattingTheme] = field(
-        default_factory=dict
-    )
+    formatting_themes: Dict[str, ConditionalFormattingTheme] = field(default_factory=dict)
 
     # Custom styles
     custom_styles: Dict[str, Dict[str, Any]] = field(default_factory=dict)
@@ -353,9 +351,7 @@ class ColorUtilities:
             new_l = max(0.2, min(0.8, l + (i - count // 2) * 0.15))
             new_s = max(0.3, min(1.0, s + (i - count // 2) * 0.1))
             r, g, b = colorsys.hls_to_rgb(h, new_l, new_s)
-            colors.append(
-                ColorUtilities.rgb_to_hex(int(r * 255), int(g * 255), int(b * 255))
-            )
+            colors.append(ColorUtilities.rgb_to_hex(int(r * 255), int(g * 255), int(b * 255)))
 
         return colors
 
@@ -405,9 +401,7 @@ class BrandingThemeManager:
                 warning="#FF9800",
                 danger="#F44336",
             ),
-            fonts=FontConfiguration(
-                primary_font="Times New Roman", secondary_font="Arial"
-            ),
+            fonts=FontConfiguration(primary_font="Times New Roman", secondary_font="Arial"),
         )
         themes["corporate_green"] = corporate_green
 
@@ -485,25 +479,17 @@ class BrandingThemeManager:
             layout=base.layout,
             formatting_themes=base.formatting_themes.copy(),
             custom_styles=base.custom_styles.copy(),
-            watermark_enabled=customizations.get(
-                "watermark_enabled", base.watermark_enabled
-            ),
+            watermark_enabled=customizations.get("watermark_enabled", base.watermark_enabled),
             watermark_text=customizations.get("watermark_text", base.watermark_text),
-            watermark_opacity=customizations.get(
-                "watermark_opacity", base.watermark_opacity
-            ),
-            watermark_rotation=customizations.get(
-                "watermark_rotation", base.watermark_rotation
-            ),
+            watermark_opacity=customizations.get("watermark_opacity", base.watermark_opacity),
+            watermark_rotation=customizations.get("watermark_rotation", base.watermark_rotation),
         )
 
         # Apply color customizations
         if "primary_color" in customizations:
             custom_theme.colors.primary = customizations["primary_color"]
             # Generate complementary colors
-            palette = ColorUtilities.generate_color_palette(
-                custom_theme.colors.primary, 5
-            )
+            palette = ColorUtilities.generate_color_palette(custom_theme.colors.primary, 5)
             custom_theme.colors.secondary = palette[1]
             custom_theme.colors.accent = palette[2]
 
@@ -524,8 +510,8 @@ class BrandingThemeManager:
 
         if compliance_colors:
             if "compliant" in compliance_colors:
-                theme.compliant_format["background_color"] = (
-                    ColorUtilities.lighten_color(compliance_colors["compliant"], 0.8)
+                theme.compliant_format["background_color"] = ColorUtilities.lighten_color(
+                    compliance_colors["compliant"], 0.8
                 )
                 theme.compliant_format["text_color"] = ColorUtilities.darken_color(
                     compliance_colors["compliant"], 0.3
@@ -533,22 +519,18 @@ class BrandingThemeManager:
                 theme.compliant_format["border_color"] = compliance_colors["compliant"]
 
             if "non_compliant" in compliance_colors:
-                theme.non_compliant_format["background_color"] = (
-                    ColorUtilities.lighten_color(
-                        compliance_colors["non_compliant"], 0.8
-                    )
+                theme.non_compliant_format["background_color"] = ColorUtilities.lighten_color(
+                    compliance_colors["non_compliant"], 0.8
                 )
                 theme.non_compliant_format["text_color"] = ColorUtilities.darken_color(
                     compliance_colors["non_compliant"], 0.3
                 )
-                theme.non_compliant_format["border_color"] = compliance_colors[
-                    "non_compliant"
-                ]
+                theme.non_compliant_format["border_color"] = compliance_colors["non_compliant"]
 
         if risk_colors:
             if "high_risk" in risk_colors:
-                theme.high_risk_format["background_color"] = (
-                    ColorUtilities.lighten_color(risk_colors["high_risk"], 0.8)
+                theme.high_risk_format["background_color"] = ColorUtilities.lighten_color(
+                    risk_colors["high_risk"], 0.8
                 )
                 theme.high_risk_format["text_color"] = ColorUtilities.darken_color(
                     risk_colors["high_risk"], 0.3
@@ -586,9 +568,7 @@ class BrandingApplicator(ABC):
         pass
 
     @abstractmethod
-    def apply_conditional_formatting(
-        self, document_object: Any, theme_name: str
-    ) -> Any:
+    def apply_conditional_formatting(self, document_object: Any, theme_name: str) -> Any:
         """Apply conditional formatting theme."""
         pass
 
@@ -652,9 +632,7 @@ class BrandingValidator:
         except ValueError:
             return False
 
-    def get_accessibility_recommendations(
-        self, config: AdvancedBrandingConfig
-    ) -> List[str]:
+    def get_accessibility_recommendations(self, config: AdvancedBrandingConfig) -> List[str]:
         """Get accessibility recommendations for the branding configuration."""
         recommendations = []
 
@@ -664,18 +642,14 @@ class BrandingValidator:
 
         contrast_ratio = self._calculate_contrast_ratio(primary_rgb, bg_rgb)
         if contrast_ratio < 4.5:
-            recommendations.append(
-                "Primary color contrast ratio is below WCAG AA standard (4.5:1)"
-            )
+            recommendations.append("Primary color contrast ratio is below WCAG AA standard (4.5:1)")
 
         # Check font sizes
         if config.fonts.body_size < 11:
             recommendations.append("Body font size is below recommended minimum (11pt)")
 
         if config.fonts.table_size < 10:
-            recommendations.append(
-                "Table font size is below recommended minimum (10pt)"
-            )
+            recommendations.append("Table font size is below recommended minimum (10pt)")
 
         return recommendations
 

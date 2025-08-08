@@ -48,9 +48,7 @@ class TagNormalizer:
         """Initialize tag normalizer."""
         self.logger = logging.getLogger(f"{__name__}.TagNormalizer")
 
-    def normalize_value(
-        self, value: str, normalize_function: Optional[str] = None
-    ) -> str:
+    def normalize_value(self, value: str, normalize_function: Optional[str] = None) -> str:
         """Normalize tag value using specified function."""
         if not value or not normalize_function:
             return value
@@ -77,9 +75,7 @@ class TagNormalizer:
                 slug = re.sub(r"[-\s]+", "-", slug)
                 return slug.strip("-")
             else:
-                self.logger.warning(
-                    f"Unknown normalization function: {normalize_function}"
-                )
+                self.logger.warning(f"Unknown normalization function: {normalize_function}")
                 return value
 
         except Exception as e:
@@ -197,9 +193,7 @@ class TagMappingEngine:
                 return False
 
             with open(config_path, "r", encoding="utf-8") as f:
-                if config_path.lower().endswith(
-                    ".yaml"
-                ) or config_path.lower().endswith(".yml"):
+                if config_path.lower().endswith(".yaml") or config_path.lower().endswith(".yml"):
                     config_data = yaml.safe_load(f)
                 else:
                     config_data = json.load(f)
@@ -311,9 +305,7 @@ class TagMappingEngine:
                         break
 
             # Handle missing tag
-            if tag_value is None or (
-                isinstance(tag_value, str) and not tag_value.strip()
-            ):
+            if tag_value is None or (isinstance(tag_value, str) and not tag_value.strip()):
                 if mapping.required:
                     missing_required_tags.append(tag_key)
 
@@ -348,9 +340,7 @@ class TagMappingEngine:
             normalized_values=normalized_values,
         )
 
-    def apply_mappings_to_resources(
-        self, resources: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def apply_mappings_to_resources(self, resources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Apply tag mappings to all resources."""
         enriched_resources = []
         total_validation_errors = 0
@@ -365,9 +355,7 @@ class TagMappingEngine:
                 mapping_result = self.extract_custom_attributes(resource)
 
                 # Add mapped attributes to resource
-                enriched_resource["custom_attributes"] = (
-                    mapping_result.mapped_attributes
-                )
+                enriched_resource["custom_attributes"] = mapping_result.mapped_attributes
 
                 # Add mapping metadata
                 enriched_resource["tag_mapping_metadata"] = {
@@ -490,9 +478,7 @@ class TagMappingEngine:
             "tag_list": list(self.mappings.keys()),
         }
 
-    def export_configuration_template(
-        self, output_path: str, format_type: str = "yaml"
-    ) -> bool:
+    def export_configuration_template(self, output_path: str, format_type: str = "yaml") -> bool:
         """Export a configuration template with examples."""
         template_config = {
             "tag_mappings": [
@@ -552,9 +538,7 @@ class TagMappingEngine:
             self.logger.error(f"Failed to export tag mapping template: {e}")
             return False
 
-    def generate_validation_report(
-        self, resources: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def generate_validation_report(self, resources: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Generate comprehensive validation report for resources."""
         report = {
             "total_resources": len(resources),
@@ -598,9 +582,7 @@ class TagMappingEngine:
                 report["detailed_errors"].append(
                     {
                         "resource_id": validation_result["resource_id"],
-                        "missing_required_tags": validation_result[
-                            "missing_required_tags"
-                        ],
+                        "missing_required_tags": validation_result["missing_required_tags"],
                         "validation_errors": validation_result["validation_errors"],
                     }
                 )

@@ -106,14 +106,10 @@ class ConfigurationSet:
     created_at: Optional[datetime] = None
 
     # Configuration components
-    service_descriptions: Dict[str, ServiceDescriptionConfig] = field(
-        default_factory=dict
-    )
+    service_descriptions: Dict[str, ServiceDescriptionConfig] = field(default_factory=dict)
     tag_mappings: Dict[str, TagMappingConfig] = field(default_factory=dict)
     document_templates: Dict[str, DocumentTemplateConfig] = field(default_factory=dict)
-    branding_configurations: Dict[str, BrandingConfigurationSet] = field(
-        default_factory=dict
-    )
+    branding_configurations: Dict[str, BrandingConfigurationSet] = field(default_factory=dict)
 
     # Global settings
     default_template: Optional[str] = None
@@ -232,9 +228,7 @@ class ConfigurationValidator:
             except ValidationError as e:
                 errors.append(f"Service descriptions validation error: {e.message}")
         else:
-            errors.append(
-                "jsonschema library not available - skipping schema validation"
-            )
+            errors.append("jsonschema library not available - skipping schema validation")
 
         # Additional custom validations
         for service_name, service_config in config.items():
@@ -256,18 +250,14 @@ class ConfigurationValidator:
             except ValidationError as e:
                 errors.append(f"Tag mappings validation error: {e.message}")
         else:
-            errors.append(
-                "jsonschema library not available - skipping schema validation"
-            )
+            errors.append("jsonschema library not available - skipping schema validation")
 
         # Check for duplicate column names
         column_names = set()
         for tag_key, tag_config in config.items():
             column_name = tag_config.get("column_name", "")
             if column_name in column_names:
-                errors.append(
-                    f"Duplicate column name '{column_name}' for tag '{tag_key}'"
-                )
+                errors.append(f"Duplicate column name '{column_name}' for tag '{tag_key}'")
             column_names.add(column_name)
 
             # Validate tag key format
@@ -286,9 +276,7 @@ class ConfigurationValidator:
             except ValidationError as e:
                 errors.append(f"Branding configuration validation error: {e.message}")
         else:
-            errors.append(
-                "jsonschema library not available - skipping schema validation"
-            )
+            errors.append("jsonschema library not available - skipping schema validation")
 
         # Validate logo file exists
         logo_config = config.get("logo", {})
@@ -305,8 +293,7 @@ class ConfigurationValidator:
 
         # Validate service descriptions
         service_desc_dict = {
-            name: asdict(config)
-            for name, config in config_set.service_descriptions.items()
+            name: asdict(config) for name, config in config_set.service_descriptions.items()
         }
         errors.extend(self.validate_service_descriptions(service_desc_dict))
 
@@ -372,9 +359,7 @@ class ConfigurationLoader:
             self.logger.error(f"Failed to load configuration from {config_path}: {e}")
             raise
 
-    def load_service_descriptions(
-        self, config_path: str
-    ) -> Dict[str, ServiceDescriptionConfig]:
+    def load_service_descriptions(self, config_path: str) -> Dict[str, ServiceDescriptionConfig]:
         """Load service descriptions from file."""
         self.logger.info(f"Loading service descriptions from: {config_path}")
 
@@ -510,14 +495,12 @@ class ConfigurationLoader:
         # Parse branding configurations
         branding_data = data.get("branding_configurations", {})
         for branding_name, branding_config in branding_data.items():
-            config_set.branding_configurations[branding_name] = (
-                BrandingConfigurationSet(
-                    name=branding_name,
-                    description=branding_config.get("description", ""),
-                    logo_configurations=branding_config.get("logo_configurations", {}),
-                    color_themes=branding_config.get("color_themes", {}),
-                    font_configurations=branding_config.get("font_configurations", {}),
-                )
+            config_set.branding_configurations[branding_name] = BrandingConfigurationSet(
+                name=branding_name,
+                description=branding_config.get("description", ""),
+                logo_configurations=branding_config.get("logo_configurations", {}),
+                color_themes=branding_config.get("color_themes", {}),
+                font_configurations=branding_config.get("font_configurations", {}),
             )
 
         return config_set
@@ -536,9 +519,7 @@ class ConfigurationManager:
 
         # Configuration cache
         self._config_cache: Dict[str, ConfigurationSet] = {}
-        self._service_descriptions_cache: Dict[
-            str, Dict[str, ServiceDescriptionConfig]
-        ] = {}
+        self._service_descriptions_cache: Dict[str, Dict[str, ServiceDescriptionConfig]] = {}
         self._tag_mappings_cache: Dict[str, Dict[str, TagMappingConfig]] = {}
 
     def load_configuration(self, config_name: str) -> ConfigurationSet:
@@ -567,9 +548,7 @@ class ConfigurationManager:
             # Load from default service descriptions file
             return self._load_default_service_descriptions()
 
-    def get_tag_mappings(
-        self, config_name: Optional[str] = None
-    ) -> Dict[str, TagMappingConfig]:
+    def get_tag_mappings(self, config_name: Optional[str] = None) -> Dict[str, TagMappingConfig]:
         """Get tag mappings from configuration."""
         if config_name:
             config_set = self.load_configuration(config_name)
@@ -615,9 +594,7 @@ class ConfigurationManager:
         config_set.document_templates = self._create_default_document_templates()
 
         # Add default branding
-        config_set.branding_configurations = (
-            self._create_default_branding_configurations()
-        )
+        config_set.branding_configurations = self._create_default_branding_configurations()
 
         config_set.default_template = "default_word"
         config_set.default_branding = "professional_blue"
@@ -637,9 +614,7 @@ class ConfigurationManager:
                 if output_path.endswith(".json"):
                     json.dump(config_data, f, indent=2, ensure_ascii=False, default=str)
                 elif output_path.endswith((".yaml", ".yml")):
-                    yaml.dump(
-                        config_data, f, default_flow_style=False, allow_unicode=True
-                    )
+                    yaml.dump(config_data, f, default_flow_style=False, allow_unicode=True)
                 else:
                     raise ValueError(f"Unsupported output format: {output_path}")
 
@@ -857,9 +832,7 @@ class ConfigurationManager:
             "name": config_set.name,
             "description": config_set.description,
             "version": config_set.version,
-            "created_at": (
-                config_set.created_at.isoformat() if config_set.created_at else None
-            ),
+            "created_at": (config_set.created_at.isoformat() if config_set.created_at else None),
             "default_template": config_set.default_template,
             "default_branding": config_set.default_branding,
             "output_directory": config_set.output_directory,

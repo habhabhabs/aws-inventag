@@ -73,15 +73,15 @@ def setup_logging(
 
     # Create formatters
     if account_specific:
-        console_format = (
-            "%(asctime)s - %(account_prefix)s%(name)s - %(levelname)s - %(message)s"
-        )
+        console_format = "%(asctime)s - %(account_prefix)s%(name)s - %(levelname)s - %(message)s"
         file_format = "%(asctime)s - %(account_prefix)s%(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s"
         console_formatter = AccountSpecificFormatter(console_format)
         file_formatter = AccountSpecificFormatter(file_format)
     else:
         console_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        file_format = "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s"
+        file_format = (
+            "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s"
+        )
         console_formatter = logging.Formatter(console_format)
         file_formatter = logging.Formatter(file_format)
 
@@ -117,9 +117,7 @@ def setup_logging(
     return logger
 
 
-def set_account_context(
-    logger: logging.Logger, account_id: str, account_name: str = ""
-):
+def set_account_context(logger: logging.Logger, account_id: str, account_name: str = ""):
     """Set account context for all account-specific formatters."""
     if hasattr(logger, "_account_formatters"):
         for formatter in logger._account_formatters:

@@ -132,9 +132,7 @@ class DocumentBuilder(ABC):
         pass
 
     @abstractmethod
-    def generate_document(
-        self, bom_data: BOMData, output_path: str
-    ) -> DocumentGenerationResult:
+    def generate_document(self, bom_data: BOMData, output_path: str) -> DocumentGenerationResult:
         """Generate document in the specific format."""
         pass
 
@@ -190,9 +188,7 @@ class DocumentGenerator:
                     self.builders["csv"] = csv_builder
                     self.logger.info("Initialized CSVBuilder")
                 else:
-                    self.logger.warning(
-                        f"CSVBuilder dependencies not available: {dependencies}"
-                    )
+                    self.logger.warning(f"CSVBuilder dependencies not available: {dependencies}")
             except Exception as e:
                 self.logger.error(f"Failed to initialize CSVBuilder: {e}")
 
@@ -287,9 +283,7 @@ class DocumentGenerator:
             # Collect errors and warnings
             for result in results:
                 if result.error_message:
-                    summary.errors.append(
-                        f"{result.format_type}: {result.error_message}"
-                    )
+                    summary.errors.append(f"{result.format_type}: {result.error_message}")
                 summary.warnings.extend(result.warnings)
 
             # Calculate total time
@@ -327,9 +321,7 @@ class DocumentGenerator:
 
             # Validate resource structure
             required_resource_fields = ["service", "type", "id"]
-            for i, resource in enumerate(
-                bom_data.resources[:10]
-            ):  # Check first 10 resources
+            for i, resource in enumerate(bom_data.resources[:10]):  # Check first 10 resources
                 if not isinstance(resource, dict):
                     raise DocumentValidationError(f"Resource {i} is not a dictionary")
 
@@ -337,25 +329,17 @@ class DocumentGenerator:
                     field for field in required_resource_fields if field not in resource
                 ]
                 if missing_fields:
-                    self.logger.warning(
-                        f"Resource {i} missing fields: {missing_fields}"
-                    )
+                    self.logger.warning(f"Resource {i} missing fields: {missing_fields}")
 
             # Validate metadata structure
             if not isinstance(bom_data.generation_metadata, dict):
-                raise DocumentValidationError(
-                    "Generation metadata must be a dictionary"
-                )
+                raise DocumentValidationError("Generation metadata must be a dictionary")
 
             # Validate analysis data
-            if bom_data.network_analysis and not isinstance(
-                bom_data.network_analysis, dict
-            ):
+            if bom_data.network_analysis and not isinstance(bom_data.network_analysis, dict):
                 raise DocumentValidationError("Network analysis must be a dictionary")
 
-            if bom_data.security_analysis and not isinstance(
-                bom_data.security_analysis, dict
-            ):
+            if bom_data.security_analysis and not isinstance(bom_data.security_analysis, dict):
                 raise DocumentValidationError("Security analysis must be a dictionary")
 
             self.logger.info("Document structure validation passed")
@@ -392,9 +376,7 @@ class DocumentGenerator:
             }
 
             # Collect results
-            for future in as_completed(
-                future_to_format, timeout=self.config.generation_timeout
-            ):
+            for future in as_completed(future_to_format, timeout=self.config.generation_timeout):
                 try:
                     result = future.result()
                     results.append(result)
@@ -453,9 +435,7 @@ class DocumentGenerator:
         try:
             # Check if we have a builder for this format
             if format_type not in self.builders:
-                raise DocumentGenerationError(
-                    f"No builder available for format: {format_type}"
-                )
+                raise DocumentGenerationError(f"No builder available for format: {format_type}")
 
             builder = self.builders[format_type]
 
@@ -482,17 +462,13 @@ class DocumentGenerator:
             return result
 
         except Exception as e:
-            self.logger.error(
-                f"Single document generation failed for {format_type}: {e}"
-            )
+            self.logger.error(f"Single document generation failed for {format_type}: {e}")
             return DocumentGenerationResult(
                 format_type=format_type,
                 filename="",
                 success=False,
                 error_message=str(e),
-                generation_time_seconds=(
-                    datetime.now(timezone.utc) - start_time
-                ).total_seconds(),
+                generation_time_seconds=(datetime.now(timezone.utc) - start_time).total_seconds(),
             )
 
     def _get_file_extension(self, format_type: str) -> str:
@@ -517,9 +493,7 @@ class DocumentGenerator:
                 builder = self.builders[format_type]
                 return builder.apply_branding(document_object)
             else:
-                self.logger.warning(
-                    f"No builder available for branding application: {format_type}"
-                )
+                self.logger.warning(f"No builder available for branding application: {format_type}")
                 return document_object
         except Exception as e:
             self.logger.error(f"Branding application failed for {format_type}: {e}")
@@ -551,9 +525,7 @@ class DocumentGenerator:
 
         return capabilities
 
-    def load_template(
-        self, template_path: str, format_type: str
-    ) -> Optional[DocumentTemplate]:
+    def load_template(self, template_path: str, format_type: str) -> Optional[DocumentTemplate]:
         """Load document template from file."""
         try:
             with open(template_path, "r", encoding="utf-8") as f:
@@ -580,9 +552,7 @@ class DocumentGenerator:
             self.logger.error(f"Failed to load template {template_path}: {e}")
             return None
 
-    def save_generation_report(
-        self, summary: DocumentGenerationSummary, output_path: str
-    ):
+    def save_generation_report(self, summary: DocumentGenerationSummary, output_path: str):
         """Save document generation report to file."""
         try:
             report = {

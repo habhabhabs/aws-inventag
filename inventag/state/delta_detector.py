@@ -76,9 +76,7 @@ class ResourceChange:
     network_impact: Optional[str] = None
     related_resources: List[str] = field(default_factory=list)
     severity: ChangeSeverity = ChangeSeverity.INFO
-    timestamp: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 @dataclass
@@ -203,12 +201,8 @@ class DeltaDetector:
         new_resources_map = self._create_resource_map(new_resources)
 
         # Detect different types of changes
-        added_resources = self._detect_added_resources(
-            old_resources_map, new_resources_map
-        )
-        removed_resources = self._detect_removed_resources(
-            old_resources_map, new_resources_map
-        )
+        added_resources = self._detect_added_resources(old_resources_map, new_resources_map)
+        removed_resources = self._detect_removed_resources(old_resources_map, new_resources_map)
         modified_resources, unchanged_resources = self._detect_modified_resources(
             old_resources_map, new_resources_map
         )
@@ -281,9 +275,7 @@ class DeltaDetector:
         current_state = state_manager.load_state(current_state_id)
 
         if not previous_state or not current_state:
-            logger.warning(
-                f"Could not load states {previous_state_id} or {current_state_id}"
-            )
+            logger.warning(f"Could not load states {previous_state_id} or {current_state_id}")
             # Return empty delta report
             return DeltaReport(
                 state1_id=previous_state_id,
@@ -345,18 +337,12 @@ class DeltaDetector:
                     resource_type=resource.get("type", ""),
                     region=resource.get("region", ""),
                     change_type=ChangeType.ADDED,
-                    severity=self._determine_resource_severity(
-                        resource, ChangeType.ADDED
-                    ),
+                    severity=self._determine_resource_severity(resource, ChangeType.ADDED),
                 )
 
                 # Add security and network impact for new resources
-                change.security_impact = self._assess_security_impact(
-                    resource, ChangeType.ADDED
-                )
-                change.network_impact = self._assess_network_impact(
-                    resource, ChangeType.ADDED
-                )
+                change.security_impact = self._assess_security_impact(resource, ChangeType.ADDED)
+                change.network_impact = self._assess_network_impact(resource, ChangeType.ADDED)
 
                 added_resources.append(change)
 
@@ -378,18 +364,12 @@ class DeltaDetector:
                     resource_type=resource.get("type", ""),
                     region=resource.get("region", ""),
                     change_type=ChangeType.REMOVED,
-                    severity=self._determine_resource_severity(
-                        resource, ChangeType.REMOVED
-                    ),
+                    severity=self._determine_resource_severity(resource, ChangeType.REMOVED),
                 )
 
                 # Add security and network impact for removed resources
-                change.security_impact = self._assess_security_impact(
-                    resource, ChangeType.REMOVED
-                )
-                change.network_impact = self._assess_network_impact(
-                    resource, ChangeType.REMOVED
-                )
+                change.security_impact = self._assess_security_impact(resource, ChangeType.REMOVED)
+                change.network_impact = self._assess_network_impact(resource, ChangeType.REMOVED)
 
                 removed_resources.append(change)
 
@@ -424,9 +404,7 @@ class DeltaDetector:
                     )
 
                     # Analyze compliance changes for this resource
-                    compliance_changes = self._detect_compliance_changes(
-                        old_resource, new_resource
-                    )
+                    compliance_changes = self._detect_compliance_changes(old_resource, new_resource)
                     change.compliance_changes = compliance_changes
 
                     # Add security and network impact
@@ -456,9 +434,7 @@ class DeltaDetector:
         )
         return modified_resources, unchanged_resources
 
-    def _compare_resources(
-        self, old_resource: Dict, new_resource: Dict
-    ) -> List[AttributeChange]:
+    def _compare_resources(self, old_resource: Dict, new_resource: Dict) -> List[AttributeChange]:
         """Compare two resources and return list of attribute changes"""
         changes = []
 
@@ -475,9 +451,7 @@ class DeltaDetector:
 
             # Detect changes at this level
             if old_value != new_value:
-                change_type = self._determine_attribute_change_type(
-                    old_value, new_value
-                )
+                change_type = self._determine_attribute_change_type(old_value, new_value)
                 category = self._categorize_attribute_change(key, old_value, new_value)
                 severity = self._determine_attribute_severity(key, old_value, new_value)
 
@@ -488,17 +462,13 @@ class DeltaDetector:
                     change_type=change_type,
                     category=category,
                     severity=severity,
-                    description=self._generate_change_description(
-                        key, old_value, new_value
-                    ),
+                    description=self._generate_change_description(key, old_value, new_value),
                 )
                 changes.append(change)
 
                 # For complex objects, do deep comparison
                 if isinstance(old_value, dict) and isinstance(new_value, dict):
-                    nested_changes = self._compare_nested_objects(
-                        old_value, new_value, key
-                    )
+                    nested_changes = self._compare_nested_objects(old_value, new_value, key)
                     changes.extend(nested_changes)
                 elif isinstance(old_value, list) and isinstance(new_value, list):
                     nested_changes = self._compare_lists(old_value, new_value, key)
@@ -522,15 +492,9 @@ class DeltaDetector:
             new_value = new_obj.get(key)
 
             if old_value != new_value:
-                change_type = self._determine_attribute_change_type(
-                    old_value, new_value
-                )
-                category = self._categorize_attribute_change(
-                    full_path, old_value, new_value
-                )
-                severity = self._determine_attribute_severity(
-                    full_path, old_value, new_value
-                )
+                change_type = self._determine_attribute_change_type(old_value, new_value)
+                category = self._categorize_attribute_change(full_path, old_value, new_value)
+                severity = self._determine_attribute_severity(full_path, old_value, new_value)
 
                 change = AttributeChange(
                     attribute_path=full_path,
@@ -539,9 +503,7 @@ class DeltaDetector:
                     change_type=change_type,
                     category=category,
                     severity=severity,
-                    description=self._generate_change_description(
-                        key, old_value, new_value
-                    ),
+                    description=self._generate_change_description(key, old_value, new_value),
                 )
                 changes.append(change)
 
@@ -577,12 +539,8 @@ class DeltaDetector:
                         old_value=None,
                         new_value=list(added_items),
                         change_type=ChangeType.ADDED,
-                        category=self._categorize_attribute_change(
-                            parent_path, None, added_items
-                        ),
-                        severity=self._determine_attribute_severity(
-                            parent_path, None, added_items
-                        ),
+                        category=self._categorize_attribute_change(parent_path, None, added_items),
+                        severity=self._determine_attribute_severity(parent_path, None, added_items),
                         description=f"Added items to {parent_path}: {added_items}",
                     )
                     changes.append(change)
@@ -610,9 +568,7 @@ class DeltaDetector:
                         old_value=old_list,
                         new_value=new_list,
                         change_type=ChangeType.MODIFIED,
-                        category=self._categorize_attribute_change(
-                            parent_path, old_list, new_list
-                        ),
+                        category=self._categorize_attribute_change(parent_path, old_list, new_list),
                         severity=self._determine_attribute_severity(
                             parent_path, old_list, new_list
                         ),
@@ -627,21 +583,15 @@ class DeltaDetector:
                     old_value=old_list,
                     new_value=new_list,
                     change_type=ChangeType.MODIFIED,
-                    category=self._categorize_attribute_change(
-                        parent_path, old_list, new_list
-                    ),
-                    severity=self._determine_attribute_severity(
-                        parent_path, old_list, new_list
-                    ),
+                    category=self._categorize_attribute_change(parent_path, old_list, new_list),
+                    severity=self._determine_attribute_severity(parent_path, old_list, new_list),
                     description=f"List {parent_path} modified",
                 )
                 changes.append(change)
 
         return changes
 
-    def _determine_attribute_change_type(
-        self, old_value: Any, new_value: Any
-    ) -> ChangeType:
+    def _determine_attribute_change_type(self, old_value: Any, new_value: Any) -> ChangeType:
         """Determine the type of change for an attribute"""
         if old_value is None and new_value is not None:
             return ChangeType.ADDED
@@ -729,10 +679,7 @@ class DeltaDetector:
             return ChangeSeverity.MEDIUM
         else:
             # Modification severity depends on the attribute
-            if any(
-                keyword in path_lower
-                for keyword in ["security", "encryption", "public"]
-            ):
+            if any(keyword in path_lower for keyword in ["security", "encryption", "public"]):
                 return ChangeSeverity.HIGH
             elif any(keyword in path_lower for keyword in ["compliance", "policy"]):
                 return ChangeSeverity.HIGH
@@ -763,9 +710,7 @@ class DeltaDetector:
 
         if old_compliance != new_compliance:
             severity = (
-                ChangeSeverity.HIGH
-                if new_compliance == "non-compliant"
-                else ChangeSeverity.MEDIUM
+                ChangeSeverity.HIGH if new_compliance == "non-compliant" else ChangeSeverity.MEDIUM
             )
 
             change = AttributeChange(
@@ -877,32 +822,20 @@ class DeltaDetector:
         # Security-critical services
         if service in ["IAM", "KMS", "SECRETS_MANAGER"]:
             if change_type == ChangeType.ADDED:
-                security_impacts.append(
-                    f"New {service} resource may affect access controls"
-                )
+                security_impacts.append(f"New {service} resource may affect access controls")
             elif change_type == ChangeType.REMOVED:
-                security_impacts.append(
-                    f"Removed {service} resource may break access controls"
-                )
+                security_impacts.append(f"Removed {service} resource may break access controls")
             elif change_type == ChangeType.MODIFIED and old_resource:
-                security_impacts.append(
-                    f"Modified {service} resource may change access patterns"
-                )
+                security_impacts.append(f"Modified {service} resource may change access patterns")
 
         # Security groups
         if "security" in resource_type and "group" in resource_type:
             if change_type == ChangeType.ADDED:
-                security_impacts.append(
-                    "New security group may introduce network access changes"
-                )
+                security_impacts.append("New security group may introduce network access changes")
             elif change_type == ChangeType.REMOVED:
-                security_impacts.append(
-                    "Removed security group may affect network access"
-                )
+                security_impacts.append("Removed security group may affect network access")
             elif change_type == ChangeType.MODIFIED:
-                security_impacts.append(
-                    "Modified security group rules may change network access"
-                )
+                security_impacts.append("Modified security group rules may change network access")
 
         # Public access changes
         if old_resource and change_type == ChangeType.MODIFIED:
@@ -931,21 +864,16 @@ class DeltaDetector:
 
         # Network-critical resources
         if service in ["VPC", "EC2"] or any(
-            keyword in resource_type
-            for keyword in ["vpc", "subnet", "gateway", "route"]
+            keyword in resource_type for keyword in ["vpc", "subnet", "gateway", "route"]
         ):
             if change_type == ChangeType.ADDED:
-                network_impacts.append(
-                    f"New {service} resource may affect network topology"
-                )
+                network_impacts.append(f"New {service} resource may affect network topology")
             elif change_type == ChangeType.REMOVED:
                 network_impacts.append(
                     f"Removed {service} resource may disrupt network connectivity"
                 )
             elif change_type == ChangeType.MODIFIED:
-                network_impacts.append(
-                    f"Modified {service} resource may change network behavior"
-                )
+                network_impacts.append(f"Modified {service} resource may change network behavior")
 
         # VPC/Subnet changes
         if old_resource and change_type == ChangeType.MODIFIED:
@@ -957,9 +885,7 @@ class DeltaDetector:
             if old_vpc != new_vpc:
                 network_impacts.append(f"VPC changed from {old_vpc} to {new_vpc}")
             if old_subnet != new_subnet:
-                network_impacts.append(
-                    f"Subnet changed from {old_subnet} to {new_subnet}"
-                )
+                network_impacts.append(f"Subnet changed from {old_subnet} to {new_subnet}")
 
         return "; ".join(network_impacts) if network_impacts else None
 
@@ -991,9 +917,7 @@ class DeltaDetector:
         compliance_status_changes = []
         for change in modified_resources:
             compliance_changes = [
-                c
-                for c in change.compliance_changes
-                if c.attribute_path == "compliance_status"
+                c for c in change.compliance_changes if c.attribute_path == "compliance_status"
             ]
             if compliance_changes:
                 compliance_status_changes.append(
@@ -1009,31 +933,19 @@ class DeltaDetector:
             "old_compliance_stats": old_compliance_stats,
             "new_compliance_stats": new_compliance_stats,
             "compliance_trend": {
-                "compliance_percentage_change": new_compliance_stats[
-                    "compliance_percentage"
-                ]
+                "compliance_percentage_change": new_compliance_stats["compliance_percentage"]
                 - old_compliance_stats["compliance_percentage"],
                 "newly_compliant": len(
-                    [
-                        c
-                        for c in compliance_status_changes
-                        if c["new_status"] == "compliant"
-                    ]
+                    [c for c in compliance_status_changes if c["new_status"] == "compliant"]
                 ),
                 "newly_non_compliant": len(
-                    [
-                        c
-                        for c in compliance_status_changes
-                        if c["new_status"] == "non-compliant"
-                    ]
+                    [c for c in compliance_status_changes if c["new_status"] == "non-compliant"]
                 ),
             },
             "compliance_status_changes": compliance_status_changes,
         }
 
-    def _analyze_security_changes(
-        self, all_changes: List[ResourceChange]
-    ) -> Dict[str, Any]:
+    def _analyze_security_changes(self, all_changes: List[ResourceChange]) -> Dict[str, Any]:
         """Analyze security-related changes"""
         security_changes = []
         high_risk_changes = []
@@ -1041,9 +953,7 @@ class DeltaDetector:
         for change in all_changes:
             # Check for security-related attribute changes
             security_attrs = [
-                c
-                for c in change.attribute_changes
-                if c.category == ChangeCategory.SECURITY
+                c for c in change.attribute_changes if c.category == ChangeCategory.SECURITY
             ]
             if security_attrs:
                 security_changes.append(
@@ -1079,15 +989,11 @@ class DeltaDetector:
                 "medium_changes": len(
                     [c for c in security_changes if c["highest_severity"] == "medium"]
                 ),
-                "low_changes": len(
-                    [c for c in security_changes if c["highest_severity"] == "low"]
-                ),
+                "low_changes": len([c for c in security_changes if c["highest_severity"] == "low"]),
             },
         }
 
-    def _analyze_network_changes(
-        self, all_changes: List[ResourceChange]
-    ) -> Dict[str, Any]:
+    def _analyze_network_changes(self, all_changes: List[ResourceChange]) -> Dict[str, Any]:
         """Analyze network-related changes"""
         network_changes = []
         vpc_changes = []
@@ -1096,9 +1002,7 @@ class DeltaDetector:
         for change in all_changes:
             # Check for network-related attribute changes
             network_attrs = [
-                c
-                for c in change.attribute_changes
-                if c.category == ChangeCategory.NETWORK
+                c for c in change.attribute_changes if c.category == ChangeCategory.NETWORK
             ]
             if network_attrs:
                 network_changes.append(
@@ -1112,13 +1016,9 @@ class DeltaDetector:
                 )
 
             # Track VPC and subnet specific changes
-            vpc_attrs = [
-                c for c in change.attribute_changes if "vpc" in c.attribute_path.lower()
-            ]
+            vpc_attrs = [c for c in change.attribute_changes if "vpc" in c.attribute_path.lower()]
             subnet_attrs = [
-                c
-                for c in change.attribute_changes
-                if "subnet" in c.attribute_path.lower()
+                c for c in change.attribute_changes if "subnet" in c.attribute_path.lower()
             ]
 
             if vpc_attrs:
@@ -1206,9 +1106,9 @@ class DeltaDetector:
         related_resources = []
 
         # Get the resource data
-        resource_data = new_resources_map.get(
+        resource_data = new_resources_map.get(change.resource_arn) or old_resources_map.get(
             change.resource_arn
-        ) or old_resources_map.get(change.resource_arn)
+        )
         if not resource_data:
             return related_resources
 
@@ -1221,9 +1121,7 @@ class DeltaDetector:
 
             # Check if this resource type depends on the changed resource type
             if resource_service in self.dependency_patterns:
-                depends_on = self.dependency_patterns[resource_service].get(
-                    "depends_on", []
-                )
+                depends_on = self.dependency_patterns[resource_service].get("depends_on", [])
                 if change.service.upper() in depends_on:
                     # Check for actual relationships (VPC, subnet, security groups, etc.)
                     if self._resources_are_related(resource_data, resource):
@@ -1293,9 +1191,9 @@ class DeltaDetector:
         # Identify resources affected by multiple changes
         for resource_arn, affecting_changes in resource_change_count.items():
             if len(affecting_changes) > 1:  # Multiple dependencies changed
-                resource_data = new_resources_map.get(
+                resource_data = new_resources_map.get(resource_arn) or old_resources_map.get(
                     resource_arn
-                ) or old_resources_map.get(resource_arn)
+                )
                 if resource_data:
                     cascade_risks.append(
                         {
@@ -1303,9 +1201,7 @@ class DeltaDetector:
                             "service": resource_data.get("service", ""),
                             "type": resource_data.get("type", ""),
                             "affecting_changes": affecting_changes,
-                            "risk_level": (
-                                "high" if len(affecting_changes) > 2 else "medium"
-                            ),
+                            "risk_level": ("high" if len(affecting_changes) > 2 else "medium"),
                             "description": f"Resource depends on {len(affecting_changes)} resources that have changed",
                         }
                     )
@@ -1323,9 +1219,7 @@ class DeltaDetector:
                 "compliance_percentage": 0.0,
             }
 
-        compliant_count = len(
-            [r for r in resources if r.get("compliance_status") == "compliant"]
-        )
+        compliant_count = len([r for r in resources if r.get("compliance_status") == "compliant"])
         non_compliant_count = len(
             [r for r in resources if r.get("compliance_status") == "non-compliant"]
         )
@@ -1375,8 +1269,7 @@ class DeltaDetector:
         return {
             "total_changes": len(all_changes),
             "change_percentage": (
-                (len(all_changes) / (len(all_changes) + len(unchanged_resources)))
-                * 100.0
+                (len(all_changes) / (len(all_changes) + len(unchanged_resources))) * 100.0
                 if (len(all_changes) + len(unchanged_resources)) > 0
                 else 0.0
             ),

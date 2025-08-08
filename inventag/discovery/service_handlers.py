@@ -72,9 +72,7 @@ class S3Handler(ServiceHandler):
                 s3_client, "get_bucket_versioning", Bucket=bucket_name
             )
             if versioning_response:
-                attributes["versioning_status"] = versioning_response.get(
-                    "Status", "Disabled"
-                )
+                attributes["versioning_status"] = versioning_response.get("Status", "Disabled")
             else:
                 attributes["versioning_status"] = "Unknown"
 
@@ -83,9 +81,7 @@ class S3Handler(ServiceHandler):
                 s3_client, "get_bucket_location", Bucket=bucket_name
             )
             if location_response:
-                attributes["location"] = (
-                    location_response.get("LocationConstraint") or "us-east-1"
-                )
+                attributes["location"] = location_response.get("LocationConstraint") or "us-east-1"
             else:
                 attributes["location"] = "Unknown"
 
@@ -114,9 +110,7 @@ class S3Handler(ServiceHandler):
                 s3_client, "get_object_lock_configuration", Bucket=bucket_name
             )
             if object_lock_response:
-                attributes["object_lock"] = object_lock_response.get(
-                    "ObjectLockConfiguration", {}
-                )
+                attributes["object_lock"] = object_lock_response.get("ObjectLockConfiguration", {})
             else:
                 attributes["object_lock"] = None
 
@@ -182,15 +176,9 @@ class RDSHandler(ServiceHandler):
                             "storage_encrypted": db_instance.get("StorageEncrypted"),
                             "kms_key_id": db_instance.get("KmsKeyId"),
                             "multi_az": db_instance.get("MultiAZ"),
-                            "publicly_accessible": db_instance.get(
-                                "PubliclyAccessible"
-                            ),
-                            "backup_retention_period": db_instance.get(
-                                "BackupRetentionPeriod"
-                            ),
-                            "preferred_backup_window": db_instance.get(
-                                "PreferredBackupWindow"
-                            ),
+                            "publicly_accessible": db_instance.get("PubliclyAccessible"),
+                            "backup_retention_period": db_instance.get("BackupRetentionPeriod"),
+                            "preferred_backup_window": db_instance.get("PreferredBackupWindow"),
                             "preferred_maintenance_window": db_instance.get(
                                 "PreferredMaintenanceWindow"
                             ),
@@ -209,15 +197,11 @@ class RDSHandler(ServiceHandler):
                                 og["OptionGroupName"]
                                 for og in db_instance.get("OptionGroupMemberships", [])
                             ],
-                            "deletion_protection": db_instance.get(
-                                "DeletionProtection"
-                            ),
+                            "deletion_protection": db_instance.get("DeletionProtection"),
                             "performance_insights_enabled": db_instance.get(
                                 "PerformanceInsightsEnabled"
                             ),
-                            "monitoring_interval": db_instance.get(
-                                "MonitoringInterval"
-                            ),
+                            "monitoring_interval": db_instance.get("MonitoringInterval"),
                             "enhanced_monitoring_resource_arn": db_instance.get(
                                 "EnhancedMonitoringResourceArn"
                             ),
@@ -238,12 +222,8 @@ class RDSHandler(ServiceHandler):
                             "engine_mode": db_cluster.get("EngineMode"),
                             "storage_encrypted": db_cluster.get("StorageEncrypted"),
                             "kms_key_id": db_cluster.get("KmsKeyId"),
-                            "backup_retention_period": db_cluster.get(
-                                "BackupRetentionPeriod"
-                            ),
-                            "preferred_backup_window": db_cluster.get(
-                                "PreferredBackupWindow"
-                            ),
+                            "backup_retention_period": db_cluster.get("BackupRetentionPeriod"),
+                            "preferred_backup_window": db_cluster.get("PreferredBackupWindow"),
                             "preferred_maintenance_window": db_cluster.get(
                                 "PreferredMaintenanceWindow"
                             ),
@@ -252,9 +232,7 @@ class RDSHandler(ServiceHandler):
                                 for sg in db_cluster.get("VpcSecurityGroups", [])
                             ],
                             "db_subnet_group": db_cluster.get("DBSubnetGroup"),
-                            "db_cluster_parameter_group": db_cluster.get(
-                                "DBClusterParameterGroup"
-                            ),
+                            "db_cluster_parameter_group": db_cluster.get("DBClusterParameterGroup"),
                             "deletion_protection": db_cluster.get("DeletionProtection"),
                             "multi_az": db_cluster.get("MultiAZ"),
                             "cluster_members": [
@@ -337,35 +315,21 @@ class EC2Handler(ServiceHandler):
                                         "platform": instance.get("Platform"),
                                         "architecture": instance.get("Architecture"),
                                         "hypervisor": instance.get("Hypervisor"),
-                                        "virtualization_type": instance.get(
-                                            "VirtualizationType"
-                                        ),
+                                        "virtualization_type": instance.get("VirtualizationType"),
                                         "ami_id": instance.get("ImageId"),
                                         "key_name": instance.get("KeyName"),
                                         "launch_time": instance.get("LaunchTime"),
-                                        "availability_zone": instance.get(
-                                            "Placement", {}
-                                        ).get("AvailabilityZone"),
-                                        "tenancy": instance.get("Placement", {}).get(
-                                            "Tenancy"
+                                        "availability_zone": instance.get("Placement", {}).get(
+                                            "AvailabilityZone"
                                         ),
-                                        "host_id": instance.get("Placement", {}).get(
-                                            "HostId"
-                                        ),
+                                        "tenancy": instance.get("Placement", {}).get("Tenancy"),
+                                        "host_id": instance.get("Placement", {}).get("HostId"),
                                         "subnet_id": instance.get("SubnetId"),
                                         "vpc_id": instance.get("VpcId"),
-                                        "private_ip_address": instance.get(
-                                            "PrivateIpAddress"
-                                        ),
-                                        "public_ip_address": instance.get(
-                                            "PublicIpAddress"
-                                        ),
-                                        "private_dns_name": instance.get(
-                                            "PrivateDnsName"
-                                        ),
-                                        "public_dns_name": instance.get(
-                                            "PublicDnsName"
-                                        ),
+                                        "private_ip_address": instance.get("PrivateIpAddress"),
+                                        "public_ip_address": instance.get("PublicIpAddress"),
+                                        "private_dns_name": instance.get("PrivateDnsName"),
+                                        "public_dns_name": instance.get("PublicDnsName"),
                                         "security_groups": [
                                             sg["GroupId"]
                                             for sg in instance.get("SecurityGroups", [])
@@ -373,31 +337,21 @@ class EC2Handler(ServiceHandler):
                                         "iam_instance_profile": instance.get(
                                             "IamInstanceProfile", {}
                                         ).get("Arn"),
-                                        "monitoring_state": instance.get(
-                                            "Monitoring", {}
-                                        ).get("State"),
-                                        "source_dest_check": instance.get(
-                                            "SourceDestCheck"
+                                        "monitoring_state": instance.get("Monitoring", {}).get(
+                                            "State"
                                         ),
+                                        "source_dest_check": instance.get("SourceDestCheck"),
                                         "ebs_optimized": instance.get("EbsOptimized"),
-                                        "sriov_net_support": instance.get(
-                                            "SriovNetSupport"
-                                        ),
+                                        "sriov_net_support": instance.get("SriovNetSupport"),
                                         "ena_support": instance.get("EnaSupport"),
-                                        "root_device_type": instance.get(
-                                            "RootDeviceType"
-                                        ),
-                                        "root_device_name": instance.get(
-                                            "RootDeviceName"
-                                        ),
+                                        "root_device_type": instance.get("RootDeviceType"),
+                                        "root_device_name": instance.get("RootDeviceName"),
                                         "block_device_mappings": instance.get(
                                             "BlockDeviceMappings", []
                                         ),
                                         "network_interfaces": [
                                             ni["NetworkInterfaceId"]
-                                            for ni in instance.get(
-                                                "NetworkInterfaces", []
-                                            )
+                                            for ni in instance.get("NetworkInterfaces", [])
                                         ],
                                         "cpu_options": instance.get("CpuOptions", {}),
                                         "capacity_reservation_specification": instance.get(
@@ -406,12 +360,8 @@ class EC2Handler(ServiceHandler):
                                         "hibernation_options": instance.get(
                                             "HibernationOptions", {}
                                         ),
-                                        "metadata_options": instance.get(
-                                            "MetadataOptions", {}
-                                        ),
-                                        "enclave_options": instance.get(
-                                            "EnclaveOptions", {}
-                                        ),
+                                        "metadata_options": instance.get("MetadataOptions", {}),
+                                        "enclave_options": instance.get("EnclaveOptions", {}),
                                     }
                                 )
                                 break
@@ -486,9 +436,7 @@ class LambdaHandler(ServiceHandler):
             attributes = {}
 
             # Get function configuration
-            response = self._safe_api_call(
-                lambda_client, "get_function", FunctionName=resource_id
-            )
+            response = self._safe_api_call(lambda_client, "get_function", FunctionName=resource_id)
             if response:
                 config = response.get("Configuration", {})
                 code = response.get("Code", {})
@@ -517,25 +465,17 @@ class LambdaHandler(ServiceHandler):
                         "state_reason": config.get("StateReason"),
                         "state_reason_code": config.get("StateReasonCode"),
                         "last_update_status": config.get("LastUpdateStatus"),
-                        "last_update_status_reason": config.get(
-                            "LastUpdateStatusReason"
-                        ),
-                        "last_update_status_reason_code": config.get(
-                            "LastUpdateStatusReasonCode"
-                        ),
+                        "last_update_status_reason": config.get("LastUpdateStatusReason"),
+                        "last_update_status_reason_code": config.get("LastUpdateStatusReasonCode"),
                         "file_system_configs": config.get("FileSystemConfigs", []),
                         "package_type": config.get("PackageType"),
                         "image_config_response": config.get("ImageConfigResponse", {}),
-                        "signing_profile_version_arn": config.get(
-                            "SigningProfileVersionArn"
-                        ),
+                        "signing_profile_version_arn": config.get("SigningProfileVersionArn"),
                         "signing_job_arn": config.get("SigningJobArn"),
                         "architectures": config.get("Architectures", []),
                         "ephemeral_storage": config.get("EphemeralStorage", {}),
                         "snap_start": config.get("SnapStart", {}),
-                        "runtime_version_config": config.get(
-                            "RuntimeVersionConfig", {}
-                        ),
+                        "runtime_version_config": config.get("RuntimeVersionConfig", {}),
                         "logging_config": config.get("LoggingConfig", {}),
                         "code_repository_type": code.get("RepositoryType"),
                         "code_location": code.get("Location"),
@@ -549,8 +489,8 @@ class LambdaHandler(ServiceHandler):
                 lambda_client, "get_function_concurrency", FunctionName=resource_id
             )
             if concurrency_response:
-                attributes["reserved_concurrency_executions"] = (
-                    concurrency_response.get("ReservedConcurrencyExecutions")
+                attributes["reserved_concurrency_executions"] = concurrency_response.get(
+                    "ReservedConcurrencyExecutions"
                 )
 
             return {**resource, "service_attributes": attributes}
@@ -617,9 +557,7 @@ class ECSHandler(ServiceHandler):
                             "attachments": cluster.get("attachments", []),
                             "settings": cluster.get("settings", []),
                             "configuration": cluster.get("configuration", {}),
-                            "service_connect_defaults": cluster.get(
-                                "serviceConnectDefaults", {}
-                            ),
+                            "service_connect_defaults": cluster.get("serviceConnectDefaults", {}),
                         }
                     )
 
@@ -648,9 +586,7 @@ class ECSHandler(ServiceHandler):
                             "platform_version": service.get("platformVersion"),
                             "platform_family": service.get("platformFamily"),
                             "role_arn": service.get("roleArn"),
-                            "deployment_configuration": service.get(
-                                "deploymentConfiguration", {}
-                            ),
+                            "deployment_configuration": service.get("deploymentConfiguration", {}),
                             "deployments": service.get("deployments", []),
                             "load_balancers": service.get("loadBalancers", []),
                             "service_registries": service.get("serviceRegistries", []),
@@ -659,18 +595,12 @@ class ECSHandler(ServiceHandler):
                                 "healthCheckGracePeriodSeconds"
                             ),
                             "scheduling_strategy": service.get("schedulingStrategy"),
-                            "deployment_controller": service.get(
-                                "deploymentController", {}
-                            ),
-                            "network_configuration": service.get(
-                                "networkConfiguration", {}
-                            ),
+                            "deployment_controller": service.get("deploymentController", {}),
+                            "network_configuration": service.get("networkConfiguration", {}),
                             "service_connect_configuration": service.get(
                                 "serviceConnectConfiguration", {}
                             ),
-                            "volume_configurations": service.get(
-                                "volumeConfigurations", []
-                            ),
+                            "volume_configurations": service.get("volumeConfigurations", []),
                         }
                     )
 
@@ -720,9 +650,7 @@ class EKSHandler(ServiceHandler):
 
             if resource_type == "Cluster":
                 # Get cluster details
-                response = self._safe_api_call(
-                    eks_client, "describe_cluster", name=resource_id
-                )
+                response = self._safe_api_call(eks_client, "describe_cluster", name=resource_id)
                 if response and "cluster" in response:
                     cluster = response["cluster"]
                     attributes.update(
@@ -730,18 +658,12 @@ class EKSHandler(ServiceHandler):
                             "version": cluster.get("version"),
                             "endpoint": cluster.get("endpoint"),
                             "role_arn": cluster.get("roleArn"),
-                            "resources_vpc_config": cluster.get(
-                                "resourcesVpcConfig", {}
-                            ),
-                            "kubernetes_network_config": cluster.get(
-                                "kubernetesNetworkConfig", {}
-                            ),
+                            "resources_vpc_config": cluster.get("resourcesVpcConfig", {}),
+                            "kubernetes_network_config": cluster.get("kubernetesNetworkConfig", {}),
                             "logging": cluster.get("logging", {}),
                             "identity": cluster.get("identity", {}),
                             "status": cluster.get("status"),
-                            "certificate_authority": cluster.get(
-                                "certificateAuthority", {}
-                            ),
+                            "certificate_authority": cluster.get("certificateAuthority", {}),
                             "client_request_token": cluster.get("clientRequestToken"),
                             "platform_version": cluster.get("platformVersion"),
                             "encryption_config": cluster.get("encryptionConfig", []),

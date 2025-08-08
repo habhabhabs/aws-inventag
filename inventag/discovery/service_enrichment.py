@@ -81,9 +81,7 @@ class ServiceHandler(ABC):
     def _safe_api_call(self, client, operation_name: str, **kwargs) -> Optional[Dict]:
         """Safely execute API call with read-only validation."""
         if not self.validate_read_only_operation(operation_name):
-            self.logger.warning(
-                f"Operation {operation_name} is not validated as read-only"
-            )
+            self.logger.warning(f"Operation {operation_name} is not validated as read-only")
             return None
 
         try:
@@ -250,9 +248,7 @@ class DynamicServiceHandler(ServiceHandler):
         attributes = {}
 
         # Skip metadata
-        filtered_response = {
-            k: v for k, v in response.items() if k != "ResponseMetadata"
-        }
+        filtered_response = {k: v for k, v in response.items() if k != "ResponseMetadata"}
 
         # Strategy 1: Look for keys that match the resource type
         resource_keys = [
@@ -343,19 +339,13 @@ class DynamicServiceHandler(ServiceHandler):
         arn = resource.get("arn", "")
 
         if not service or not resource_type:
-            self.logger.warning(
-                f"Missing service or resource_type for resource: {resource}"
-            )
+            self.logger.warning(f"Missing service or resource_type for resource: {resource}")
             return resource
 
         # Check cache first
-        cached_result = self._get_cached_pattern_result(
-            service, resource_type, resource_id
-        )
+        cached_result = self._get_cached_pattern_result(service, resource_type, resource_id)
         if cached_result is not None:
-            self.logger.debug(
-                f"Using cached result for {service}/{resource_type}/{resource_id}"
-            )
+            self.logger.debug(f"Using cached result for {service}/{resource_type}/{resource_id}")
             return {**resource, "service_attributes": cached_result}
 
         attributes = {}
@@ -403,9 +393,7 @@ class DynamicServiceHandler(ServiceHandler):
             )
 
             # Generate parameter patterns
-            parameter_patterns = self._generate_parameter_patterns(
-                resource_type, resource_id, arn
-            )
+            parameter_patterns = self._generate_parameter_patterns(resource_type, resource_id, arn)
 
             # Try each operation pattern
             for pattern in valid_patterns:
@@ -415,9 +403,7 @@ class DynamicServiceHandler(ServiceHandler):
                     # Try each parameter pattern
                     for param_pattern in parameter_patterns:
                         try:
-                            response = self._safe_api_call(
-                                client, pattern, **param_pattern
-                            )
+                            response = self._safe_api_call(client, pattern, **param_pattern)
                             if response:
                                 # Extract resource data from response
                                 extracted_attributes = self._extract_resource_data(
@@ -427,9 +413,7 @@ class DynamicServiceHandler(ServiceHandler):
                                 if extracted_attributes:
                                     attributes.update(extracted_attributes)
                                     discovery_metadata["successful_pattern"] = pattern
-                                    discovery_metadata["parameter_pattern"] = (
-                                        param_pattern
-                                    )
+                                    discovery_metadata["parameter_pattern"] = param_pattern
 
                                     # Cache successful result
                                     self._cache_pattern_result(
@@ -532,9 +516,7 @@ class ServiceHandlerFactory:
             self._handlers["ECS"] = ECSHandler
             self._handlers["EKS"] = EKSHandler
 
-            self.logger.info(
-                "Registered built-in service handlers: S3, RDS, EC2, Lambda, ECS, EKS"
-            )
+            self.logger.info("Registered built-in service handlers: S3, RDS, EC2, Lambda, ECS, EKS")
 
         except ImportError as e:
             self.logger.warning(f"Failed to import specific service handlers: {e}")
@@ -554,9 +536,7 @@ class ServiceHandlerFactory:
         # Check for specific service handler
         if service_upper in self._handlers:
             if service_upper not in self._handler_instances:
-                self._handler_instances[service_upper] = self._handlers[service_upper](
-                    self.session
-                )
+                self._handler_instances[service_upper] = self._handlers[service_upper](self.session)
 
             handler = self._handler_instances[service_upper]
             if handler.can_handle(service, resource_type):
@@ -685,9 +665,7 @@ class ServiceAttributeEnricher:
             )
             return resource
 
-    def handle_unknown_service(
-        self, service: str, resource: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def handle_unknown_service(self, service: str, resource: Dict[str, Any]) -> Dict[str, Any]:
         """Dynamically handle unknown services using generic patterns."""
         self.logger.info(f"Attempting dynamic discovery for unknown service: {service}")
 
@@ -712,8 +690,6 @@ class ServiceAttributeEnricher:
             "registered_handlers": self.handler_factory.list_registered_handlers(),
         }
 
-    def register_custom_handler(
-        self, service: str, handler_class: Type[ServiceHandler]
-    ):
+    def register_custom_handler(self, service: str, handler_class: Type[ServiceHandler]):
         """Register a custom service handler."""
         self.handler_factory.register_handler(service, handler_class)

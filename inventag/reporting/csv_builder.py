@@ -29,9 +29,7 @@ class CSVBuilder(DocumentBuilder):
         """Validate CSV dependencies (always available)."""
         return []  # No external dependencies
 
-    def generate_document(
-        self, bom_data: BOMData, output_path: str
-    ) -> DocumentGenerationResult:
+    def generate_document(self, bom_data: BOMData, output_path: str) -> DocumentGenerationResult:
         """Generate CSV document."""
         start_time = datetime.now(timezone.utc)
 
