@@ -91,11 +91,13 @@ class QuickRegressionTestRunner:
         self.run_command("python3 -m inventag.cli.main --help", "CLI Help Display", timeout=30)
 
         # Test fallback display options
-        self.run_command(
-            "python3 -c \"import sys; sys.path.append('.'); from inventag.cli.main import create_parser; parser = create_parser(); args = parser.parse_args(['--fallback-display=auto', '--help']); print('✓ Fallback options available')\"",
-            "Fallback Display Options Available",
-            timeout=15,
+        cmd = (
+            "python3 -c \"import sys; sys.path.append('.'); "
+            "from inventag.cli.main import create_parser; parser = create_parser(); "
+            "args = parser.parse_args(['--fallback-display=auto', '--help']); "
+            "print('✓ Fallback options available')\""
         )
+        self.run_command(cmd, "Fallback Display Options Available", timeout=15)
 
         # Test configuration validation (should work without AWS credentials)
         self.run_command(
@@ -111,25 +113,26 @@ class QuickRegressionTestRunner:
         print("=" * 60)
 
         # Test core imports
-        self.run_command(
-            "python3 -c \"from inventag.core import CloudBOMGenerator, MultiAccountConfig, AccountCredentials; print('✓ Core modules imported successfully')\"",
-            "Core Module Import Test",
-            timeout=15,
+        cmd1 = (
+            'python3 -c "from inventag.core import CloudBOMGenerator, '
+            "MultiAccountConfig, AccountCredentials; "
+            "print('✓ Core modules imported successfully')\""
         )
+        self.run_command(cmd1, "Core Module Import Test", timeout=15)
 
         # Test discovery imports
-        self.run_command(
-            "python3 -c \"from inventag.discovery import comprehensive_discovery; print('✓ Discovery modules imported successfully')\"",
-            "Discovery Module Import Test",
-            timeout=15,
+        cmd2 = (
+            'python3 -c "from inventag.discovery import comprehensive_discovery; '
+            "print('✓ Discovery modules imported successfully')\""
         )
+        self.run_command(cmd2, "Discovery Module Import Test", timeout=15)
 
         # Test CLI imports
-        self.run_command(
-            "python3 -c \"from inventag.cli.main import create_parser; print('✓ CLI modules imported successfully')\"",
-            "CLI Module Import Test",
-            timeout=15,
+        cmd3 = (
+            'python3 -c "from inventag.cli.main import create_parser; '
+            "print('✓ CLI modules imported successfully')\""
         )
+        self.run_command(cmd3, "CLI Module Import Test", timeout=15)
 
     def test_fallback_logic(self):
         """Test fallback logic without AWS calls."""
@@ -149,15 +152,15 @@ try:
     discovery = ComprehensiveAWSDiscovery("fake-account", fallback_display_mode="auto")
     assert discovery.fallback_display_mode == "auto"
     print("Auto mode initialization works")
-    
-    discovery_always = ComprehensiveAWSDiscovery("fake-account", fallback_display_mode="always") 
+
+    discovery_always = ComprehensiveAWSDiscovery("fake-account", fallback_display_mode="always")
     assert discovery_always.fallback_display_mode == "always"
     print("Always mode initialization works")
-    
+
     discovery_never = ComprehensiveAWSDiscovery("fake-account", fallback_display_mode="never")
-    assert discovery_never.fallback_display_mode == "never" 
+    assert discovery_never.fallback_display_mode == "never"
     print("Never mode initialization works")
-    
+
     print("All fallback modes working correctly")
 except Exception as e:
     print(f"Fallback logic test failed: {e}")
@@ -184,17 +187,20 @@ except Exception as e:
         )
 
         # Validate template YAML syntax
-        self.run_command(
-            "python3 -c \"import yaml; data = yaml.safe_load(open('config/aws-prescriptive-guidance/tag-mappings.yaml')); print(f'✓ Tag mappings YAML valid with {len(data)} sections')\"",
-            "Tag Mappings YAML Validation",
-            timeout=10,
+        cmd1 = (
+            'python3 -c "import yaml; '
+            "data = yaml.safe_load(open('config/aws-prescriptive-guidance/tag-mappings.yaml')); "
+            "print(f'✓ Tag mappings YAML valid with {len(data)} sections')\""
         )
+        self.run_command(cmd1, "Tag Mappings YAML Validation", timeout=10)
 
-        self.run_command(
-            "python3 -c \"import yaml; data = yaml.safe_load(open('config/aws-prescriptive-guidance/service-descriptions.yaml')); print(f'✓ Service descriptions YAML valid with {len(data)} services')\"",
-            "Service Descriptions YAML Validation",
-            timeout=10,
+        cmd2 = (
+            'python3 -c "import yaml; '
+            "data = yaml.safe_load("
+            "open('config/aws-prescriptive-guidance/service-descriptions.yaml')); "
+            "print(f'Service descriptions valid with {len(data)} services')\""
         )
+        self.run_command(cmd2, "Service Descriptions YAML Validation", timeout=10)
 
     def test_documentation_completeness(self):
         """Test documentation files are complete."""
