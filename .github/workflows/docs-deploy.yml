@@ -122,37 +122,36 @@ jobs:
           fi
           cd ..
           
-          # Create SBOM summary for documentation
-          cat > docs/security/current/sbom-summary.md << EOF
-# Current SBOM Summary
-
-**Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')  
-**Repository**: ${{ github.repository }}  
-**Branch**: ${{ github.ref_name }}  
-**Commit**: ${{ github.sha }}
-
-## Components Overview
-
-### Repository-wide SBOM
-- **File**: [current-sbom.json](../sbom/current-sbom.json)
-- **Format**: Syft JSON
-- **Components**: $(jq '.artifacts | length' docs/security/sbom/current-sbom.json 2>/dev/null || echo "Unknown")
-
-### Python Dependencies
-$(if [ -f "docs/security/sbom/python-sbom.json" ]; then
-  echo "- **File**: [python-sbom.json](../sbom/python-sbom.json)"
-  echo "- **Components**: $(jq '.components | length' docs/security/sbom/python-sbom.json 2>/dev/null || echo "Unknown")"
-else
-  echo "- **Status**: No requirements.txt found"
-fi)
-
-### Node.js Dependencies (Website)
-$(if [ -f "docs/security/sbom/nodejs-website-sbom.json" ]; then
-  echo "- **File**: [nodejs-website-sbom.json](../sbom/nodejs-website-sbom.json)"  
-  echo "- **Components**: $(jq '.components | length' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null || echo "Unknown")"
-else
-  echo "- **Status**: No Node.js dependencies detected"
-fi)
+          # Create SBOM summary for documentation (simplified to avoid YAML issues)
+          echo "# Current SBOM Summary" > docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> docs/security/current/sbom-summary.md
+          echo "Repository: ${{ github.repository }}" >> docs/security/current/sbom-summary.md
+          echo "Branch: ${{ github.ref_name }}" >> docs/security/current/sbom-summary.md
+          echo "Commit: ${{ github.sha }}" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "## Components Overview" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "### Repository-wide SBOM" >> docs/security/current/sbom-summary.md
+          echo "- File: [current-sbom.json](../sbom/current-sbom.json)" >> docs/security/current/sbom-summary.md
+          echo "- Format: Syft JSON" >> docs/security/current/sbom-summary.md
+          echo "- Components: $(jq '.artifacts | length' docs/security/sbom/current-sbom.json 2>/dev/null || echo 'Unknown')" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "### Python Dependencies" >> docs/security/current/sbom-summary.md
+          if [ -f "docs/security/sbom/python-sbom.json" ]; then
+            echo "- File: [python-sbom.json](../sbom/python-sbom.json)" >> docs/security/current/sbom-summary.md
+            echo "- Components: $(jq '.components | length' docs/security/sbom/python-sbom.json 2>/dev/null || echo 'Unknown')" >> docs/security/current/sbom-summary.md
+          else
+            echo "- Status: No requirements.txt found" >> docs/security/current/sbom-summary.md
+          fi
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "### Node.js Dependencies (Website)" >> docs/security/current/sbom-summary.md
+          if [ -f "docs/security/sbom/nodejs-website-sbom.json" ]; then
+            echo "- File: [nodejs-website-sbom.json](../sbom/nodejs-website-sbom.json)" >> docs/security/current/sbom-summary.md
+            echo "- Components: $(jq '.components | length' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null || echo 'Unknown')" >> docs/security/current/sbom-summary.md
+          else
+            echo "- Status: No Node.js dependencies detected" >> docs/security/current/sbom-summary.md
+          fi
 
 ## SBOM Formats Available
 

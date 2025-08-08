@@ -148,41 +148,30 @@ jobs:
           fi
           cd ..
           
-          # Create version-specific SBOM summary
-          cat > "docs/security/versions/$VERSION/README.md" << EOF
-# SBOM for Version $VERSION
-
-**Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')  
-**Version**: $VERSION  
-**Repository**: ${{ github.repository }}  
-**Git Tag**: $VERSION
-
-## Version-Specific Components
-
-This SBOM was generated at the time of version $VERSION creation and represents the exact components and dependencies included in this release.
-
-### Available SBOM Files
-
-- [sbom-$VERSION.json](sbom-$VERSION.json) - Syft JSON format
-- [sbom-$VERSION-cyclonedx.json](sbom-$VERSION-cyclonedx.json) - CycloneDX format
-$(if [ -f "docs/security/versions/$VERSION/python-sbom-$VERSION.json" ]; then
-  echo "- [python-sbom-$VERSION.json](python-sbom-$VERSION.json) - Python dependencies"
-fi)
-$(if [ -f "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" ]; then
-  echo "- [nodejs-website-sbom-$VERSION.json](nodejs-website-sbom-$VERSION.json) - Node.js website dependencies"
-fi)
-
-## Component Summary
-
-- **Repository Components**: $(jq '.artifacts | length' "docs/security/versions/$VERSION/sbom-$VERSION.json" 2>/dev/null || echo "Unknown")
-$(if [ -f "docs/security/versions/$VERSION/python-sbom-$VERSION.json" ]; then
-  echo "- **Python Components**: $(jq '.components | length' "docs/security/versions/$VERSION/python-sbom-$VERSION.json" 2>/dev/null || echo "Unknown")"
-fi)
-$(if [ -f "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" ]; then
-  echo "- **Node.js Components**: $(jq '.components | length' "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" 2>/dev/null || echo "Unknown")"
-fi)
-
-## Version Tracking
+          # Create version-specific SBOM summary (simplified to avoid YAML issues)
+          echo "# SBOM for Version $VERSION" > "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "Generated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> "docs/security/versions/$VERSION/README.md"
+          echo "Version: $VERSION" >> "docs/security/versions/$VERSION/README.md"
+          echo "Repository: ${{ github.repository }}" >> "docs/security/versions/$VERSION/README.md"
+          echo "Git Tag: $VERSION" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "## Version-Specific Components" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "This SBOM was generated at the time of version $VERSION creation and represents the exact components and dependencies included in this release." >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "### Available SBOM Files" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "- [sbom-$VERSION.json](sbom-$VERSION.json) - Syft JSON format" >> "docs/security/versions/$VERSION/README.md"
+          echo "- [sbom-$VERSION-cyclonedx.json](sbom-$VERSION-cyclonedx.json) - CycloneDX format" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "## Component Summary" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "- Repository Components: TBD" >> "docs/security/versions/$VERSION/README.md"
+          echo "- Python Components: TBD" >> "docs/security/versions/$VERSION/README.md"
+          echo "- Node.js Components: TBD" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "## Version Tracking" >> "docs/security/versions/$VERSION/README.md"
 
 This SBOM enables:
 - Supply chain security tracking for this specific version
