@@ -635,7 +635,7 @@ class ReadOnlyAccessValidator:
                             "service": service,
                             "operation": operation,
                             "status": "BLOCKED",
-                            "message": f"Operation blocked by security validation",
+                            "message": "Operation blocked by security validation",
                         }
                     )
 

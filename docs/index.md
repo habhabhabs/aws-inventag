@@ -30,62 +30,73 @@ pip install -r requirements.txt
 
 ## ✨ Key Features
 
-- 🛡️ **Production Safety & Security** - Enterprise-grade security validation and compliance standards (SOC 2, PCI, HIPAA, GDPR)
-- 📊 **Professional BOM Generation** - Excel/Word/Google Docs reports with logical column ordering and service-specific sheets
-- 🔍 **Multi-Account Discovery** - Comprehensive resource scanning across multiple AWS accounts with parallel processing
-- 🧠 **Optimized Discovery System** - Enhanced intelligent discovery with service-specific patterns and 3-4x performance improvement
-- 🌐 **Advanced Analysis Suite** - Network security analysis, cost optimization, and security posture assessment
-- 🏷️ **Tag Compliance Checking** - Automated validation against organizational tagging policies
-- 🔄 **State Management** - Change tracking with delta detection and professional changelog generation
-- 🚀 **CI/CD Ready** - Easy integration with automated workflows and S3 upload support
-- ⚡ **Flexible Deployment** - Cross-account roles, interactive setup, and comprehensive credential management
+- 🛡️ **Production Safety & Security** - Enterprise-grade security validation with compliance standards (SOC 2, PCI, HIPAA, GDPR) and read-only enforcement
+- 📊 **Professional BOM Generation** - Multi-format reports (Excel/Word/Google Docs) with logical column ordering and service-specific sheets
+- 🔍 **Comprehensive Resource Discovery** - 22+ AWS services discovery with optimized patterns and 3-4x performance improvement
+- 🌐 **Advanced Analysis Suite** - Network security analysis, cost optimization, and security posture assessment with detailed insights
+- 🏷️ **Tag Compliance & Validation** - Automated validation against organizational tagging policies with customizable rules
+- 🔄 **State Management & Change Tracking** - Delta detection with professional changelog generation and audit trails
+- 🚀 **Multi-Account & CI/CD Ready** - Parallel processing across accounts with S3 upload, role assumption, and pipeline integration
+- ⚡ **Flexible Deployment Options** - Cross-platform support, interactive setup, credential management, and enterprise scaling
 
 ## 💼 Enterprise Examples
 
 ```bash
-# Multi-account BOM with comprehensive analysis
+# Multi-account BOM with comprehensive analysis and compliance
 ./inventag.sh --accounts-file accounts.json \
   --create-excel --create-word \
   --tag-mappings config/defaults/mappings/tag_to_column_mappings_example.yaml \
   --service-descriptions config/defaults/services/service_descriptions_example.yaml \
-  --enable-network-analysis --enable-security-analysis \
-  --compliance-standard soc2 --s3-bucket enterprise-reports
+  --enable-network-analysis --enable-security-analysis --enable-cost-analysis \
+  --compliance-standard soc2 --audit-output compliance-report.json
 
-# Interactive multi-account setup with advanced features
+# Interactive multi-account setup with state management
 ./inventag.sh --accounts-prompt \
   --create-excel --create-google-docs \
   --tag-mappings config/defaults/mappings/tag_to_column_mappings_example.yaml \
-  --enable-cost-analysis --generate-changelog
+  --enable-state-management --generate-changelog \
+  --per-account-reports --verbose
 
-# Cross-account role with production safety
+# Cross-account role assumption with enhanced security
 ./inventag.sh --cross-account-role InvenTagRole \
-  --create-excel --enable-production-safety \
-  --security-validation --audit-output security-audit.json
+  --create-excel --create-word \
+  --enable-production-safety --security-validation \
+  --risk-threshold HIGH --audit-output security-audit.json
 
-# CI/CD integration with comprehensive reporting
+# CI/CD pipeline integration with S3 upload
 ./inventag.sh --accounts-file accounts.json \
   --create-excel --create-word \
-  --s3-bucket reports-bucket --s3-key-prefix daily-reports/ \
-  --max-concurrent-accounts 8 --per-account-reports
+  --s3-bucket enterprise-reports --s3-key-prefix daily-reports/ \
+  --s3-encryption aws:kms --s3-kms-key-id alias/report-encryption \
+  --max-concurrent-accounts 8 --account-processing-timeout 3600
+
+# Production validation and debugging
+./inventag.sh --validate-credentials \
+  --validate-config --debug \
+  --log-file inventag-debug.log \
+  --credential-timeout 60
 ```
 
 ## 🏗️ Project Structure
 
 ```text
 inventag-aws/
-├── README.md                    # This overview
+├── inventag_cli.py              # Main CLI entry point
+├── inventag.sh / inventag.bat   # Cross-platform wrapper scripts
 ├── inventag/                    # Core Python package
-│   ├── cli/                     # Unified CLI interface
-│   ├── core/                    # Core orchestration
-│   ├── discovery/               # Resource discovery
-│   ├── compliance/              # Security & compliance
-│   ├── reporting/               # BOM generation
-│   └── state/                   # Change management
-├── docs/                        # Complete documentation
-├── examples/                    # Configuration examples
-├── config/                      # Default configurations
-├── scripts/                     # Standalone tools
-└── tests/                       # Comprehensive test suite
+│   ├── cli/                     # Unified CLI interface & configuration validation
+│   ├── core/                    # Multi-account orchestration & credential management
+│   ├── discovery/               # 22+ AWS service discovery engines
+│   ├── compliance/              # Security validation & production safety
+│   ├── reporting/               # Multi-format BOM generation (Excel/Word/CSV)
+│   └── state/                   # Change tracking & changelog generation
+├── docs/                        # Complete documentation (dual GitHub/Docusaurus)
+├── website/                     # Docusaurus documentation site
+├── examples/                    # 15+ working configuration examples
+├── config/                      # Default configurations & JSON schemas
+├── templates/                   # Document generation templates
+├── scripts/                     # Development & production tools
+└── tests/                       # Comprehensive test suite (unit/integration/backward)
 ```
 
 ## 🛡️ Security & Compliance
@@ -112,52 +123,52 @@ New to InvenTag? Start here to get up and running quickly.
 
 Comprehensive guides for using InvenTag in different scenarios.
 
-- **[CLI User Guide](user-guides/cli-user-guide)** - Comprehensive CLI reference and usage examples
-- **[Configuration Examples](user-guides/configuration-examples)** - Setup and configuration guidance
-- **[Production Safety Guide](user-guides/production-safety)** - Security, compliance, and safety features
-- **[Troubleshooting Guide](user-guides/troubleshooting-guide)** - Common issues and solutions
+- **[CLI User Guide](./user-guides/cli-user-guide)** - Comprehensive CLI reference and usage examples
+- **[Configuration Examples](./user-guides/configuration-examples)** - Setup and configuration guidance
+- **[Production Safety Guide](./user-guides/production-safety)** - Security, compliance, and safety features
+- **[Troubleshooting Guide](./user-guides/troubleshooting-guide)** - Common issues and solutions
 
 ## 🏗️ Architecture & Technical Design
 
 Technical documentation for developers and system architects.
 
-- **[Core Module Integration](architecture/core-module-integration)** - System architecture overview
-- **[Optimized Discovery System](architecture/optimized-discovery-system)** - Enhanced discovery with 3-4x performance improvement
-- **[State Management](architecture/state-management)** - Change tracking and delta detection
-- **[Template Framework](architecture/template-framework)** - Document generation system
-- **[Service Enrichment](architecture/service-enrichment)** - AWS service attribute enhancement
-- **[BOM Data Processor](architecture/bom-data-processor)** - Data processing pipeline
-- **[Network Analysis](architecture/network-analysis)** - VPC and network analysis capabilities
-- **[Cost Analysis](architecture/cost-analysis)** - Cost estimation and optimization
-- **[Tag Compliance](architecture/tag-compliance)** - Compliance checking framework
+- **[Core Module Integration](./architecture/core-module-integration)** - System architecture overview
+- **[Optimized Discovery System](./architecture/optimized-discovery-system)** - Enhanced discovery with 3-4x performance improvement
+- **[State Management](./architecture/state-management)** - Change tracking and delta detection
+- **[Template Framework](./architecture/template-framework)** - Document generation system
+- **[Service Enrichment](./architecture/service-enrichment)** - AWS service attribute enhancement
+- **[BOM Data Processor](./architecture/bom-data-processor)** - Data processing pipeline
+- **[Network Analysis](./architecture/network-analysis)** - VPC and network analysis capabilities
+- **[Cost Analysis](./architecture/cost-analysis)** - Cost estimation and optimization
+- **[Tag Compliance](./architecture/tag-compliance)** - Compliance checking framework
 
 ## 🛠️ Development & Deployment
 
 Resources for developers contributing to InvenTag or deploying it in production.
 
-- **[Contributing Guide](development/CONTRIBUTING)** - Development setup and guidelines
-- **[Deployment Guide](development/DEPLOYMENT)** - Production deployment instructions
-- **[CI/CD Integration](development/cicd-integration)** - Pipeline integration examples
-- **[Security Guide](development/SECURITY)** - Security best practices
-- **[Backward Compatibility](development/backward-compatibility)** - Version compatibility matrix
-- **[Migration Guide](development/bom-migration-guide)** - Upgrade and migration procedures
+- **[Contributing Guide](./development/CONTRIBUTING)** - Development setup and guidelines
+- **[Deployment Guide](./development/DEPLOYMENT)** - Production deployment instructions
+- **[CI/CD Integration](./development/cicd-integration)** - Pipeline integration examples
+- **[Security Guide](./development/SECURITY)** - Security best practices
+- **[Backward Compatibility](./development/backward-compatibility)** - Version compatibility matrix
+- **[Migration Guide](./development/bom-migration-guide)** - Upgrade and migration procedures
 
 ## 📖 Documentation
 
-- **[📖 Complete User Guide](user-guides/cli-user-guide)** - Comprehensive CLI reference and examples
-- **[🚀 Quick Start Guide](getting-started/quick-start)** - Get started in minutes
-- **[📋 Configuration Examples](examples/)** - Working configuration examples  
-- **[🛡️ Production Safety Guide](user-guides/production-safety)** - Security and compliance features
-- **[⚙️ Configuration Guide](user-guides/configuration-examples)** - Setup and customization
-- **[🔧 Troubleshooting](user-guides/troubleshooting-guide)** - Common issues and solutions
+- **[📖 Complete User Guide](./user-guides/cli-user-guide)** - Comprehensive CLI reference and examples
+- **[🚀 Quick Start Guide](./getting-started/quick-start)** - Get started in minutes
+- **[📋 Configuration Examples](./examples/)** - Working configuration examples  
+- **[🛡️ Production Safety Guide](./user-guides/production-safety)** - Security and compliance features
+- **[⚙️ Configuration Guide](./user-guides/configuration-examples)** - Setup and customization
+- **[🔧 Troubleshooting](./user-guides/troubleshooting-guide)** - Common issues and solutions
 
 ## 🚀 Quick Navigation
 
-- **New User?** Start with [Introduction](getting-started/introduction) and [Quick Start Guide](getting-started/quick-start)
-- **Setting Up?** Check [Installation](getting-started/installation) and [Configuration Examples](user-guides/configuration-examples)  
-- **Production Deployment?** See [Production Safety Guide](user-guides/production-safety) and [Deployment Guide](development/DEPLOYMENT)
-- **Having Issues?** Visit [Troubleshooting Guide](user-guides/troubleshooting-guide)
-- **Developer?** Read [Contributing Guide](development/CONTRIBUTING)
+- **New User?** Start with [Introduction](./getting-started/introduction) and [Quick Start Guide](./getting-started/quick-start)
+- **Setting Up?** Check [Installation](./getting-started/installation) and [Configuration Examples](./user-guides/configuration-examples)  
+- **Production Deployment?** See [Production Safety Guide](./user-guides/production-safety) and [Deployment Guide](./development/DEPLOYMENT)
+- **Having Issues?** Visit [Troubleshooting Guide](./user-guides/troubleshooting-guide)
+- **Developer?** Read [Contributing Guide](./development/CONTRIBUTING)
 
 ## 🔗 Support & Community
 

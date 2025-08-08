@@ -117,22 +117,22 @@ def create_parser() -> argparse.ArgumentParser:
 Examples:
   # Generate BOM for single account using default credentials
   inventag --create-excel --create-word
-  
+
   # Multi-account BOM generation from file
   inventag --accounts-file accounts.json --create-excel --s3-bucket my-bucket
-  
+
   # Interactive multi-account setup
   inventag --accounts-prompt --create-word --create-excel --verbose
-  
+
   # Cross-account role assumption (auto-discovers all regions)
   inventag --cross-account-role InvenTagRole
-  
+
   # CI/CD integration with S3 upload
   inventag --accounts-file accounts.json --create-excel --s3-bucket reports-bucket --s3-key-prefix bom-reports/
-  
+
   # Debug mode with comprehensive logging
   inventag --debug --log-file inventag-debug.log --create-excel
-  
+
   # Validate AWS credentials only
   inventag --validate-credentials
         """,
@@ -474,7 +474,7 @@ def create_accounts_from_prompt() -> List[AccountCredentials]:
         if not account_id:
             break
 
-        account_name = input(f"Account Name (optional): ").strip() or account_id
+        account_name = input("Account Name (optional): ").strip() or account_id
 
         print("\nCredential Options:")
         print("1. AWS Profile")
@@ -607,14 +607,14 @@ def create_multi_account_config(args) -> MultiAccountConfig:
                 try:
                     role_part = account_arn.split("assumed-role/")[1].split("/")[0]
                     account_name = f"AWS Account {actual_account_id} ({role_part})"
-                except:
+                except Exception:
                     account_name = f"AWS Account {actual_account_id}"
             elif "user" in account_arn:
                 # Extract user name from ARN like: arn:aws:iam::123456789012:user/username
                 try:
                     user_part = account_arn.split("user/")[1]
                     account_name = f"AWS Account {actual_account_id} ({user_part})"
-                except:
+                except Exception:
                     account_name = f"AWS Account {actual_account_id}"
             else:
                 account_name = f"AWS Account {actual_account_id}"
@@ -957,7 +957,7 @@ def main():
 
             processing_stats = results.get("processing_statistics", {})
             if processing_stats:
-                logger.info(f"Processing summary:")
+                logger.info("Processing summary:")
                 logger.info(
                     f"  - Total accounts: {processing_stats.get('total_accounts', 0)}"
                 )

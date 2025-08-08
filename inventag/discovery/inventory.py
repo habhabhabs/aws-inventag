@@ -1216,7 +1216,7 @@ class AWSResourceInventory:
             "acm": "ACM",
             "kms": "KMS",
             "keymanagementservice": "KMS",
-            "waf": "WAF",
+            "wa": "WAF",
             "wafv2": "WAF",
             "shield": "Shield",
             # Management & Governance
@@ -1281,7 +1281,7 @@ class AWSResourceInventory:
             "kms": "kms",
             "keymanagementservice": "kms",
             "secretsmanager": "secretsmanager",
-            "waf": "waf",
+            "wa": "wa",
             "wafv2": "wafv2",
             "shield": "shield",
             # Storage
@@ -1430,7 +1430,7 @@ class AWSResourceInventory:
                     response_data = []
                     for page in paginator.paginate():
                         response_data.append(page)
-                except:
+                except Exception:
                     # Fallback to direct call
                     response_data = [operation()]
             else:
@@ -1604,13 +1604,13 @@ class AWSResourceInventory:
                             if "/" in resource_part:
                                 return resource_part.split("/")[-1]  # Get resource name
                             return resource_part
-                    except:
+                    except Exception:
                         pass
 
                 return value
 
         # Fallback: look for any string field that could be an identifier
-        fallback_patterns = ["identifier", "ref", "reference", "key", "token"]
+        fallback_patterns = ["identifier", "re", "reference", "key", "token"]
         for key, value in resource_data.items():
             if isinstance(value, str) and len(value) > 0 and len(value) < 200:
                 key_lower = key.lower()
@@ -1684,7 +1684,7 @@ class AWSResourceInventory:
                         if "/" in resource_part:
                             return resource_part.split("/")[-1]
                         return resource_part
-                    except:
+                    except Exception:
                         pass
 
         return None

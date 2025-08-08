@@ -44,7 +44,7 @@ class ReadOnlyAccessDiscovery(OptimizedAWSDiscovery):
             "cloudfront": "us-east-1",
             "iam": "us-east-1",
             "route53": "us-east-1",
-            "waf": "us-east-1",
+            "wa": "us-east-1",
             "wafv2": "us-east-1",
             "shield": "us-east-1",
             "globalaccelerator": "us-east-1",

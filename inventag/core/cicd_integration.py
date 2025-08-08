@@ -844,7 +844,7 @@ class CICDIntegration:
     ):
         """Export Prometheus metrics to file and optionally push to gateway."""
         try:
-            metrics_content = f"""# HELP inventag_total_resources Total number of AWS resources discovered
+            metrics_content = """# HELP inventag_total_resources Total number of AWS resources discovered
 # TYPE inventag_total_resources gauge
 inventag_total_resources {metrics.total_resources}
 
@@ -954,7 +954,7 @@ inventag_s3_upload_time_seconds {metrics.s3_upload_time}
         """
         output_formats = output_formats or ["excel", "word", "json"]
 
-        workflow_config = f"""name: {workflow_name}
+        workflow_config = """name: {workflow_name}
 
 on:
   schedule:
@@ -978,28 +978,28 @@ on:
 jobs:
   inventag-bom-generation:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install inventag[cicd]
-    
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{{{ secrets.AWS_ACCESS_KEY_ID }}}}
         aws-secret-access-key: ${{{{ secrets.AWS_SECRET_ACCESS_KEY }}}}
         aws-region: us-east-1
-    
+
     - name: Generate multi-account BOM
       env:
         INVENTAG_ACCOUNTS_FILE: ${{{{ github.event.inputs.accounts_file || '.github/inventag-accounts.yaml' }}}}
@@ -1014,16 +1014,16 @@ jobs:
         import os
         from inventag import CloudBOMGenerator, CredentialManager
         from inventag.core.cicd_integration import CICDIntegration, S3UploadConfig, NotificationConfig
-        
+
         # Load accounts configuration
         credential_manager = CredentialManager()
         accounts = credential_manager.load_credential_file(os.environ['INVENTAG_ACCOUNTS_FILE'])
-        
+
         # Create BOM generator
         from inventag import MultiAccountConfig
         config = MultiAccountConfig(accounts=accounts)
         generator = CloudBOMGenerator(config)
-        
+
         # Configure CI/CD integration
         s3_config = None
         if os.environ.get('INVENTAG_S3_BUCKET') and os.environ.get('INVENTAG_UPLOAD_TO_S3') == 'true':
@@ -1031,17 +1031,17 @@ jobs:
                 bucket_name=os.environ['INVENTAG_S3_BUCKET'],
                 key_prefix=os.environ.get('INVENTAG_S3_KEY_PREFIX', 'inventag-bom')
             )
-        
+
         notification_config = NotificationConfig(
             slack_webhook_url=os.environ.get('INVENTAG_SLACK_WEBHOOK'),
             teams_webhook_url=os.environ.get('INVENTAG_TEAMS_WEBHOOK')
         )
-        
+
         cicd = CICDIntegration(
             s3_config=s3_config,
             notification_config=notification_config
         )
-        
+
         # Execute pipeline
         output_formats = os.environ['INVENTAG_OUTPUT_FORMATS'].split(',')
         result = cicd.execute_pipeline_integration(
@@ -1051,18 +1051,18 @@ jobs:
             send_notifications=True,
             export_metrics=True
         )
-        
+
         # Set GitHub Actions outputs
         print(f'::set-output name=success::{{result.success}}')
         print(f'::set-output name=compliance_gate_passed::{{result.compliance_gate_passed}}')
         print(f'::set-output name=generated_documents::{{len(result.generated_documents)}}')
-        
+
         # Fail the job if compliance gate failed
         if not result.compliance_gate_passed:
             print('::error::Compliance gate failed')
             exit(1)
         "
-    
+
     - name: Upload artifacts
       if: always()
       uses: actions/upload-artifact@v3

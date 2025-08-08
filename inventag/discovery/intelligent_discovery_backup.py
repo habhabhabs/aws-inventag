@@ -291,7 +291,7 @@ class IntelligentFieldMapper:
                         if "/" in resource_part:
                             return resource_part.split("/")[-1]
                         return resource_part
-                    except:
+                    except Exception:
                         return arn
 
         # Try hierarchical ID field lookup
@@ -362,7 +362,7 @@ class IntelligentFieldMapper:
                         if "/" in resource_part:
                             return resource_part.split("/")[-1]
                         return resource_part
-                    except:
+                    except Exception:
                         pass
 
         return None
@@ -508,7 +508,7 @@ class IntelligentFieldMapper:
                 if arn.startswith("arn:aws:"):
                     try:
                         return arn.split(":")[4]  # Account ID is 5th element
-                    except:
+                    except Exception:
                         pass
 
         # Direct account fields
@@ -799,7 +799,7 @@ class IntelligentAWSDiscovery:
                 # Try with paginator first
                 paginator = client.get_paginator(snake_case_op)
                 responses = paginator.paginate()
-            except:
+            except Exception:
                 # Fallback to direct call
                 responses = [operation()]
 
@@ -919,7 +919,7 @@ class IntelligentAWSDiscovery:
             ec2 = self.session.client("ec2", region_name="us-east-1")
             regions = ec2.describe_regions()["Regions"]
             return [region["RegionName"] for region in regions]
-        except:
+        except Exception:
             # Fallback to common regions
             return ["us-east-1", "us-west-2", "eu-west-1"]
 

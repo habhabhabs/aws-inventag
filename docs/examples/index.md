@@ -125,6 +125,6 @@ Always validate your configuration files before use:
 
 ## More Information
 
-- [Quick Start Guide](/getting-started/quick-start)
-- [Complete CLI User Guide](/user-guides/cli-user-guide)
-- [Configuration Guide](/user-guides/configuration-examples)
+- [Quick Start Guide](../getting-started/quick-start)
+- [Complete CLI User Guide](../user-guides/cli-user-guide)
+- [Configuration Guide](../user-guides/configuration-examples)

@@ -280,7 +280,7 @@ npm run docs:pipeline:test
 - **GitHub Compatibility**: Use relative links that work in both GitHub and Docusaurus:
   ```markdown
   # Good - works in both platforms
-  [Configuration Guide](../user-guides/configuration-examples.md)
+  [Configuration Guide](../user-guides/configuration-examples)
   
   # Avoid - absolute GitHub links
   [Guide](https://github.com/habhabhabs/inventag-aws/blob/main/docs/guide.md)
@@ -288,7 +288,7 @@ npm run docs:pipeline:test
 
 - **Asset Management**: Place images and files in `docs/assets/`:
   ```markdown
-  ![Architecture Diagram](assets/architecture-overview.png)
+  ![Architecture Diagram](../assets/architecture-overview.png)
   ```
 
 #### 4. **Testing Documentation Changes**

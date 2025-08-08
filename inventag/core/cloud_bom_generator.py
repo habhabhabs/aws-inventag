@@ -320,7 +320,7 @@ class CloudBOMGenerator:
                                     credentials.account_name = (
                                         f"AWS Account {actual_account_id} ({role_part})"
                                     )
-                                except:
+                                except Exception:
                                     credentials.account_name = (
                                         f"AWS Account {actual_account_id}"
                                     )
@@ -330,7 +330,7 @@ class CloudBOMGenerator:
                                     credentials.account_name = (
                                         f"AWS Account {actual_account_id} ({user_part})"
                                     )
-                                except:
+                                except Exception:
                                     credentials.account_name = (
                                         f"AWS Account {actual_account_id}"
                                     )

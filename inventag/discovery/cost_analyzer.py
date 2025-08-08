@@ -1095,7 +1095,7 @@ class CostAnalyzer:
             # Determine recommendation type based on service
             if resource.service == "EC2":
                 recommendation_type = "rightsizing"
-                description = f"Consider rightsizing this EC2 instance to reduce costs"
+                description = "Consider rightsizing this EC2 instance to reduce costs"
                 potential_savings = resource.estimated_monthly_cost * Decimal(
                     "0.3"
                 )  # 30% potential savings
@@ -1106,7 +1106,7 @@ class CostAnalyzer:
                 ]
             elif resource.service == "RDS":
                 recommendation_type = "rightsizing"
-                description = f"Consider optimizing this RDS instance configuration"
+                description = "Consider optimizing this RDS instance configuration"
                 potential_savings = resource.estimated_monthly_cost * Decimal(
                     "0.25"
                 )  # 25% potential savings

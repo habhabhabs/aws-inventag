@@ -46,21 +46,12 @@ class ComprehensiveAWSDiscovery:
 
         # Comprehensive service discovery patterns
         self.service_discovery_patterns = {
-            # Network & Foundation Services (often untagged)
-            "ec2": {
+            # VPC & Network Infrastructure (separate from EC2)
+            "vpc": {
                 "operations": [
                     ("describe_vpcs", "Vpcs", "VPC"),
                     ("describe_subnets", "Subnets", "Subnet"),
                     ("describe_security_groups", "SecurityGroups", "SecurityGroup"),
-                    ("describe_instances", "Reservations", "Instance"),
-                    ("describe_volumes", "Volumes", "Volume"),
-                    (
-                        "describe_snapshots",
-                        "Snapshots",
-                        "Snapshot",
-                        {"OwnerIds": ["self"]},
-                    ),
-                    ("describe_key_pairs", "KeyPairs", "KeyPair"),
                     (
                         "describe_internet_gateways",
                         "InternetGateways",
@@ -73,6 +64,23 @@ class ComprehensiveAWSDiscovery:
                 ],
                 "regional": True,
                 "critical": True,  # Always discover these
+                "client_service": "ec2",  # Use EC2 client for VPC operations
+            },
+            # EC2 Compute Services (separate from VPC)
+            "ec2": {
+                "operations": [
+                    ("describe_instances", "Reservations", "Instance"),
+                    ("describe_volumes", "Volumes", "Volume"),
+                    (
+                        "describe_snapshots",
+                        "Snapshots",
+                        "Snapshot",
+                        {"OwnerIds": ["self"]},
+                    ),
+                    ("describe_key_pairs", "KeyPairs", "KeyPair"),
+                ],
+                "regional": True,
+                "critical": True,
             },
             # Storage Services
             "s3": {
@@ -81,7 +89,7 @@ class ComprehensiveAWSDiscovery:
                 ],
                 "regional": False,  # Global service
                 "critical": True,
-                "post_process": "enhance_s3_buckets",  # Get bucket regions/details
+                "post_process": "enhance_s3_buckets",  # Get bucket regions/details using boto3 API
             },
             # Database Services
             "rds": {
@@ -168,6 +176,7 @@ class ComprehensiveAWSDiscovery:
                 ],
                 "regional": True,
                 "critical": False,
+                "graceful_degradation": True,  # Handle access denied gracefully
             },
             # Monitoring
             "cloudwatch": {
@@ -225,6 +234,64 @@ class ComprehensiveAWSDiscovery:
                 "regional": True,
                 "critical": False,
             },
+            # AWS Glue
+            "glue": {
+                "operations": [
+                    ("get_databases", "DatabaseList", "Database"),
+                    ("get_jobs", "Jobs", "Job"),
+                    ("get_crawlers", "CrawlerList", "Crawler"),
+                    ("get_triggers", "Triggers", "Trigger"),
+                ],
+                "regional": True,
+                "critical": False,
+                "graceful_degradation": True,
+            },
+            # Amazon WorkMail
+            "workmail": {
+                "operations": [
+                    ("list_organizations", "Organizations", "Organization"),
+                ],
+                "regional": True,
+                "critical": False,
+                "graceful_degradation": True,  # WorkMail requires specific permissions
+            },
+            # CloudFormation
+            "cloudformation": {
+                "operations": [
+                    ("describe_stacks", "Stacks", "Stack"),
+                    ("list_stack_sets", "Summaries", "StackSet"),
+                ],
+                "regional": True,
+                "critical": False,
+            },
+            # AWS Certificate Manager
+            "acm": {
+                "operations": [
+                    ("list_certificates", "CertificateSummaryList", "Certificate"),
+                ],
+                "regional": True,
+                "critical": False,
+                "graceful_degradation": True,
+            },
+            # AWS CloudTrail
+            "cloudtrail": {
+                "operations": [
+                    ("describe_trails", "trailList", "Trail"),
+                ],
+                "regional": True,
+                "critical": False,
+                "graceful_degradation": True,
+            },
+            # CloudWatch Events (EventBridge)
+            "events": {
+                "operations": [
+                    ("list_rules", "Rules", "Rule"),
+                    ("list_event_buses", "EventBuses", "EventBus"),
+                ],
+                "regional": True,
+                "critical": False,
+                "graceful_degradation": True,
+            },
         }
 
         # Global services that should only be called from us-east-1
@@ -256,7 +323,7 @@ class ComprehensiveAWSDiscovery:
         # Step 4: Validate against billing data
         self._validate_with_billing()
 
-        # Step 5: Post-process and enhance
+        # Step 5: Post-process and enhance (including S3 bucket regions)
         self._post_process_resources()
 
         execution_time = time.time() - start_time
@@ -390,8 +457,9 @@ class ComprehensiveAWSDiscovery:
         resources_found = 0
 
         try:
-            # Create service client
-            client = self.session.client(service_name, region_name=region)
+            # Create service client (handle special cases like VPC using EC2 client)
+            client_service = config.get("client_service", service_name)
+            client = self.session.client(client_service, region_name=region)
 
             # Execute all operations for this service
             for operation_config in config["operations"]:
@@ -402,7 +470,11 @@ class ComprehensiveAWSDiscovery:
                 except ClientError as e:
                     error_code = e.response.get("Error", {}).get("Code", "")
                     if error_code in ["AccessDenied", "UnauthorizedOperation"]:
-                        # Expected for some operations with limited permissions
+                        # Handle access denied gracefully for services that support it
+                        if config.get("graceful_degradation", False):
+                            self.logger.debug(
+                                f"Access denied for {service_name} operation - continuing with limited permissions"
+                            )
                         continue
                     else:
                         self.logger.debug(f"Operation failed for {service_name}: {e}")
@@ -561,9 +633,14 @@ class ComprehensiveAWSDiscovery:
             # Extract tags
             tags = self._extract_tags(raw_data)
 
+            # Reclassify VPC-related resources from EC2 to VPC service
+            actual_service = self._determine_actual_service(
+                service_name, resource_type, resource_id, arn
+            )
+
             # Build normalized resource
             resource = {
-                "service": service_name.upper(),
+                "service": actual_service.upper(),
                 "resource_type": resource_type,
                 "resource_id": resource_id,
                 "resource_name": resource_name,
@@ -575,6 +652,7 @@ class ComprehensiveAWSDiscovery:
                 "discovered_via": f"ServiceAPI:{operation_name}",
                 "discovered_at": datetime.utcnow().isoformat(),
                 "tagged": bool(tags),
+                "priority": "primary",  # Service API discoveries are primary
             }
 
             return resource
@@ -606,6 +684,7 @@ class ComprehensiveAWSDiscovery:
                 "discovered_via": f"ServiceAPI:{operation_name}",
                 "discovered_at": datetime.utcnow().isoformat(),
                 "tagged": False,
+                "priority": "primary",  # Service API discoveries are primary
             }
 
             return resource
@@ -628,7 +707,7 @@ class ComprehensiveAWSDiscovery:
             "Identifier",
         ]
 
-        # Service-specific patterns
+        # Service-specific patterns - prioritize human-readable IDs over ARNs
         service_patterns = {
             "VPC": ["VpcId"],
             "Subnet": ["SubnetId"],
@@ -644,6 +723,21 @@ class ComprehensiveAWSDiscovery:
             "Role": ["RoleName"],
             "HostedZone": ["Id"],
             "Distribution": ["Id"],
+            "Stack": ["StackName", "StackId"],  # Prefer StackName over StackId/ARN
+            "StackSet": ["StackSetName", "StackSetId"],  # Prefer name over ID
+            # Additional patterns for other services
+            "Key": ["KeyId"],
+            "Alias": ["AliasName"],
+            "Alarm": ["AlarmName"],
+            "Dashboard": ["DashboardName"],
+            "Topic": ["TopicArn"],  # SNS topics use ARN as identifier
+            "Queue": ["QueueUrl"],  # SQS queues use URL as identifier
+            "Table": ["TableName"],
+            "RestApi": ["id", "name"],
+            "Certificate": ["CertificateArn"],
+            "Trail": ["Name", "TrailARN"],
+            "Rule": ["Name"],
+            "EventBus": ["Name"],
         }
 
         # Try service-specific patterns first
@@ -711,7 +805,7 @@ class ComprehensiveAWSDiscovery:
             try:
                 sts = self.session.client("sts")
                 account_id = sts.get_caller_identity()["Account"]
-            except:
+            except Exception:
                 account_id = "000000000000"  # Placeholder
 
             # Handle service-specific ARN formats
@@ -726,7 +820,7 @@ class ComprehensiveAWSDiscovery:
             else:
                 return f"arn:aws:{service}:{region}:{account_id}:{resource_type.lower()}/{resource_id}"
 
-        except:
+        except Exception:
             return f"arn:aws:{service}:{region}:unknown:{resource_type.lower()}/{resource_id}"
 
     def _enrich_with_tagging_api(self):
@@ -762,27 +856,35 @@ class ComprehensiveAWSDiscovery:
                             )
                             enriched_count += 1
                         else:
-                            # This is a resource we missed - add it
+                            # This is a resource we missed - add it as fallback only
                             try:
                                 service = self._extract_service_from_arn(arn)
                                 if service:
+                                    resource_id = (
+                                        arn.split("/")[-1]
+                                        if "/" in arn
+                                        else arn.split(":")[-1]
+                                    )
+
+                                    # Apply the same service classification logic for fallback resources
+                                    actual_service = self._determine_actual_service(
+                                        service, "Unknown", resource_id, arn
+                                    )
+
                                     new_resource = {
-                                        "service": service.upper(),
+                                        "service": actual_service.upper(),
                                         "resource_type": "Unknown",
-                                        "resource_id": (
-                                            arn.split("/")[-1]
-                                            if "/" in arn
-                                            else arn.split(":")[-1]
-                                        ),
+                                        "resource_id": resource_id,
                                         "resource_name": tags.get("Name"),
                                         "arn": arn,
                                         "region": region,
                                         "account_id": self._extract_account_id(arn),
                                         "tags": tags,
                                         "raw_data": {"arn": arn},
-                                        "discovered_via": "ResourceGroupsTaggingAPI",
+                                        "discovered_via": "ResourceGroupsTaggingAPI:Fallback",
                                         "discovered_at": datetime.utcnow().isoformat(),
                                         "tagged": True,
+                                        "priority": "fallback",  # Mark as lower priority
                                     }
                                     self.resources.append(new_resource)
                                     new_resources_found += 1
@@ -810,41 +912,102 @@ class ComprehensiveAWSDiscovery:
         return None
 
     def _validate_with_billing(self):
-        """Validate discovered resources against billing data."""
+        """Comprehensive validation of discovered resources against billing data."""
         if not self.billing_services:
+            self.logger.warning(
+                "💸 No billing data available - cannot validate discovery completeness"
+            )
             return
 
         discovered_services = {r["service"].lower() for r in self.resources}
 
-        # Find services with billing but no resources (potential untagged resources)
-        missing_services = self.billing_services - discovered_services
-        if missing_services:
-            self.logger.warning(
-                f"💸 Found {len(missing_services)} services with billing usage but no discovered resources: "
-                f"{', '.join(sorted(missing_services))} - these may have untagged resources"
+        self.logger.info("💰 BILLING vs DISCOVERY ANALYSIS")
+        self.logger.info("=" * 50)
+
+        # Create comprehensive comparison
+        all_services = discovered_services | self.billing_services
+        comparison_data = []
+
+        for service in sorted(all_services):
+            has_billing = service in self.billing_services
+            has_resources = service in discovered_services
+            billing_cost = self.billing_spend.get(service, 0.0)
+            resource_count = len(
+                [r for r in self.resources if r["service"].lower() == service]
             )
 
-        # Find services with resources but no billing (free tier)
-        unbilled_services = discovered_services - self.billing_services
-        if unbilled_services:
-            self.logger.info(
-                f"🆓 Found {len(unbilled_services)} services with resources but no billing: "
-                f"{', '.join(sorted(unbilled_services))} - likely free tier usage"
+            status = "✅ MATCHED"
+            if has_billing and not has_resources:
+                status = "❌ MISSING RESOURCES"
+            elif has_resources and not has_billing:
+                status = "🆓 FREE TIER"
+
+            comparison_data.append(
+                {
+                    "service": service.upper(),
+                    "billing": f"${billing_cost:.3f}" if has_billing else "N/A",
+                    "resources": resource_count if has_resources else 0,
+                    "status": status,
+                }
             )
+
+            self.logger.info(
+                f"{status:<20} {service.upper():<15} Billing: ${billing_cost:<8.3f} Resources: {resource_count}"
+            )
+
+        # Summary analysis
+        missing_services = self.billing_services - discovered_services
+        unbilled_services = discovered_services - self.billing_services
+        matched_services = discovered_services & self.billing_services
+
+        self.logger.info("=" * 50)
+        self.logger.info("📊 DISCOVERY COMPLETENESS SUMMARY:")
+        self.logger.info(
+            f"   ✅ Matched (billing + resources): {len(matched_services)} services"
+        )
+        self.logger.info(
+            f"   ❌ Missing resources (billing only): {len(missing_services)} services"
+        )
+        self.logger.info(
+            f"   🆓 Free tier (resources only): {len(unbilled_services)} services"
+        )
+
+        if missing_services:
+            self.logger.warning("💸 MISSING RESOURCES for services with billing:")
+            for service in sorted(missing_services):
+                cost = self.billing_spend.get(service, 0.0)
+                self.logger.warning(
+                    f"   • {service.upper()}: ${cost:.3f} - resources not discovered"
+                )
+
+        if unbilled_services:
+            self.logger.info("🆓 FREE TIER SERVICES (no billing cost):")
+            for service in sorted(unbilled_services):
+                count = len(
+                    [r for r in self.resources if r["service"].lower() == service]
+                )
+                self.logger.info(
+                    f"   • {service.upper()}: {count} resources (likely free tier)"
+                )
+
+        # Calculate overall detection rate
+        total_billing_services = len(self.billing_services)
+        detected_billing_services = len(matched_services)
+        if total_billing_services > 0:
+            detection_rate = (detected_billing_services / total_billing_services) * 100
+            self.logger.info(
+                f"🎯 DETECTION RATE: {detection_rate:.1f}% ({detected_billing_services}/{total_billing_services} billing services)"
+            )
+
+        self.logger.info("=" * 50)
 
     def _post_process_resources(self):
         """Post-process resources for consistency and additional metadata."""
-        # Remove duplicates based on ARN
-        seen_arns = set()
-        deduplicated = []
+        # Enhanced S3 bucket region detection using boto3 API
+        self._enhance_s3_buckets()
 
-        for resource in self.resources:
-            arn = resource.get("arn")
-            if arn not in seen_arns:
-                seen_arns.add(arn)
-                deduplicated.append(resource)
-
-        self.resources = deduplicated
+        # Smart duplicate removal prioritizing service APIs over fallback methods
+        self._remove_duplicates_with_priority()
 
         # Add billing metadata
         for resource in self.resources:
@@ -855,6 +1018,305 @@ class ComprehensiveAWSDiscovery:
         self.logger.info(
             f"📊 Post-processing complete: {len(self.resources)} unique resources"
         )
+
+    def _enhance_s3_buckets(self):
+        """Use boto3 APIs to get correct regions and metadata for all services."""
+        # S3 bucket region detection
+        s3_client = self.session.client("s3")
+
+        for resource in self.resources:
+            if (
+                resource.get("service") == "S3"
+                and resource.get("resource_type") == "Bucket"
+            ):
+                bucket_name = resource.get("resource_id")
+                try:
+                    # Use boto3 S3 API to get bucket location
+                    response = s3_client.get_bucket_location(Bucket=bucket_name)
+                    region = (
+                        response.get("LocationConstraint") or "us-east-1"
+                    )  # us-east-1 returns None
+
+                    # Update resource with correct region
+                    resource["region"] = region
+                    resource["raw_data"]["boto3_region"] = region
+
+                    # Reconstruct ARN with correct region
+                    resource["arn"] = f"arn:aws:s3:::{bucket_name}"
+
+                    self.logger.debug(
+                        f"Enhanced S3 bucket {bucket_name} with region {region}"
+                    )
+
+                except Exception as e:
+                    self.logger.debug(
+                        f"Failed to get S3 bucket region for {bucket_name}: {e}"
+                    )
+                    continue
+
+        # Lambda function region/runtime enhancement
+        self._enhance_lambda_functions()
+
+        # RDS instance region/engine enhancement
+        self._enhance_rds_resources()
+
+        # CloudFormation stack region/status enhancement
+        self._enhance_cloudformation_stacks()
+
+    def _enhance_lambda_functions(self):
+        """Enhance Lambda functions with detailed metadata from boto3 API."""
+        for region in self.regions:
+            lambda_functions = [
+                r
+                for r in self.resources
+                if r.get("service") == "LAMBDA" and r.get("resource_type") == "Function"
+            ]
+
+            if not lambda_functions:
+                continue
+
+            try:
+                lambda_client = self.session.client("lambda", region_name=region)
+
+                for resource in lambda_functions:
+                    function_name = resource.get("resource_id")
+                    try:
+                        # Get detailed function configuration
+                        response = lambda_client.get_function(
+                            FunctionName=function_name
+                        )
+                        config = response.get("Configuration", {})
+
+                        # Update with accurate region and metadata
+                        resource["region"] = region
+                        resource["raw_data"]["boto3_config"] = config
+                        resource["raw_data"]["runtime"] = config.get("Runtime")
+                        resource["raw_data"]["memory_size"] = config.get("MemorySize")
+                        resource["raw_data"]["timeout"] = config.get("Timeout")
+
+                        self.logger.debug(
+                            f"Enhanced Lambda function {function_name} in {region}"
+                        )
+
+                    except Exception as e:
+                        self.logger.debug(
+                            f"Failed to enhance Lambda function {function_name}: {e}"
+                        )
+                        continue
+
+            except Exception as e:
+                self.logger.debug(f"Failed to create Lambda client for {region}: {e}")
+                continue
+
+    def _enhance_rds_resources(self):
+        """Enhance RDS resources with detailed metadata from boto3 API."""
+        for region in self.regions:
+            rds_instances = [
+                r
+                for r in self.resources
+                if r.get("service") == "RDS"
+                and "Instance" in r.get("resource_type", "")
+            ]
+
+            if not rds_instances:
+                continue
+
+            try:
+                rds_client = self.session.client("rds", region_name=region)
+
+                for resource in rds_instances:
+                    instance_id = resource.get("resource_id")
+                    try:
+                        # Get detailed instance information
+                        response = rds_client.describe_db_instances(
+                            DBInstanceIdentifier=instance_id
+                        )
+                        instances = response.get("DBInstances", [])
+
+                        if instances:
+                            instance = instances[0]
+                            # Update with accurate region and metadata
+                            resource["region"] = region
+                            resource["raw_data"]["boto3_instance"] = instance
+                            resource["raw_data"]["engine"] = instance.get("Engine")
+                            resource["raw_data"]["engine_version"] = instance.get(
+                                "EngineVersion"
+                            )
+                            resource["raw_data"]["instance_class"] = instance.get(
+                                "DBInstanceClass"
+                            )
+                            resource["raw_data"]["availability_zone"] = instance.get(
+                                "AvailabilityZone"
+                            )
+
+                            self.logger.debug(
+                                f"Enhanced RDS instance {instance_id} in {region}"
+                            )
+
+                    except Exception as e:
+                        self.logger.debug(
+                            f"Failed to enhance RDS instance {instance_id}: {e}"
+                        )
+                        continue
+
+            except Exception as e:
+                self.logger.debug(f"Failed to create RDS client for {region}: {e}")
+                continue
+
+    def _enhance_cloudformation_stacks(self):
+        """Enhance CloudFormation stacks with detailed metadata from boto3 API."""
+        for region in self.regions:
+            cf_stacks = [
+                r
+                for r in self.resources
+                if r.get("service") == "CLOUDFORMATION"
+                and r.get("resource_type") == "Stack"
+            ]
+
+            if not cf_stacks:
+                continue
+
+            try:
+                cf_client = self.session.client("cloudformation", region_name=region)
+
+                for resource in cf_stacks:
+                    stack_name = resource.get("resource_id")
+                    try:
+                        # Get detailed stack information
+                        response = cf_client.describe_stacks(StackName=stack_name)
+                        stacks = response.get("Stacks", [])
+
+                        if stacks:
+                            stack = stacks[0]
+                            # Update with accurate region and metadata
+                            resource["region"] = region
+                            resource["raw_data"]["boto3_stack"] = stack
+                            resource["raw_data"]["stack_status"] = stack.get(
+                                "StackStatus"
+                            )
+                            resource["raw_data"]["creation_time"] = stack.get(
+                                "CreationTime"
+                            )
+                            resource["raw_data"]["drift_status"] = stack.get(
+                                "DriftInformation", {}
+                            ).get("StackDriftStatus")
+
+                            self.logger.debug(
+                                f"Enhanced CloudFormation stack {stack_name} in {region}"
+                            )
+
+                    except Exception as e:
+                        self.logger.debug(
+                            f"Failed to enhance CloudFormation stack {stack_name}: {e}"
+                        )
+                        continue
+
+            except Exception as e:
+                self.logger.debug(
+                    f"Failed to create CloudFormation client for {region}: {e}"
+                )
+                continue
+
+    def _remove_duplicates_with_priority(self):
+        """Remove duplicates prioritizing service API discoveries over fallback methods."""
+        # Group resources by ARN
+        arn_groups = {}
+        for resource in self.resources:
+            arn = resource.get("arn")
+            if arn:
+                if arn not in arn_groups:
+                    arn_groups[arn] = []
+                arn_groups[arn].append(resource)
+
+        # Select best resource for each ARN (prioritize service API over fallback)
+        deduplicated = []
+        for arn, resource_group in arn_groups.items():
+            if len(resource_group) == 1:
+                deduplicated.append(resource_group[0])
+            else:
+                # Sort by priority: primary (service API) > fallback (ResourceGroupsTagging)
+                resource_group.sort(
+                    key=lambda r: (
+                        r.get("priority", "fallback") != "primary",  # Primary first
+                        not r.get("tagged", False),  # Tagged resources second
+                        r.get("discovered_at", ""),  # Newer discoveries last
+                    )
+                )
+
+                best_resource = resource_group[0]
+
+                # Merge tags from all sources
+                all_tags = {}
+                for resource in resource_group:
+                    all_tags.update(resource.get("tags", {}))
+
+                best_resource["tags"] = all_tags
+                best_resource["tagged"] = bool(all_tags)
+                best_resource["duplicate_sources"] = len(resource_group)
+
+                deduplicated.append(best_resource)
+
+                self.logger.debug(
+                    f"Merged {len(resource_group)} duplicates for {arn}, kept {best_resource.get('discovered_via', 'unknown')}"
+                )
+
+        self.resources = deduplicated
+
+        self.logger.info(
+            "🔄 Duplicate removal complete: prioritized service API discoveries over fallback methods"
+        )
+
+    def _determine_actual_service(
+        self, service_name: str, resource_type: str, resource_id: str, arn: str
+    ) -> str:
+        """Determine the actual service for proper classification, especially for VPC resources discovered via EC2 client."""
+        # VPC-related resources should be classified as VPC service, not EC2
+        vpc_resource_indicators = [
+            "vpc-",
+            "subnet-",
+            "igw-",
+            "rtb-",
+            "acl-",
+            "sg-",
+            "nat-",
+            "eip-",
+        ]
+        vpc_resource_types = [
+            "VPC",
+            "Subnet",
+            "SecurityGroup",
+            "InternetGateway",
+            "NatGateway",
+            "RouteTable",
+            "NetworkAcl",
+            "ElasticIP",
+        ]
+
+        # Check resource ID prefixes
+        if any(
+            resource_id.startswith(indicator) for indicator in vpc_resource_indicators
+        ):
+            return "vpc"
+
+        # Check resource types
+        if resource_type in vpc_resource_types:
+            return "vpc"
+
+        # Check ARN for VPC service indicators
+        if ":ec2:" in arn and any(
+            indicator in arn
+            for indicator in [
+                "vpc/",
+                "subnet/",
+                "security-group/",
+                "internet-gateway/",
+                "nat-gateway/",
+            ]
+        ):
+            return "vpc"
+
+        # Default to original service
+        return service_name
 
     def _normalize_billing_service_name(self, billing_name: str) -> str:
         """Normalize billing service name to match AWS service names."""
@@ -869,13 +1331,20 @@ class ComprehensiveAWSDiscovery:
             "Amazon CloudWatch": "cloudwatch",
             "AWS Key Management Service": "kms",
             "Elastic Load Balancing": "elasticloadbalancing",
-            "Amazon Virtual Private Cloud": "ec2",
+            "Amazon Virtual Private Cloud": "vpc",
             "Amazon Elastic Container Service": "ecs",
             "Amazon Elastic Kubernetes Service": "eks",
             "Amazon Simple Notification Service": "sns",
             "Amazon Simple Queue Service": "sqs",
             "Amazon DynamoDB": "dynamodb",
             "Amazon API Gateway": "apigateway",
+            "AWS Glue": "glue",
+            "Amazon WorkMail": "workmail",
+            "AWS CloudFormation": "cloudformation",
+            "AWS Certificate Manager": "acm",
+            "AWS CloudTrail": "cloudtrail",
+            "CloudWatch Events": "events",
+            "Amazon CloudWatch Events": "events",
         }
 
         return mappings.get(
