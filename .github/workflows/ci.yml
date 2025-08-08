@@ -291,6 +291,17 @@ EOF
           detect-secrets scan --all-files --baseline .secrets.baseline --update
         fi
         
+        echo "🔒 Running GitLeaks scan..."
+        if [ -f ".gitleaks.toml" ]; then
+          if gitleaks detect --config .gitleaks.toml; then
+            echo "✅ No real secrets detected by GitLeaks"
+          else
+            echo "⚠️ GitLeaks found potential secrets (may be documentation examples)"
+          fi
+        else
+          echo "ℹ️ No GitLeaks configuration found"
+        fi
+        
         echo "🔍 Scanning for sensitive configuration patterns..."
         
         # Check for potentially sensitive files

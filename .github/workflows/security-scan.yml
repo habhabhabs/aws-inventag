@@ -280,6 +280,14 @@ EOF
           detect-secrets audit .security-scan/reports/secrets/secrets.baseline --report --output .security-scan/reports/secrets/secrets-audit.json || true
         fi
         
+        echo "🔒 Running GitLeaks scan with custom configuration..."
+        if [ -f ".gitleaks.toml" ]; then
+          gitleaks detect --config .gitleaks.toml --report-format json --report-path .security-scan/reports/secrets/gitleaks-report.json || true
+          gitleaks detect --config .gitleaks.toml || echo "⚠️ GitLeaks found potential issues (filtered for documentation examples)"
+        else
+          echo "ℹ️ No GitLeaks configuration found, skipping GitLeaks scan"
+        fi
+        
         echo "🔍 Scanning for credential patterns in code..."
         
         # Enhanced credential pattern detection
