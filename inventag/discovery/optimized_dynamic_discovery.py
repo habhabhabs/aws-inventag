@@ -163,11 +163,15 @@ class OptimizedDynamicDiscovery:
 
                     # Early termination if we've found enough resources
                     if len(resources_discovered) > 1000:  # Reasonable limit
-                        self.logger.info("Early termination - found sufficient resources")
+                        self.logger.info(
+                            "Early termination - found sufficient resources"
+                        )
                         break
 
                 except Exception as e:
-                    self.logger.warning(f"Task failed for {task['service']}-{task['region']}: {e}")
+                    self.logger.warning(
+                        f"Task failed for {task['service']}-{task['region']}: {e}"
+                    )
                     results.append(
                         DiscoveryResult(
                             service_name=task["service"],
@@ -191,7 +195,9 @@ class OptimizedDynamicDiscovery:
             "successful_discoveries": len(successful_discoveries),
             "total_resources_found": total_resources,
             "average_time_per_task": total_time / len(results) if results else 0,
-            "resources_per_second": (total_resources / total_time if total_time > 0 else 0),
+            "resources_per_second": (
+                total_resources / total_time if total_time > 0 else 0
+            ),
             "parallel_efficiency": (
                 len(results) / (total_time * self.max_workers) if total_time > 0 else 0
             ),
@@ -283,7 +289,9 @@ class OptimizedDynamicDiscovery:
                         self._record_successful_operation(service_name, operation_name)
 
                 except Exception as e:
-                    self.logger.debug(f"Operation {operation_name} failed for {service_name}: {e}")
+                    self.logger.debug(
+                        f"Operation {operation_name} failed for {service_name}: {e}"
+                    )
                     continue
 
             execution_time = time.time() - start_time
@@ -364,7 +372,9 @@ class OptimizedDynamicDiscovery:
 
                 # Prioritize List and Describe operations
                 list_ops = [op for op in available_operations if op.startswith("List")]
-                describe_ops = [op for op in available_operations if op.startswith("Describe")]
+                describe_ops = [
+                    op for op in available_operations if op.startswith("Describe")
+                ]
 
                 # Combine and limit to most promising operations
                 operations = (list_ops[:3] + describe_ops[:3])[:5]
@@ -494,7 +504,9 @@ class OptimizedDynamicDiscovery:
                                 )
                 elif isinstance(items, dict):
                     resources.append(
-                        self._normalize_resource(items, service_name, region, operation_name)
+                        self._normalize_resource(
+                            items, service_name, region, operation_name
+                        )
                     )
 
                 # If we found resources in this key, we're done

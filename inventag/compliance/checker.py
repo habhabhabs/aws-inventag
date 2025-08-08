@@ -17,7 +17,9 @@ import time
 
 
 class ComprehensiveTagComplianceChecker:
-    def __init__(self, regions: Optional[List[str]] = None, config_file: Optional[str] = None):
+    def __init__(
+        self, regions: Optional[List[str]] = None, config_file: Optional[str] = None
+    ):
         """Initialize the Comprehensive Tag Compliance Checker."""
         self.session = boto3.Session()
         self.logger = self._setup_logging()
@@ -34,7 +36,9 @@ class ComprehensiveTagComplianceChecker:
 
     def _setup_logging(self) -> logging.Logger:
         """Set up logging configuration."""
-        logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+        logging.basicConfig(
+            level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+        )
         return logging.getLogger(__name__)
 
     def _get_available_regions(self) -> List[str]:
@@ -47,7 +51,9 @@ class ComprehensiveTagComplianceChecker:
             return region_list
         except Exception as e:
             self.logger.warning(f"Failed to get all regions: {e}")
-            self.logger.info("Falling back to default regions: us-east-1, ap-southeast-1")
+            self.logger.info(
+                "Falling back to default regions: us-east-1, ap-southeast-1"
+            )
             return ["us-east-1", "ap-southeast-1"]  # Fallback to key regions
 
     def _load_tag_policy(self) -> Dict[str, Any]:
@@ -101,7 +107,9 @@ class ComprehensiveTagComplianceChecker:
 
     def discover_all_resources(self) -> List[Dict[str, Any]]:
         """Discover ALL AWS resources using Resource Groups Tagging API and other comprehensive methods."""
-        self.logger.info("Starting comprehensive AWS resource discovery across ALL services...")
+        self.logger.info(
+            "Starting comprehensive AWS resource discovery across ALL services..."
+        )
 
         # Method 1: Use Resource Groups Tagging API for comprehensive discovery
         self._discover_via_resource_groups_tagging_api()
@@ -126,7 +134,9 @@ class ComprehensiveTagComplianceChecker:
 
         for region in self.regions:
             try:
-                rgt_client = self.session.client("resourcegroupstaggingapi", region_name=region)
+                rgt_client = self.session.client(
+                    "resourcegroupstaggingapi", region_name=region
+                )
 
                 # Get all resources (paginated)
                 paginator = rgt_client.get_paginator("get_resources")
@@ -146,14 +156,17 @@ class ComprehensiveTagComplianceChecker:
 
                                 # Extract resource type and ID
                                 if "/" in resource_part:
-                                    resource_type, resource_id = resource_part.split("/", 1)
+                                    resource_type, resource_id = resource_part.split(
+                                        "/", 1
+                                    )
                                 else:
                                     resource_type = resource_part
                                     resource_id = resource_part
 
                                 # Convert tag list to dictionary
                                 tags = {
-                                    tag["Key"]: tag["Value"] for tag in resource.get("Tags", [])
+                                    tag["Key"]: tag["Value"]
+                                    for tag in resource.get("Tags", [])
                                 }
 
                                 # Get additional resource details if possible
@@ -163,10 +176,14 @@ class ComprehensiveTagComplianceChecker:
 
                                 resource_info = {
                                     "service": service.upper(),
-                                    "type": self._normalize_resource_type(service, resource_type),
+                                    "type": self._normalize_resource_type(
+                                        service, resource_type
+                                    ),
                                     "region": region_from_arn or region,
                                     "id": resource_id,
-                                    "name": self._extract_resource_name(tags, additional_info),
+                                    "name": self._extract_resource_name(
+                                        tags, additional_info
+                                    ),
                                     "arn": arn,
                                     "tags": tags,
                                     "account_id": account_id,
@@ -199,7 +216,9 @@ class ComprehensiveTagComplianceChecker:
                         f"Failed to discover resources via RGT API in {region}: {e}"
                     )
             except Exception as e:
-                self.logger.warning(f"Unexpected error in RGT API discovery for {region}: {e}")
+                self.logger.warning(
+                    f"Unexpected error in RGT API discovery for {region}: {e}"
+                )
 
     def _discover_via_config_service(self):
         """Use AWS Config to discover additional resources."""
@@ -209,7 +228,9 @@ class ComprehensiveTagComplianceChecker:
 
     def _discover_additional_resources(self):
         """Discover additional resources that might not appear in RGT API."""
-        self.logger.info("Discovering additional resources via service-specific APIs...")
+        self.logger.info(
+            "Discovering additional resources via service-specific APIs..."
+        )
         # Simplified implementation - full implementation would include more services
         pass
 
@@ -254,7 +275,9 @@ class ComprehensiveTagComplianceChecker:
 
         self.all_resources = deduplicated
 
-    def check_compliance(self, resources: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    def check_compliance(
+        self, resources: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
         """Check tag compliance for all resources."""
         if resources is None:
             resources = self.discover_all_resources()
@@ -321,7 +344,9 @@ class ComprehensiveTagComplianceChecker:
             "all_discovered_resources": resources,  # Include all resources for BOM generation
         }
 
-        self.logger.info(f"Compliance check complete. {compliance_percentage:.1f}% compliant")
+        self.logger.info(
+            f"Compliance check complete. {compliance_percentage:.1f}% compliant"
+        )
 
         return self.compliance_results
 
@@ -376,7 +401,9 @@ class ComprehensiveTagComplianceChecker:
         if not self.compliance_results or not self.compliance_results.get(
             "all_discovered_resources"
         ):
-            raise ValueError("No compliance results available. Run check_compliance() first.")
+            raise ValueError(
+                "No compliance results available. Run check_compliance() first."
+            )
 
         self.logger.info("Starting BOM document generation from compliance results...")
 
@@ -411,7 +438,9 @@ class ComprehensiveTagComplianceChecker:
                         bom_config.service_descriptions = json.load(f)
                     else:
                         bom_config.service_descriptions = yaml.safe_load(f)
-                self.logger.info(f"Loaded service descriptions from {service_descriptions_file}")
+                self.logger.info(
+                    f"Loaded service descriptions from {service_descriptions_file}"
+                )
             except Exception as e:
                 self.logger.warning(f"Could not load service descriptions: {e}")
 
@@ -438,7 +467,9 @@ class ComprehensiveTagComplianceChecker:
         processor = BOMDataProcessor(bom_config)
 
         # Process inventory data into BOM format
-        self.logger.info(f"Processing {len(all_resources)} resources for BOM generation...")
+        self.logger.info(
+            f"Processing {len(all_resources)} resources for BOM generation..."
+        )
         bom_data = processor.process_inventory_data(all_resources)
 
         # Add compliance information to BOM data
@@ -447,7 +478,9 @@ class ComprehensiveTagComplianceChecker:
             "compliant_resources": len(self.compliance_results["compliant"]),
             "non_compliant_resources": len(self.compliance_results["non_compliant"]),
             "untagged_resources": len(self.compliance_results["untagged"]),
-            "compliance_percentage": self.compliance_results["summary"]["compliance_percentage"],
+            "compliance_percentage": self.compliance_results["summary"][
+                "compliance_percentage"
+            ],
         }
 
         # Generate timestamp for filenames
@@ -460,7 +493,9 @@ class ComprehensiveTagComplianceChecker:
         for format_type in output_formats:
             try:
                 if format_type.lower() == "excel":
-                    filename = os.path.join(output_directory, f"compliance_bom_{timestamp}.xlsx")
+                    filename = os.path.join(
+                        output_directory, f"compliance_bom_{timestamp}.xlsx"
+                    )
                     self._generate_excel_bom(bom_data, filename)
                     generated_files.append(filename)
                     generation_results[format_type] = {
@@ -469,7 +504,9 @@ class ComprehensiveTagComplianceChecker:
                     }
 
                 elif format_type.lower() == "word":
-                    filename = os.path.join(output_directory, f"compliance_bom_{timestamp}.docx")
+                    filename = os.path.join(
+                        output_directory, f"compliance_bom_{timestamp}.docx"
+                    )
                     self._generate_word_bom(bom_data, filename)
                     generated_files.append(filename)
                     generation_results[format_type] = {
@@ -478,7 +515,9 @@ class ComprehensiveTagComplianceChecker:
                     }
 
                 elif format_type.lower() == "csv":
-                    filename = os.path.join(output_directory, f"compliance_bom_{timestamp}.csv")
+                    filename = os.path.join(
+                        output_directory, f"compliance_bom_{timestamp}.csv"
+                    )
                     self._generate_csv_bom(bom_data, filename)
                     generated_files.append(filename)
                     generation_results[format_type] = {
@@ -508,7 +547,9 @@ class ComprehensiveTagComplianceChecker:
         }
 
         if generated_files:
-            self.logger.info(f"Successfully generated {len(generated_files)} BOM document(s)")
+            self.logger.info(
+                f"Successfully generated {len(generated_files)} BOM document(s)"
+            )
             for file_path in generated_files:
                 self.logger.info(f"  - {file_path}")
         else:
@@ -566,7 +607,9 @@ class ComprehensiveTagComplianceChecker:
 
         except ImportError:
             # Fallback: create a simple text-based report
-            self.logger.warning("Word document generation not available, creating text report")
+            self.logger.warning(
+                "Word document generation not available, creating text report"
+            )
             with open(filename.replace(".docx", ".txt"), "w") as f:
                 f.write("InvenTag Compliance BOM Report\n")
                 f.write("=" * 40 + "\n\n")
@@ -631,7 +674,9 @@ class ComprehensiveTagComplianceChecker:
             else:
                 raise ValueError("Format must be 'json' or 'yaml'")
 
-            s3.put_object(Bucket=bucket_name, Key=key, Body=content, ContentType=content_type)
+            s3.put_object(
+                Bucket=bucket_name, Key=key, Body=content, ContentType=content_type
+            )
 
             self.logger.info(f"Compliance results uploaded to s3://{bucket_name}/{key}")
 

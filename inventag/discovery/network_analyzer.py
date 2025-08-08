@@ -94,7 +94,9 @@ class NetworkAnalyzer:
         self.high_utilization_threshold = 80.0  # Percentage
         self.capacity_warning_threshold = 90.0  # Percentage
 
-    def analyze_vpc_resources(self, resources: List[Dict[str, Any]]) -> Dict[str, VPCAnalysis]:
+    def analyze_vpc_resources(
+        self, resources: List[Dict[str, Any]]
+    ) -> Dict[str, VPCAnalysis]:
         """
         Analyze VPC resources and calculate CIDR utilization.
 
@@ -119,7 +121,9 @@ class NetworkAnalyzer:
         # Calculate utilization metrics
         self._calculate_utilization_metrics()
 
-        logger.info(f"Analyzed {len(self.vpc_cache)} VPCs across {len(regions)} regions")
+        logger.info(
+            f"Analyzed {len(self.vpc_cache)} VPCs across {len(regions)} regions"
+        )
         return self.vpc_cache
 
     def calculate_subnet_utilization(
@@ -147,7 +151,9 @@ class NetworkAnalyzer:
 
         return self.subnet_cache
 
-    def map_resources_to_network(self, resources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def map_resources_to_network(
+        self, resources: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         Map EC2/RDS resources to their VPC/subnet context.
 
@@ -204,7 +210,9 @@ class NetworkAnalyzer:
         logger.info(f"Enriched {enriched_count} resources with network context")
         return enriched_resources
 
-    def generate_network_summary(self, vpc_analysis: Dict[str, VPCAnalysis]) -> NetworkSummary:
+    def generate_network_summary(
+        self, vpc_analysis: Dict[str, VPCAnalysis]
+    ) -> NetworkSummary:
         """
         Generate network capacity summary for BOM.
 
@@ -228,7 +236,9 @@ class NetworkAnalyzer:
             for subnet in vpc.subnets:
                 if subnet.utilization_percentage > highest_utilization_percentage:
                     highest_utilization_percentage = subnet.utilization_percentage
-                    highest_utilization_subnet = f"{subnet.subnet_name} ({subnet.subnet_id})"
+                    highest_utilization_subnet = (
+                        f"{subnet.subnet_name} ({subnet.subnet_id})"
+                    )
 
         # Calculate VPC utilization stats
         vpc_utilization_stats = {
@@ -237,7 +247,9 @@ class NetworkAnalyzer:
 
         # Generate capacity warnings and recommendations
         capacity_warnings = self._generate_capacity_warnings(vpc_analysis)
-        optimization_recommendations = self._generate_optimization_recommendations(vpc_analysis)
+        optimization_recommendations = self._generate_optimization_recommendations(
+            vpc_analysis
+        )
 
         return NetworkSummary(
             total_vpcs=total_vpcs,
@@ -323,14 +335,18 @@ class NetworkAnalyzer:
 
             for subnet in subnets_response["Subnets"]:
                 subnet_id = subnet["SubnetId"]
-                subnet_name = self._get_tag_value(subnet.get("Tags", []), "Name") or subnet_id
+                subnet_name = (
+                    self._get_tag_value(subnet.get("Tags", []), "Name") or subnet_id
+                )
                 vpc_id = subnet["VpcId"]
 
                 # Calculate IP utilization
                 total_ips = self._calculate_cidr_ips(subnet["CidrBlock"])
                 available_ips = subnet["AvailableIpAddressCount"]
                 utilization_percentage = (
-                    ((total_ips - available_ips) / total_ips * 100) if total_ips > 0 else 0
+                    ((total_ips - available_ips) / total_ips * 100)
+                    if total_ips > 0
+                    else 0
                 )
 
                 # Extract tags
@@ -366,7 +382,9 @@ class NetworkAnalyzer:
                 for attachment in igw.get("Attachments", []):
                     vpc_id = attachment.get("VpcId")
                     if vpc_id and vpc_id in self.vpc_cache:
-                        self.vpc_cache[vpc_id].internet_gateway_id = igw["InternetGatewayId"]
+                        self.vpc_cache[vpc_id].internet_gateway_id = igw[
+                            "InternetGatewayId"
+                        ]
 
             # NAT Gateways
             nat_response = ec2_client.describe_nat_gateways()
@@ -380,7 +398,9 @@ class NetworkAnalyzer:
             for endpoint in endpoint_response["VpcEndpoints"]:
                 vpc_id = endpoint.get("VpcId")
                 if vpc_id and vpc_id in self.vpc_cache:
-                    self.vpc_cache[vpc_id].vpc_endpoints.append(endpoint["VpcEndpointId"])
+                    self.vpc_cache[vpc_id].vpc_endpoints.append(
+                        endpoint["VpcEndpointId"]
+                    )
 
             # VPC Peering Connections
             peering_response = ec2_client.describe_vpc_peering_connections()
@@ -429,20 +449,28 @@ class NetworkAnalyzer:
             # Add resource to subnet
             if subnet_id and subnet_id in self.subnet_cache:
                 if resource_id not in self.subnet_cache[subnet_id].associated_resources:
-                    self.subnet_cache[subnet_id].associated_resources.append(resource_id)
+                    self.subnet_cache[subnet_id].associated_resources.append(
+                        resource_id
+                    )
 
     def _calculate_utilization_metrics(self):
         """Calculate utilization metrics for VPCs."""
         for vpc_analysis in self.vpc_cache.values():
             if vpc_analysis.subnets:
                 # Calculate VPC utilization based on subnet utilization
-                total_subnet_ips = sum(subnet.total_ips for subnet in vpc_analysis.subnets)
-                total_available_ips = sum(subnet.available_ips for subnet in vpc_analysis.subnets)
+                total_subnet_ips = sum(
+                    subnet.total_ips for subnet in vpc_analysis.subnets
+                )
+                total_available_ips = sum(
+                    subnet.available_ips for subnet in vpc_analysis.subnets
+                )
 
                 vpc_analysis.available_ips = total_available_ips
                 if total_subnet_ips > 0:
                     vpc_analysis.utilization_percentage = (
-                        (total_subnet_ips - total_available_ips) / total_subnet_ips * 100
+                        (total_subnet_ips - total_available_ips)
+                        / total_subnet_ips
+                        * 100
                     )
 
                 # Determine if subnets are public (have route to IGW)
@@ -512,7 +540,9 @@ class NetworkAnalyzer:
                 return tag.get("Value")
         return None
 
-    def _generate_capacity_warnings(self, vpc_analysis: Dict[str, VPCAnalysis]) -> List[str]:
+    def _generate_capacity_warnings(
+        self, vpc_analysis: Dict[str, VPCAnalysis]
+    ) -> List[str]:
         """Generate capacity warnings for high utilization."""
         warnings = []
 

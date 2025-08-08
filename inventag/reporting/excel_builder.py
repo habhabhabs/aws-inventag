@@ -86,7 +86,9 @@ class ExcelWorkbookBuilder(DocumentBuilder):
     def validate_dependencies(self) -> List[str]:
         """Validate Excel dependencies."""
         if not OPENPYXL_AVAILABLE:
-            return ["openpyxl library not available - install with: pip install openpyxl"]
+            return [
+                "openpyxl library not available - install with: pip install openpyxl"
+            ]
         return []
 
     def _initialize_styles(self) -> Dict[str, Any]:
@@ -146,7 +148,9 @@ class ExcelWorkbookBuilder(DocumentBuilder):
             "left_alignment": Alignment(horizontal="left", vertical="center"),
         }
 
-    def generate_document(self, bom_data: BOMData, output_path: str) -> DocumentGenerationResult:
+    def generate_document(
+        self, bom_data: BOMData, output_path: str
+    ) -> DocumentGenerationResult:
         """
         Generate Excel workbook with multiple sheets and advanced formatting.
 
@@ -371,7 +375,9 @@ class ExcelWorkbookBuilder(DocumentBuilder):
         ws[f"B{start_row + 1}"] = metadata.get("total_resources", 0)
 
         ws[f"A{start_row + 2}"] = "Processing Time:"
-        ws[f"B{start_row + 2}"] = f"{metadata.get('processing_time_seconds', 0):.2f} seconds"
+        ws[f"B{start_row + 2}"] = (
+            f"{metadata.get('processing_time_seconds', 0):.2f} seconds"
+        )
 
         # Apply formatting
         for row in range(start_row, start_row + 3):
@@ -543,7 +549,9 @@ class ExcelWorkbookBuilder(DocumentBuilder):
 
         return findings
 
-    def _add_service_summary(self, ws, service: str, resources: List[Dict], start_row: int):
+    def _add_service_summary(
+        self, ws, service: str, resources: List[Dict], start_row: int
+    ):
         """Add service summary information."""
         ws[f"A{start_row}"] = f"Service: {service}"
         ws[f"A{start_row}"].font = Font(bold=True, size=12)
@@ -551,7 +559,9 @@ class ExcelWorkbookBuilder(DocumentBuilder):
         ws[f"A{start_row + 1}"] = f"Total Resources: {len(resources)}"
 
         # Count compliance status
-        compliant = sum(1 for r in resources if r.get("compliance_status") == "compliant")
+        compliant = sum(
+            1 for r in resources if r.get("compliance_status") == "compliant"
+        )
         non_compliant = len(resources) - compliant
 
         ws[f"A{start_row + 2}"] = f"Compliant: {compliant}"
@@ -586,7 +596,9 @@ class ExcelWorkbookBuilder(DocumentBuilder):
             flattened = self._flatten_dict(resource)
             for col, header in enumerate(sorted_headers, 1):
                 value = flattened.get(header, "")
-                cell = ws.cell(row=row, column=col, value=str(value) if value is not None else "")
+                cell = ws.cell(
+                    row=row, column=col, value=str(value) if value is not None else ""
+                )
                 cell.border = self.styles["border"]
                 cell.alignment = self.styles["left_alignment"]
 
@@ -672,20 +684,20 @@ class ExcelWorkbookBuilder(DocumentBuilder):
         row += 1
         for vpc_id, vpc_data in vpc_utilization.items():
             ws.cell(row=row, column=1, value=vpc_id).border = self.styles["border"]
-            ws.cell(row=row, column=2, value=vpc_data.get("name", "")).border = self.styles[
-                "border"
-            ]
-            ws.cell(row=row, column=3, value=vpc_data.get("cidr_block", "")).border = self.styles[
-                "border"
-            ]
+            ws.cell(row=row, column=2, value=vpc_data.get("name", "")).border = (
+                self.styles["border"]
+            )
+            ws.cell(row=row, column=3, value=vpc_data.get("cidr_block", "")).border = (
+                self.styles["border"]
+            )
             ws.cell(
                 row=row,
                 column=4,
                 value=f"{vpc_data.get('utilization_percentage', 0):.1f}%",
             ).border = self.styles["border"]
-            ws.cell(row=row, column=5, value=vpc_data.get("available_ips", 0)).border = self.styles[
-                "border"
-            ]
+            ws.cell(
+                row=row, column=5, value=vpc_data.get("available_ips", 0)
+            ).border = self.styles["border"]
             row += 1
 
     def _add_network_resource_mapping(self, ws, bom_data: BOMData, start_row: int):
@@ -767,19 +779,21 @@ class ExcelWorkbookBuilder(DocumentBuilder):
         # Risk data
         row += 1
         for rule in overly_permissive_rules:
-            ws.cell(row=row, column=1, value=rule.get("group_id", "")).border = self.styles[
+            ws.cell(row=row, column=1, value=rule.get("group_id", "")).border = (
+                self.styles["border"]
+            )
+            ws.cell(row=row, column=2, value=rule.get("rule", "")).border = self.styles[
                 "border"
             ]
-            ws.cell(row=row, column=2, value=rule.get("rule", "")).border = self.styles["border"]
 
             risk_cell = ws.cell(row=row, column=3, value=rule.get("risk_level", ""))
             risk_cell.border = self.styles["border"]
             if rule.get("risk_level") == "high":
                 risk_cell.fill = self.styles["non_compliant_fill"]
 
-            ws.cell(row=row, column=4, value="Restrict source to specific CIDR blocks").border = (
-                self.styles["border"]
-            )
+            ws.cell(
+                row=row, column=4, value="Restrict source to specific CIDR blocks"
+            ).border = self.styles["border"]
             row += 1
 
     def _add_security_recommendations(self, ws, bom_data: BOMData, start_row: int):
@@ -851,16 +865,18 @@ class ExcelWorkbookBuilder(DocumentBuilder):
                 non_compliant_cell.fill = self.styles["non_compliant_fill"]
 
             ws.cell(row=row, column=4, value=total).border = self.styles["border"]
-            ws.cell(row=row, column=5, value=f"{compliance_pct:.1f}%").border = self.styles[
-                "border"
-            ]
+            ws.cell(row=row, column=5, value=f"{compliance_pct:.1f}%").border = (
+                self.styles["border"]
+            )
 
             row += 1
 
     def _add_non_compliant_details(self, ws, bom_data: BOMData, start_row: int):
         """Add details of non-compliant resources."""
         non_compliant_resources = [
-            r for r in bom_data.resources if r.get("compliance_status") == "non_compliant"
+            r
+            for r in bom_data.resources
+            if r.get("compliance_status") == "non_compliant"
         ]
 
         if not non_compliant_resources:
@@ -885,20 +901,24 @@ class ExcelWorkbookBuilder(DocumentBuilder):
         # Resource data
         row += 1
         for resource in non_compliant_resources:
-            ws.cell(row=row, column=1, value=resource.get("service", "")).border = self.styles[
-                "border"
-            ]
-            ws.cell(row=row, column=2, value=resource.get("type", "")).border = self.styles[
-                "border"
-            ]
-            ws.cell(row=row, column=3, value=resource.get("id", "")).border = self.styles["border"]
-            ws.cell(row=row, column=4, value=resource.get("name", "")).border = self.styles[
-                "border"
-            ]
-            ws.cell(row=row, column=5, value=resource.get("region", "")).border = self.styles[
-                "border"
-            ]
-            ws.cell(row=row, column=6, value="Missing required tags").border = self.styles["border"]
+            ws.cell(row=row, column=1, value=resource.get("service", "")).border = (
+                self.styles["border"]
+            )
+            ws.cell(row=row, column=2, value=resource.get("type", "")).border = (
+                self.styles["border"]
+            )
+            ws.cell(row=row, column=3, value=resource.get("id", "")).border = (
+                self.styles["border"]
+            )
+            ws.cell(row=row, column=4, value=resource.get("name", "")).border = (
+                self.styles["border"]
+            )
+            ws.cell(row=row, column=5, value=resource.get("region", "")).border = (
+                self.styles["border"]
+            )
+            ws.cell(row=row, column=6, value="Missing required tags").border = (
+                self.styles["border"]
+            )
 
             # Highlight row
             for col in range(1, 7):
@@ -929,7 +949,9 @@ class ExcelWorkbookBuilder(DocumentBuilder):
         # Set workbook properties
         wb.properties.title = f"{self.config.branding.company_name} - Cloud BOM Report"
         wb.properties.creator = "InvenTag Cloud BOM Generator"
-        wb.properties.description = "Professional AWS resource inventory and compliance report"
+        wb.properties.description = (
+            "Professional AWS resource inventory and compliance report"
+        )
 
     def _flatten_dict(
         self, d: Dict[str, Any], parent_key: str = "", sep: str = "."

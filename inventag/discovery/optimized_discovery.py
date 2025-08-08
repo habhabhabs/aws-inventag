@@ -71,7 +71,9 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 "region_dependent": False,
                 "global_service": True,
                 "exclude_aws_managed": True,
-                "exclude_resource_types": ["GeoLocation"],  # Exclude geolocation records
+                "exclude_resource_types": [
+                    "GeoLocation"
+                ],  # Exclude geolocation records
                 "aws_managed_patterns": [
                     r".*\.amazonaws\.com\.$",  # AWS service domains
                     r".*\.aws\.amazon\.com\.$",  # AWS internal domains
@@ -363,7 +365,9 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
             )
 
             # Check if this is an AWS managed resource that should be excluded
-            if self._is_aws_managed_resource(raw_data, service_name, resource_id, resource_type):
+            if self._is_aws_managed_resource(
+                raw_data, service_name, resource_id, resource_type
+            ):
                 self.logger.debug(
                     f"Excluding AWS managed resource: {service_name}:{resource_type}:{resource_id}"
                 )
@@ -384,12 +388,18 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
             )
 
             # Enhanced field extraction
-            resource.resource_name = self._optimized_extract_resource_name(raw_data, service_name)
+            resource.resource_name = self._optimized_extract_resource_name(
+                raw_data, service_name
+            )
             resource.resource_arn = self._extract_arn(raw_data)
 
             # Status and lifecycle with fallbacks
-            resource.status = self._extract_status(raw_data) or self._extract_state(raw_data)
-            resource.state = self._extract_state(raw_data) or self._extract_status(raw_data)
+            resource.status = self._extract_status(raw_data) or self._extract_state(
+                raw_data
+            )
+            resource.state = self._extract_state(raw_data) or self._extract_status(
+                raw_data
+            )
             resource.created_date = self._extract_creation_date(raw_data)
             resource.last_modified = self._extract_modification_date(raw_data)
 
@@ -398,7 +408,9 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
             resource.tags = raw_tags
             resource.name_from_tags = raw_tags.get("Name")
             resource.environment = (
-                raw_tags.get("Environment") or raw_tags.get("Env") or raw_tags.get("Stage")
+                raw_tags.get("Environment")
+                or raw_tags.get("Env")
+                or raw_tags.get("Stage")
             )
             resource.project = (
                 raw_tags.get("Project")
@@ -415,7 +427,9 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
             resource.vpc_id = self._extract_vpc_info(raw_data)
             resource.subnet_ids = self._extract_subnet_info(raw_data)
             resource.security_groups = self._extract_security_groups(raw_data)
-            resource.public_access = self._determine_public_access(raw_data, service_name)
+            resource.public_access = self._determine_public_access(
+                raw_data, service_name
+            )
             resource.encrypted = self._determine_encryption_status(raw_data)
 
             # Resource relationships
@@ -423,7 +437,9 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
             resource.parent_resource = self._identify_parent_resource(raw_data)
 
             # Optimized confidence calculation
-            resource.confidence_score = self._optimized_calculate_confidence_score(resource)
+            resource.confidence_score = self._optimized_calculate_confidence_score(
+                resource
+            )
 
             return resource
 
@@ -439,7 +455,9 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 raw_data=raw_data,
             )
 
-    def _optimized_extract_resource_id(self, data: Dict[str, Any], service_name: str) -> str:
+    def _optimized_extract_resource_id(
+        self, data: Dict[str, Any], service_name: str
+    ) -> str:
         """Optimized resource ID extraction with service-specific logic."""
 
         service_lower = service_name.lower()
@@ -509,14 +527,20 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                     nested_tags = value["Tags"]
                     if isinstance(nested_tags, list):
                         for tag in nested_tags:
-                            if isinstance(tag, dict) and "Key" in tag and "Value" in tag:
+                            if (
+                                isinstance(tag, dict)
+                                and "Key" in tag
+                                and "Value" in tag
+                            ):
                                 tags[tag["Key"]] = tag["Value"]
                     elif isinstance(nested_tags, dict):
                         tags.update(nested_tags)
 
         return tags
 
-    def _optimized_calculate_confidence_score(self, resource: StandardResource) -> float:
+    def _optimized_calculate_confidence_score(
+        self, resource: StandardResource
+    ) -> float:
         """Optimized confidence scoring with weighted factors."""
 
         score = 0.0
@@ -593,7 +617,9 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
         if service_lower == "iam":
             return self._is_aws_managed_iam_resource(data, resource_id, resource_type)
         elif service_lower == "route53":
-            return self._is_aws_managed_route53_resource(data, resource_id, resource_type)
+            return self._is_aws_managed_route53_resource(
+                data, resource_id, resource_type
+            )
         elif service_lower == "ec2":
             return self._is_aws_managed_ec2_resource(data, resource_id, resource_type)
 
@@ -629,7 +655,9 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
         if resource_type == "Role":
             path = data.get("Path", "")
             # Service-linked roles
-            if path.startswith("/aws-service-role/") or path.startswith("/service-role/"):
+            if path.startswith("/aws-service-role/") or path.startswith(
+                "/service-role/"
+            ):
                 return True
 
             # Check role creation date - roles created before account creation
@@ -646,13 +674,17 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
         # Check for AWS managed users (rare but possible)
         if resource_type == "User":
             path = data.get("Path", "")
-            if path.startswith("/aws-service-role/") or path.startswith("/service-role/"):
+            if path.startswith("/aws-service-role/") or path.startswith(
+                "/service-role/"
+            ):
                 return True
 
         # Check for AWS managed groups
         if resource_type == "Group":
             path = data.get("Path", "")
-            if path.startswith("/aws-service-role/") or path.startswith("/service-role/"):
+            if path.startswith("/aws-service-role/") or path.startswith(
+                "/service-role/"
+            ):
                 return True
 
         return False
@@ -695,7 +727,9 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                             ]
                         ):
                             return True
-                elif isinstance(principal, str) and principal.endswith(".amazonaws.com"):
+                elif isinstance(principal, str) and principal.endswith(
+                    ".amazonaws.com"
+                ):
                     return True
         except Exception as e:
             self.logger.debug(f"Failed to parse assume role policy: {e}")
@@ -866,7 +900,9 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 if field == "AvailabilityZone":
                     az = data[field]
                     if isinstance(az, str) and len(az) > 2:
-                        return az[:-1]  # Remove the AZ letter (e.g., us-east-1a -> us-east-1)
+                        return az[
+                            :-1
+                        ]  # Remove the AZ letter (e.g., us-east-1a -> us-east-1)
                 elif field == "Placement":
                     placement = data[field]
                     if isinstance(placement, dict) and "AvailabilityZone" in placement:
@@ -932,7 +968,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             client = self.session.client(service_name, region_name=region)
             return client
         except Exception as e:
-            self.logger.error(f"Failed to create {service_name} client in {region}: {e}")
+            self.logger.error(
+                f"Failed to create {service_name} client in {region}: {e}"
+            )
             return None
         finally:
             with self._client_lock:
@@ -941,7 +979,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
     def discover_all_services(self) -> List[StandardResource]:
         """Optimized discovery with enhanced service coverage."""
 
-        self.logger.info("Starting optimized AWS discovery with enhanced service coverage...")
+        self.logger.info(
+            "Starting optimized AWS discovery with enhanced service coverage..."
+        )
 
         if self.enable_parallel:
             return self._discover_services_parallel()
@@ -954,7 +994,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         all_resources = []
 
         # Process priority services in parallel
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=self.max_workers
+        ) as executor:
             # Submit discovery tasks for priority services
             future_to_service = {
                 executor.submit(self._discover_service_safe, service): service
@@ -962,7 +1004,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             }
 
             # Collect results as they complete
-            for future in concurrent.futures.as_completed(future_to_service, timeout=120):
+            for future in concurrent.futures.as_completed(
+                future_to_service, timeout=120
+            ):
                 service = future_to_service[future]
                 try:
                     resources = future.result(timeout=self.operation_timeout)
@@ -971,13 +1015,17 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                         f"Optimized discovery: {service} found {len(resources)} resources"
                     )
                 except Exception as e:
-                    self.logger.warning(f"Optimized discovery failed for {service}: {e}")
+                    self.logger.warning(
+                        f"Optimized discovery failed for {service}: {e}"
+                    )
 
         # Deduplicate and enhance
         all_resources = self._intelligent_deduplication(all_resources)
         self.discovered_resources.extend(all_resources)
 
-        self.logger.info(f"Optimized parallel discovery complete: {len(all_resources)} resources")
+        self.logger.info(
+            f"Optimized parallel discovery complete: {len(all_resources)} resources"
+        )
         return all_resources
 
     def _discover_services_sequential(self) -> List[StandardResource]:
@@ -989,7 +1037,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             try:
                 resources = self._discover_service_safe(service)
                 all_resources.extend(resources)
-                self.logger.info(f"Optimized discovery: {service} found {len(resources)} resources")
+                self.logger.info(
+                    f"Optimized discovery: {service} found {len(resources)} resources"
+                )
             except Exception as e:
                 self.logger.warning(f"Optimized discovery failed for {service}: {e}")
 
@@ -997,7 +1047,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         all_resources = self._intelligent_deduplication(all_resources)
         self.discovered_resources.extend(all_resources)
 
-        self.logger.info(f"Optimized sequential discovery complete: {len(all_resources)} resources")
+        self.logger.info(
+            f"Optimized sequential discovery complete: {len(all_resources)} resources"
+        )
         return all_resources
 
     def _discover_service_safe(self, service_name: str) -> List[StandardResource]:
@@ -1030,7 +1082,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                     continue
 
                 # Get optimized operations for this service
-                operations = self._get_optimized_discovery_operations(service_name, client)
+                operations = self._get_optimized_discovery_operations(
+                    service_name, client
+                )
 
                 # Try each discovery operation
                 region_resources = []
@@ -1056,20 +1110,30 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                 service_resources.extend(region_resources)
 
             except Exception as e:
-                self.logger.warning(f"Failed to create {service_name} client in {region}: {e}")
+                self.logger.warning(
+                    f"Failed to create {service_name} client in {region}: {e}"
+                )
                 continue
 
         # If specified regions failed and we have fallback enabled, try all regions
-        if not discovery_successful and self.specified_regions and self.fallback_to_all_regions:
+        if (
+            not discovery_successful
+            and self.specified_regions
+            and self.fallback_to_all_regions
+        ):
             self.logger.info(f"Falling back to all regions for {service_name}")
             return self._discover_service_all_regions(service_name)
 
         # For S3, enhance with actual bucket regions after all regions are processed
         if service_name.lower() == "s3" and service_resources:
-            service_resources = self._enhance_s3_bucket_regions_comprehensive(service_resources)
+            service_resources = self._enhance_s3_bucket_regions_comprehensive(
+                service_resources
+            )
 
         # Enhanced deduplication for this service with consistent ordering
-        service_resources = self._intelligent_deduplication_consistent(service_resources)
+        service_resources = self._intelligent_deduplication_consistent(
+            service_resources
+        )
 
         return service_resources
 
@@ -1083,10 +1147,14 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         # Otherwise use all available regions
         return self.regions
 
-    def _discover_service_all_regions(self, service_name: str) -> List[StandardResource]:
+    def _discover_service_all_regions(
+        self, service_name: str
+    ) -> List[StandardResource]:
         """Fallback discovery using all available regions."""
 
-        self.logger.info(f"Attempting discovery for {service_name} across all regions as fallback")
+        self.logger.info(
+            f"Attempting discovery for {service_name} across all regions as fallback"
+        )
 
         # Temporarily override regions and disable fallback to prevent infinite loop
         original_regions = self.regions
@@ -1164,7 +1232,10 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         enhanced_resources = []
 
         for resource in resources:
-            if resource.service_name.upper() == "S3" and resource.resource_type == "Bucket":
+            if (
+                resource.service_name.upper() == "S3"
+                and resource.resource_type == "Bucket"
+            ):
                 try:
                     # Get bucket location
                     bucket_name = resource.resource_id
@@ -1175,8 +1246,12 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                     else:
                         # Get bucket location
                         try:
-                            location_response = s3_client.get_bucket_location(Bucket=bucket_name)
-                            location_constraint = location_response.get("LocationConstraint")
+                            location_response = s3_client.get_bucket_location(
+                                Bucket=bucket_name
+                            )
+                            location_constraint = location_response.get(
+                                "LocationConstraint"
+                            )
 
                             # Handle special cases
                             if location_constraint is None or location_constraint == "":
@@ -1200,7 +1275,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                     enhanced_resources.append(resource)
 
                 except Exception as e:
-                    self.logger.debug(f"Failed to enhance S3 bucket {resource.resource_id}: {e}")
+                    self.logger.debug(
+                        f"Failed to enhance S3 bucket {resource.resource_id}: {e}"
+                    )
                     enhanced_resources.append(resource)  # Keep original
             else:
                 enhanced_resources.append(resource)
@@ -1214,7 +1291,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
 
         enhanced_resources = []
         s3_buckets = [
-            r for r in resources if r.service_name.upper() == "S3" and r.resource_type == "Bucket"
+            r
+            for r in resources
+            if r.service_name.upper() == "S3" and r.resource_type == "Bucket"
         ]
         other_resources = [
             r
@@ -1229,7 +1308,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         try:
             s3_client = self._create_client_safely("s3", "us-east-1")
             if not s3_client:
-                self.logger.warning("Could not create S3 client for bucket location detection")
+                self.logger.warning(
+                    "Could not create S3 client for bucket location detection"
+                )
                 return s3_buckets
 
             for bucket_resource in s3_buckets:
@@ -1242,8 +1323,12 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                     else:
                         # Get bucket location
                         try:
-                            location_response = s3_client.get_bucket_location(Bucket=bucket_name)
-                            location_constraint = location_response.get("LocationConstraint")
+                            location_response = s3_client.get_bucket_location(
+                                Bucket=bucket_name
+                            )
+                            location_constraint = location_response.get(
+                                "LocationConstraint"
+                            )
 
                             # Handle special cases for region mapping
                             if location_constraint is None or location_constraint == "":
@@ -1264,7 +1349,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                             self.logger.debug(
                                 f"Failed to get bucket location for {bucket_name}: {e}"
                             )
-                            actual_region = bucket_resource.region  # Keep original region
+                            actual_region = (
+                                bucket_resource.region
+                            )  # Keep original region
 
                     # Update resource region and ARN
                     bucket_resource.region = actual_region
@@ -1326,10 +1413,14 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             )
         )
 
-        self.logger.debug(f"Deduplication: {len(resources)} -> {len(deduplicated)} resources")
+        self.logger.debug(
+            f"Deduplication: {len(resources)} -> {len(deduplicated)} resources"
+        )
         return deduplicated
 
-    def _get_optimized_discovery_operations(self, service_name: str, client) -> List[str]:
+    def _get_optimized_discovery_operations(
+        self, service_name: str, client
+    ) -> List[str]:
         """Get optimized discovery operations for a service."""
 
         # Get all available operations
@@ -1338,9 +1429,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         # Service-specific operation priorities
         service_lower = service_name.lower()
         if service_lower in self.field_mapper.optimized_service_patterns:
-            preferred_ops = self.field_mapper.optimized_service_patterns[service_lower].get(
-                "operations", []
-            )
+            preferred_ops = self.field_mapper.optimized_service_patterns[
+                service_lower
+            ].get("operations", [])
             # Prioritize preferred operations
             operations = [op for op in preferred_ops if op in all_operations]
             if operations:
@@ -1351,7 +1442,10 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             op
             for op in all_operations
             if op.startswith(("List", "Describe", "Get"))
-            and not any(skip in op for skip in ["Policy", "Version", "Status", "Health", "Metrics"])
+            and not any(
+                skip in op
+                for skip in ["Policy", "Version", "Status", "Health", "Metrics"]
+            )
         ]
 
         # Prioritize List operations over Describe operations
@@ -1359,7 +1453,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         describe_ops = [op for op in discovery_ops if op.startswith("Describe")]
         get_ops = [op for op in discovery_ops if op.startswith("Get")]
 
-        return list_ops[:2] + describe_ops[:2] + get_ops[:1]  # Limit to avoid too many calls
+        return (
+            list_ops[:2] + describe_ops[:2] + get_ops[:1]
+        )  # Limit to avoid too many calls
 
     def _is_global_service(self, service_name: str) -> bool:
         """Check if a service is global (not region-specific)."""
@@ -1384,7 +1480,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
 
         return service_lower in global_services
 
-    def _apply_ai_predictions(self, resources: List[StandardResource]) -> List[StandardResource]:
+    def _apply_ai_predictions(
+        self, resources: List[StandardResource]
+    ) -> List[StandardResource]:
         """Apply AI-based resource predictions for missing dependencies."""
 
         predicted_resources = []
@@ -1527,9 +1625,13 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                             predicted_resources.append(predicted_resource)
 
                     except Exception as e:
-                        self.logger.debug(f"AI prediction failed for {pattern_name}: {e}")
+                        self.logger.debug(
+                            f"AI prediction failed for {pattern_name}: {e}"
+                        )
 
-        self.logger.info(f"AI predictions generated {len(predicted_resources)} potential resources")
+        self.logger.info(
+            f"AI predictions generated {len(predicted_resources)} potential resources"
+        )
         return predicted_resources
 
     def discover_all_services_with_ai(self) -> List[StandardResource]:

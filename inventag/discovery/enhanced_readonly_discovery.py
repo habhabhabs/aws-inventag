@@ -211,7 +211,9 @@ class ReadOnlyAccessDiscovery(OptimizedAWSDiscovery):
 
             self.has_readonly_access = True
             self.permission_level = "readonly"
-            self.logger.info("Detected ReadOnlyAccess policy - enabling enhanced discovery")
+            self.logger.info(
+                "Detected ReadOnlyAccess policy - enabling enhanced discovery"
+            )
 
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "")
@@ -250,9 +252,13 @@ class ReadOnlyAccessDiscovery(OptimizedAWSDiscovery):
             self.logger.info("Starting billing-first service discovery")
             try:
                 active_services = self._discover_active_services_from_billing()
-                self.logger.info(f"Found {len(active_services)} active services from billing data")
+                self.logger.info(
+                    f"Found {len(active_services)} active services from billing data"
+                )
             except Exception as e:
-                self.logger.warning(f"Billing discovery failed, falling back to service list: {e}")
+                self.logger.warning(
+                    f"Billing discovery failed, falling back to service list: {e}"
+                )
 
         # Step 2: Determine services to scan
         if services is None:
@@ -291,7 +297,9 @@ class ReadOnlyAccessDiscovery(OptimizedAWSDiscovery):
                         f"Discovered {len(resources)} resources for {service_name} in {region}"
                     )
                 except Exception as e:
-                    self.logger.error(f"Failed to discover {service_name} in {region}: {e}")
+                    self.logger.error(
+                        f"Failed to discover {service_name} in {region}: {e}"
+                    )
 
         # Step 4: Post-process and enhance
         self._post_process_resources(discovered_resources)
@@ -330,7 +338,9 @@ class ReadOnlyAccessDiscovery(OptimizedAWSDiscovery):
                     usage = float(metrics.get("UsageQuantity", {}).get("Amount", "0"))
 
                     if cost > 0.01 or usage > 0:  # Active service threshold
-                        aws_service = service_mappings.get(service_name, service_name.lower())
+                        aws_service = service_mappings.get(
+                            service_name, service_name.lower()
+                        )
                         active_services.add(aws_service)
 
             return active_services
@@ -364,7 +374,9 @@ class ReadOnlyAccessDiscovery(OptimizedAWSDiscovery):
                         )
                     )
                 except Exception as e:
-                    self.logger.debug(f"Operation {operation} failed for {service_name}: {e}")
+                    self.logger.debug(
+                        f"Operation {operation} failed for {service_name}: {e}"
+                    )
 
             # Step 2: Enhanced attribute extraction (ReadOnlyAccess only)
             if self.has_readonly_access and pattern.get("readonly_operations"):
@@ -377,7 +389,9 @@ class ReadOnlyAccessDiscovery(OptimizedAWSDiscovery):
                     )
 
         except Exception as e:
-            self.logger.error(f"Failed to discover {service_name} resources in {region}: {e}")
+            self.logger.error(
+                f"Failed to discover {service_name} resources in {region}: {e}"
+            )
 
         return resources
 
@@ -396,22 +410,34 @@ class ReadOnlyAccessDiscovery(OptimizedAWSDiscovery):
             try:
                 # Execute readonly operation based on resource type
                 if resource.service_name == "s3" and operation == "GetBucketEncryption":
-                    response = client.get_bucket_encryption(Bucket=resource.resource_name)
+                    response = client.get_bucket_encryption(
+                        Bucket=resource.resource_name
+                    )
                     resource.raw_data["encryption_config"] = response
                     resource.encrypted = True
 
-                elif resource.service_name == "kms" and operation == "GetKeyRotationStatus":
-                    response = client.get_key_rotation_status(KeyId=resource.resource_id)
+                elif (
+                    resource.service_name == "kms"
+                    and operation == "GetKeyRotationStatus"
+                ):
+                    response = client.get_key_rotation_status(
+                        KeyId=resource.resource_id
+                    )
                     resource.raw_data["rotation_enabled"] = response.get(
                         "KeyRotationEnabled", False
                     )
 
-                elif resource.service_name == "rds" and operation == "DescribeDBParameterGroups":
+                elif (
+                    resource.service_name == "rds"
+                    and operation == "DescribeDBParameterGroups"
+                ):
                     # Add parameter group information
                     if hasattr(resource, "raw_data") and "DBParameterGroupName" in str(
                         resource.raw_data
                     ):
-                        param_group_name = self._extract_parameter_group_name(resource.raw_data)
+                        param_group_name = self._extract_parameter_group_name(
+                            resource.raw_data
+                        )
                         if param_group_name:
                             response = client.describe_db_parameter_groups(
                                 DBParameterGroupName=param_group_name
@@ -421,7 +447,9 @@ class ReadOnlyAccessDiscovery(OptimizedAWSDiscovery):
                 # Add more service-specific enhancements as needed
 
             except Exception as e:
-                self.logger.debug(f"Failed to enhance {resource.resource_id} with {operation}: {e}")
+                self.logger.debug(
+                    f"Failed to enhance {resource.resource_id} with {operation}: {e}"
+                )
 
     def _get_billing_service_mappings(self) -> Dict[str, str]:
         """Map billing service names to AWS service codes."""
@@ -479,13 +507,17 @@ class ReadOnlyAccessDiscovery(OptimizedAWSDiscovery):
         for resource in resources:
             if resource.vpc_id:
                 # Find related VPC resources
-                vpc_resources = [r for r in resources if r.resource_id == resource.vpc_id]
+                vpc_resources = [
+                    r for r in resources if r.resource_id == resource.vpc_id
+                ]
                 if vpc_resources:
                     resource.parent_resource = vpc_resources[0].resource_arn
 
             if resource.subnet_ids:
                 # Find related subnet resources
-                subnet_resources = [r for r in resources if r.resource_id in resource.subnet_ids]
+                subnet_resources = [
+                    r for r in resources if r.resource_id in resource.subnet_ids
+                ]
                 resource.child_resources.extend(
                     [r.resource_arn for r in subnet_resources if r.resource_arn]
                 )
@@ -495,8 +527,12 @@ class ReadOnlyAccessDiscovery(OptimizedAWSDiscovery):
         if resource.tags:
             # Extract common tag-based fields
             resource.name_from_tags = resource.tags.get("Name")
-            resource.environment = resource.tags.get("Environment") or resource.tags.get("Env")
-            resource.project = resource.tags.get("Project") or resource.tags.get("Application")
+            resource.environment = resource.tags.get(
+                "Environment"
+            ) or resource.tags.get("Env")
+            resource.project = resource.tags.get("Project") or resource.tags.get(
+                "Application"
+            )
             resource.cost_center = resource.tags.get("CostCenter") or resource.tags.get(
                 "Cost-Center"
             )
@@ -512,7 +548,9 @@ class ReadOnlyAccessDiscovery(OptimizedAWSDiscovery):
             for resource in s3_resources:
                 if resource.resource_type == "Bucket":
                     try:
-                        response = s3_client.get_bucket_location(Bucket=resource.resource_name)
+                        response = s3_client.get_bucket_location(
+                            Bucket=resource.resource_name
+                        )
                         bucket_region = response.get("LocationConstraint")
 
                         # Handle us-east-1 special case

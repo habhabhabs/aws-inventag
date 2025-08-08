@@ -51,12 +51,19 @@ class RegressionTestRunner:
 
         try:
             result = subprocess.run(
-                cmd, shell=True, capture_output=True, text=True, timeout=timeout, cwd=os.getcwd()
+                cmd,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                cwd=os.getcwd(),
             )
 
             duration = time.time() - test_start
 
-            success = (result.returncode == 0) if expect_success else (result.returncode != 0)
+            success = (
+                (result.returncode == 0) if expect_success else (result.returncode != 0)
+            )
 
             test_result = {
                 "test": description,
@@ -102,11 +109,15 @@ class RegressionTestRunner:
         print("=" * 60)
 
         # Test CLI help
-        self.run_command("python3 -m inventag.cli.main --help", "CLI Help Display", timeout=30)
+        self.run_command(
+            "python3 -m inventag.cli.main --help", "CLI Help Display", timeout=30
+        )
 
         # Test configuration validation
         self.run_command(
-            "python3 -m inventag.cli.main --validate-config", "Configuration Validation", timeout=30
+            "python3 -m inventag.cli.main --validate-config",
+            "Configuration Validation",
+            timeout=30,
         )
 
         # Test credential validation (may fail if no credentials)
@@ -123,9 +134,7 @@ class RegressionTestRunner:
         print("🧪 TESTING: Fallback Display Modes")
         print("=" * 60)
 
-        base_cmd = (
-            f"./inventag.sh --output-directory {self.temp_dir}/fallback_test --regions us-east-1"
-        )
+        base_cmd = f"./inventag.sh --output-directory {self.temp_dir}/fallback_test --regions us-east-1"
 
         # Test auto mode (default)
         self.run_command(
@@ -161,15 +170,17 @@ class RegressionTestRunner:
         print("🧪 TESTING: BOM Generation Formats")
         print("=" * 60)
 
-        base_cmd = (
-            f"./inventag.sh --output-directory {self.temp_dir}/bom_formats --regions us-east-1"
-        )
+        base_cmd = f"./inventag.sh --output-directory {self.temp_dir}/bom_formats --regions us-east-1"
 
         # Test Excel generation
-        self.run_command(f"{base_cmd} --create-excel", "BOM Generation: Excel Format", timeout=600)
+        self.run_command(
+            f"{base_cmd} --create-excel", "BOM Generation: Excel Format", timeout=600
+        )
 
         # Test Word generation
-        self.run_command(f"{base_cmd} --create-word", "BOM Generation: Word Format", timeout=600)
+        self.run_command(
+            f"{base_cmd} --create-word", "BOM Generation: Word Format", timeout=600
+        )
 
         # Test both formats
         self.run_command(
@@ -192,7 +203,9 @@ class RegressionTestRunner:
             f"--service-descriptions config/aws-prescriptive-guidance/service-descriptions.yaml"
         )
 
-        self.run_command(cmd, "AWS Prescriptive Guidance Template Integration", timeout=600)
+        self.run_command(
+            cmd, "AWS Prescriptive Guidance Template Integration", timeout=600
+        )
 
         # Test with default templates for comparison
         cmd = (
@@ -257,7 +270,9 @@ class RegressionTestRunner:
 
         # Test security validation
         self.run_command(
-            f"{base_cmd} --security-validation --create-excel", "Security Validation", timeout=600
+            f"{base_cmd} --security-validation --create-excel",
+            "Security Validation",
+            timeout=600,
         )
 
         # Test combined safety features
@@ -321,7 +336,11 @@ class RegressionTestRunner:
         print("=" * 60)
 
         # Test multiple regions
-        regions_to_test = ["us-east-1", "us-east-1,us-west-2", "us-east-1,eu-west-1,ap-southeast-1"]
+        regions_to_test = [
+            "us-east-1",
+            "us-east-1,us-west-2",
+            "us-east-1,eu-west-1,ap-southeast-1",
+        ]
 
         for regions in regions_to_test:
             region_count = len(regions.split(","))
@@ -421,7 +440,9 @@ class RegressionTestRunner:
         ]
 
         for pattern in expected_patterns:
-            matching_files = list(Path(self.temp_dir).glob(f"**/{pattern.split('/')[-1]}"))
+            matching_files = list(
+                Path(self.temp_dir).glob(f"**/{pattern.split('/')[-1]}")
+            )
             if matching_files:
                 print(f"✅ Found {len(matching_files)} files matching {pattern}")
             else:
@@ -439,7 +460,9 @@ class RegressionTestRunner:
 
         total_time = (datetime.now() - self.start_time).total_seconds()
 
-        print(f"🕐 Test Duration: {total_time:.1f} seconds ({total_time/60:.1f} minutes)")
+        print(
+            f"🕐 Test Duration: {total_time:.1f} seconds ({total_time/60:.1f} minutes)"
+        )
         print(f"📋 Total Tests: {total_tests}")
         print(f"✅ Passed: {passed_tests}")
         print(f"❌ Failed: {failed_tests}")

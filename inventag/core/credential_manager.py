@@ -128,7 +128,9 @@ class CredentialManager:
         if encrypt:
             # Get encryption password
             if not password:
-                password = getpass.getpass("Enter encryption password for credential file: ")
+                password = getpass.getpass(
+                    "Enter encryption password for credential file: "
+                )
                 confirm_password = getpass.getpass("Confirm encryption password: ")
                 if password != confirm_password:
                     raise ValueError("Passwords do not match")
@@ -255,7 +257,9 @@ class CredentialManager:
                 "Please select 1, 2, 3, or 4",
             )
 
-            credentials = AccountCredentials(account_id=account_id, account_name=account_name)
+            credentials = AccountCredentials(
+                account_id=account_id, account_name=account_name
+            )
 
             # Configure authentication based on selection
             if auth_method == "1":
@@ -265,14 +269,18 @@ class CredentialManager:
                 credentials.access_key_id = input("Access Key ID: ").strip()
                 credentials.secret_access_key = getpass.getpass("Secret Access Key: ")
 
-                session_token = getpass.getpass("Session Token (optional, press Enter to skip): ")
+                session_token = getpass.getpass(
+                    "Session Token (optional, press Enter to skip): "
+                )
                 if session_token:
                     credentials.session_token = session_token
 
             elif auth_method == "3":
                 credentials.role_arn = input("Role ARN: ").strip()
 
-                external_id = input("External ID (optional, press Enter to skip): ").strip()
+                external_id = input(
+                    "External ID (optional, press Enter to skip): "
+                ).strip()
                 if external_id:
                     credentials.external_id = external_id
 
@@ -280,7 +288,9 @@ class CredentialManager:
 
             # Regional configuration
             print("\nRegional Configuration:")
-            regions_input = input("Regions (comma-separated, default: us-east-1): ").strip()
+            regions_input = input(
+                "Regions (comma-separated, default: us-east-1): "
+            ).strip()
             if regions_input:
                 credentials.regions = [r.strip() for r in regions_input.split(",")]
 
@@ -308,10 +318,14 @@ class CredentialManager:
             if validation_result.is_valid:
                 print("✓ Credentials validated successfully!")
                 print(f"  Account: {validation_result.account_id}")
-                print(f"  Accessible regions: {len(validation_result.accessible_regions)}")
+                print(
+                    f"  Accessible regions: {len(validation_result.accessible_regions)}"
+                )
                 accounts.append(credentials)
             else:
-                print(f"✗ Credential validation failed: {validation_result.error_message}")
+                print(
+                    f"✗ Credential validation failed: {validation_result.error_message}"
+                )
                 retry = input("Retry this account? (y/N): ").strip().lower()
                 if retry not in ["y", "yes"]:
                     continue
@@ -333,7 +347,9 @@ class CredentialManager:
         # Save to file if requested
         if save_to_file:
             try:
-                self.create_secure_credential_file(accounts, save_to_file, encrypt=encrypt_file)
+                self.create_secure_credential_file(
+                    accounts, save_to_file, encrypt=encrypt_file
+                )
                 print(f"✓ Credentials saved to: {save_to_file}")
             except Exception as e:
                 print(f"✗ Failed to save credentials: {e}")
@@ -366,7 +382,9 @@ class CredentialManager:
             # Return cached result if less than 5 minutes old
             if datetime.fromisoformat(
                 cached_result.validation_timestamp.replace("Z", "+00:00")
-            ) > datetime.now(timezone.utc).replace(tzinfo=None) - datetime.timedelta(minutes=5):
+            ) > datetime.now(timezone.utc).replace(tzinfo=None) - datetime.timedelta(
+                minutes=5
+            ):
                 return cached_result
 
         result = CredentialValidationResult(
@@ -408,7 +426,8 @@ class CredentialManager:
             if test_services:
                 result.available_services = self._test_service_availability(
                     session,
-                    credentials.services or ["ec2", "s3", "iam"],  # Test common services
+                    credentials.services
+                    or ["ec2", "s3", "iam"],  # Test common services
                 )
 
             # Generate permissions summary
@@ -561,7 +580,9 @@ class CredentialManager:
                 }
 
             except Exception as e:
-                self.logger.error(f"Failed to setup role in account {credentials.account_id}: {e}")
+                self.logger.error(
+                    f"Failed to setup role in account {credentials.account_id}: {e}"
+                )
                 results[credentials.account_id] = {
                     "success": False,
                     "error": str(e),
@@ -570,7 +591,9 @@ class CredentialManager:
 
         return results
 
-    def _serialize_account_credentials(self, credentials: AccountCredentials) -> Dict[str, Any]:
+    def _serialize_account_credentials(
+        self, credentials: AccountCredentials
+    ) -> Dict[str, Any]:
         """Serialize account credentials for storage."""
         data = asdict(credentials)
 
@@ -584,7 +607,9 @@ class CredentialManager:
             data["use_keyring"] = True
             data["secret_access_key"] = None
             if credentials.session_token:
-                keyring.set_password("inventag", f"{keyring_key}_token", credentials.session_token)
+                keyring.set_password(
+                    "inventag", f"{keyring_key}_token", credentials.session_token
+                )
                 data["session_token"] = None
 
         return data
@@ -609,7 +634,9 @@ class CredentialManager:
 
         return account_data
 
-    def _encrypt_credential_data(self, data: SecureCredentialFile, password: str) -> Dict[str, Any]:
+    def _encrypt_credential_data(
+        self, data: SecureCredentialFile, password: str
+    ) -> Dict[str, Any]:
         """Encrypt credential data with password."""
         # Generate key from password
         password_bytes = password.encode()
@@ -658,7 +685,9 @@ class CredentialManager:
         data_dict = json.loads(decrypted_data.decode())
         return SecureCredentialFile(**data_dict)
 
-    def _create_session_from_credentials(self, credentials: AccountCredentials) -> boto3.Session:
+    def _create_session_from_credentials(
+        self, credentials: AccountCredentials
+    ) -> boto3.Session:
         """Create boto3 session from credentials."""
         # Try profile first
         if credentials.profile_name:
@@ -697,7 +726,9 @@ class CredentialManager:
         # Fallback to default session
         return boto3.Session()
 
-    def _test_region_accessibility(self, session: boto3.Session, regions: List[str]) -> List[str]:
+    def _test_region_accessibility(
+        self, session: boto3.Session, regions: List[str]
+    ) -> List[str]:
         """Test which regions are accessible."""
         accessible_regions = []
 
@@ -717,7 +748,9 @@ class CredentialManager:
 
         return accessible_regions
 
-    def _test_service_availability(self, session: boto3.Session, services: List[str]) -> List[str]:
+    def _test_service_availability(
+        self, session: boto3.Session, services: List[str]
+    ) -> List[str]:
         """Test which services are available."""
         available_services = []
 
@@ -809,7 +842,9 @@ class CredentialManager:
 
         return summary
 
-    def _prompt_with_validation(self, prompt: str, validator, error_message: str) -> str:
+    def _prompt_with_validation(
+        self, prompt: str, validator, error_message: str
+    ) -> str:
         """Prompt user with input validation."""
         while True:
             value = input(prompt).strip()
@@ -840,6 +875,8 @@ class CredentialManager:
             try:
                 keyring.delete_password("inventag", keyring_key)
                 keyring.delete_password("inventag", f"{keyring_key}_token")
-                self.logger.info(f"Removed credentials for account {account_id} from keyring")
+                self.logger.info(
+                    f"Removed credentials for account {account_id} from keyring"
+                )
             except Exception as e:
                 self.logger.warning(f"Failed to remove credentials from keyring: {e}")

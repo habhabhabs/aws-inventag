@@ -359,7 +359,9 @@ class ProductionSafetyMonitor:
         # Log detailed context for debugging
         self.logger.debug(f"Error context: {asdict(error_context)}")
 
-    def _update_circuit_breaker(self, service: str, operation: str, error_context: ErrorContext):
+    def _update_circuit_breaker(
+        self, service: str, operation: str, error_context: ErrorContext
+    ):
         """Update circuit breaker state for service/operation."""
         key = f"{service}:{operation}"
         breaker = self.circuit_breaker_state[key]
@@ -370,7 +372,9 @@ class ProductionSafetyMonitor:
         # Open circuit breaker if too many failures
         if breaker["failures"] >= 5 and breaker["state"] == "closed":
             breaker["state"] = "open"
-            self.logger.warning(f"Circuit breaker opened for {key} due to repeated failures")
+            self.logger.warning(
+                f"Circuit breaker opened for {key} due to repeated failures"
+            )
 
         # Half-open after timeout
         elif (
@@ -409,9 +413,14 @@ class ProductionSafetyMonitor:
             # Could implement fallback mechanisms here
 
         # Example: If S3 upload fails, save locally
-        if error_context.service == "s3" and "upload" in error_context.operation.lower():
+        if (
+            error_context.service == "s3"
+            and "upload" in error_context.operation.lower()
+        ):
             self.logger.info("S3 upload failed, data will be saved locally instead")
-            error_context.recovery_action = "Save data locally and retry S3 upload later"
+            error_context.recovery_action = (
+                "Save data locally and retry S3 upload later"
+            )
 
     def start_performance_monitoring(self):
         """Start background performance monitoring."""
@@ -462,7 +471,8 @@ class ProductionSafetyMonitor:
                         value=memory.percent,
                         unit="percent",
                         tags={"resource": "memory"},
-                        threshold_breached=memory.percent > self.performance_threshold_memory,
+                        threshold_breached=memory.percent
+                        > self.performance_threshold_memory,
                         threshold_value=self.performance_threshold_memory,
                     ),
                     PerformanceMetric(
@@ -497,7 +507,9 @@ class ProductionSafetyMonitor:
                 self.logger.error(f"Error in performance monitoring: {e}")
                 time.sleep(60)  # Wait longer on error
 
-    def record_operation(self, operation: str, service: str, duration: float, success: bool):
+    def record_operation(
+        self, operation: str, service: str, duration: float, success: bool
+    ):
         """Record an operation for monitoring."""
         self.operation_counts[f"{service}:{operation}"] += 1
 
@@ -537,7 +549,9 @@ class ProductionSafetyMonitor:
             return []
 
         try:
-            self.logger.info(f"Retrieving CloudTrail events from {start_time} to {end_time}")
+            self.logger.info(
+                f"Retrieving CloudTrail events from {start_time} to {end_time}"
+            )
 
             events = []
             paginator = self.cloudtrail_client.get_paginator("lookup_events")
@@ -545,7 +559,9 @@ class ProductionSafetyMonitor:
             page_iterator = paginator.paginate(
                 StartTime=start_time,
                 EndTime=end_time,
-                LookupAttributes=[{"AttributeKey": "ReadOnly", "AttributeValue": "true"}],
+                LookupAttributes=[
+                    {"AttributeKey": "ReadOnly", "AttributeValue": "true"}
+                ],
             )
 
             for page in page_iterator:
@@ -554,25 +570,27 @@ class ProductionSafetyMonitor:
                         event_time=event.get("EventTime"),
                         event_name=event.get("EventName", ""),
                         event_source=event.get("EventSource", ""),
-                        user_identity=json.loads(event.get("CloudTrailEvent", "{}")).get(
-                            "userIdentity", {}
-                        ),
-                        source_ip_address=json.loads(event.get("CloudTrailEvent", "{}")).get(
-                            "sourceIPAddress", ""
-                        ),
+                        user_identity=json.loads(
+                            event.get("CloudTrailEvent", "{}")
+                        ).get("userIdentity", {}),
+                        source_ip_address=json.loads(
+                            event.get("CloudTrailEvent", "{}")
+                        ).get("sourceIPAddress", ""),
                         user_agent=json.loads(event.get("CloudTrailEvent", "{}")).get(
                             "userAgent", ""
                         ),
-                        request_parameters=json.loads(event.get("CloudTrailEvent", "{}")).get(
-                            "requestParameters", {}
+                        request_parameters=json.loads(
+                            event.get("CloudTrailEvent", "{}")
+                        ).get("requestParameters", {}),
+                        response_elements=json.loads(
+                            event.get("CloudTrailEvent", "{}")
+                        ).get("responseElements"),
+                        error_code=json.loads(event.get("CloudTrailEvent", "{}")).get(
+                            "errorCode"
                         ),
-                        response_elements=json.loads(event.get("CloudTrailEvent", "{}")).get(
-                            "responseElements"
-                        ),
-                        error_code=json.loads(event.get("CloudTrailEvent", "{}")).get("errorCode"),
-                        error_message=json.loads(event.get("CloudTrailEvent", "{}")).get(
-                            "errorMessage"
-                        ),
+                        error_message=json.loads(
+                            event.get("CloudTrailEvent", "{}")
+                        ).get("errorMessage"),
                         resources=event.get("Resources", []),
                         read_only=event.get("ReadOnly", True),
                     )
@@ -623,7 +641,9 @@ class ProductionSafetyMonitor:
 
         # Analyze operations
         total_operations = len(self.operation_counts)
-        successful_operations = sum(1 for count in self.operation_counts.values() if count > 0)
+        successful_operations = sum(
+            1 for count in self.operation_counts.values() if count > 0
+        )
         failed_operations = len(
             [e for e in self.error_history if start_time <= e.timestamp <= end_time]
         )
@@ -631,7 +651,8 @@ class ProductionSafetyMonitor:
             [
                 e
                 for e in self.error_history
-                if start_time <= e.timestamp <= end_time and e.severity == ErrorSeverity.HIGH
+                if start_time <= e.timestamp <= end_time
+                and e.severity == ErrorSeverity.HIGH
             ]
         )
 
@@ -639,7 +660,9 @@ class ProductionSafetyMonitor:
         security_findings = self._generate_security_findings(start_time, end_time)
 
         # Generate compliance violations
-        compliance_violations = self._generate_compliance_violations(start_time, end_time)
+        compliance_violations = self._generate_compliance_violations(
+            start_time, end_time
+        )
 
         # Calculate risk score
         risk_score = self._calculate_risk_score(
@@ -669,7 +692,9 @@ class ProductionSafetyMonitor:
             cloudtrail_events=cloudtrail_events,
         )
 
-        self.logger.info(f"Security validation report generated: Risk score {risk_score:.1f}/100")
+        self.logger.info(
+            f"Security validation report generated: Risk score {risk_score:.1f}/100"
+        )
         return report
 
     def _generate_security_findings(
@@ -679,7 +704,9 @@ class ProductionSafetyMonitor:
         findings = []
 
         # Check for high error rates
-        period_errors = [e for e in self.error_history if start_time <= e.timestamp <= end_time]
+        period_errors = [
+            e for e in self.error_history if start_time <= e.timestamp <= end_time
+        ]
         if len(period_errors) > 10:
             findings.append(
                 {
@@ -692,7 +719,9 @@ class ProductionSafetyMonitor:
             )
 
         # Check for critical errors
-        critical_errors = [e for e in period_errors if e.severity == ErrorSeverity.CRITICAL]
+        critical_errors = [
+            e for e in period_errors if e.severity == ErrorSeverity.CRITICAL
+        ]
         if critical_errors:
             findings.append(
                 {
@@ -708,7 +737,8 @@ class ProductionSafetyMonitor:
         permission_errors = [
             e
             for e in period_errors
-            if "permission" in e.error_message.lower() or "access" in e.error_message.lower()
+            if "permission" in e.error_message.lower()
+            or "access" in e.error_message.lower()
         ]
         if permission_errors:
             findings.append(
@@ -732,7 +762,9 @@ class ProductionSafetyMonitor:
         # Check for operations outside business hours (example compliance rule)
         business_hours_violations = []
         for event in self.cloudtrail_events:
-            if event.event_time and (event.event_time.hour < 6 or event.event_time.hour > 22):
+            if event.event_time and (
+                event.event_time.hour < 6 or event.event_time.hour > 22
+            ):
                 business_hours_violations.append(event)
 
         if business_hours_violations:
@@ -813,13 +845,19 @@ class ProductionSafetyMonitor:
         # Finding-specific recommendations
         high_severity_findings = [f for f in findings if f.get("severity") == "HIGH"]
         if high_severity_findings:
-            recommendations.append("Address high-severity security findings immediately")
-            recommendations.append("Implement additional security controls for critical operations")
+            recommendations.append(
+                "Address high-severity security findings immediately"
+            )
+            recommendations.append(
+                "Implement additional security controls for critical operations"
+            )
 
         # Violation-specific recommendations
         if violations:
             recommendations.append("Review compliance policies and ensure adherence")
-            recommendations.append("Implement automated compliance checking and reporting")
+            recommendations.append(
+                "Implement automated compliance checking and reporting"
+            )
 
         return recommendations
 
@@ -839,13 +877,17 @@ class ProductionSafetyMonitor:
                 "state": breaker["state"],
                 "failures": breaker["failures"],
                 "last_failure": (
-                    breaker["last_failure"].isoformat() if breaker["last_failure"] else None
+                    breaker["last_failure"].isoformat()
+                    if breaker["last_failure"]
+                    else None
                 ),
             }
 
         # Get recent performance metrics
         recent_metrics = [
-            m for m in self.performance_metrics if (current_time - m.timestamp).seconds < 3600
+            m
+            for m in self.performance_metrics
+            if (current_time - m.timestamp).seconds < 3600
         ]
 
         summary = {
@@ -910,7 +952,9 @@ class ProductionSafetyMonitor:
 
         # Get recent metrics
         recent_metrics = [
-            m for m in self.performance_metrics if (current_time - m.timestamp).seconds < 3600
+            m
+            for m in self.performance_metrics
+            if (current_time - m.timestamp).seconds < 3600
         ]  # Last hour
 
         # Get recent errors

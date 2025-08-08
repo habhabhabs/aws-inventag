@@ -37,12 +37,19 @@ class QuickRegressionTestRunner:
 
         try:
             result = subprocess.run(
-                cmd, shell=True, capture_output=True, text=True, timeout=timeout, cwd=os.getcwd()
+                cmd,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                cwd=os.getcwd(),
             )
 
             duration = time.time() - test_start
 
-            success = (result.returncode == 0) if expect_success else (result.returncode != 0)
+            success = (
+                (result.returncode == 0) if expect_success else (result.returncode != 0)
+            )
 
             test_result = {
                 "test": description,
@@ -88,7 +95,9 @@ class QuickRegressionTestRunner:
         print("=" * 60)
 
         # Test CLI help
-        self.run_command("python3 -m inventag.cli.main --help", "CLI Help Display", timeout=30)
+        self.run_command(
+            "python3 -m inventag.cli.main --help", "CLI Help Display", timeout=30
+        )
 
         # Test fallback display options
         cmd = (
@@ -172,7 +181,9 @@ except Exception as e:
             f.write(test_script_content)
 
         self.run_command(
-            "python3 /tmp/fallback_test.py", "Fallback Logic Implementation Test", timeout=15
+            "python3 /tmp/fallback_test.py",
+            "Fallback Logic Implementation Test",
+            timeout=15,
         )
 
     def test_aws_templates(self):
@@ -183,7 +194,9 @@ except Exception as e:
 
         # Check template files exist
         self.run_command(
-            "ls -la config/aws-prescriptive-guidance/", "AWS Template Files Check", timeout=10
+            "ls -la config/aws-prescriptive-guidance/",
+            "AWS Template Files Check",
+            timeout=10,
         )
 
         # Validate template YAML syntax

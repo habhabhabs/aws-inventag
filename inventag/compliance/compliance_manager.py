@@ -94,7 +94,9 @@ class ComplianceManager:
         logger = logging.getLogger(f"{__name__}.compliance_manager")
         logger.setLevel(logging.INFO)
 
-        formatter = logging.Formatter("%(asctime)s - COMPLIANCE - %(levelname)s - %(message)s")
+        formatter = logging.Formatter(
+            "%(asctime)s - COMPLIANCE - %(levelname)s - %(message)s"
+        )
 
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
@@ -197,7 +199,9 @@ class ComplianceManager:
                 )
 
                 # Get monitoring summary
-                result["monitoring_data"] = self.production_monitor.get_monitoring_summary()
+                result["monitoring_data"] = (
+                    self.production_monitor.get_monitoring_summary()
+                )
 
         return result
 
@@ -230,20 +234,28 @@ class ComplianceManager:
         # Production monitoring assessment
         if self.production_monitor:
             monitoring_summary = self.production_monitor.get_monitoring_summary()
-            production_monitoring_active = monitoring_summary.get("monitoring_status") == "active"
+            production_monitoring_active = (
+                monitoring_summary.get("monitoring_status") == "active"
+            )
             error_count = monitoring_summary.get("total_errors", 0)
 
             # Generate security validation report for risk assessment
-            security_report = self.production_monitor.generate_security_validation_report()
+            security_report = (
+                self.production_monitor.generate_security_validation_report()
+            )
             risk_score = security_report.risk_score
 
             if risk_score > 50:
                 is_compliant = False
-                recommendations.append("High risk score detected - review security posture")
+                recommendations.append(
+                    "High risk score detected - review security posture"
+                )
 
             if error_count > self.config.error_threshold:
                 is_compliant = False
-                recommendations.append("Error threshold exceeded - investigate error patterns")
+                recommendations.append(
+                    "Error threshold exceeded - investigate error patterns"
+                )
 
         # Calculate overall compliance score
         if total_operations > 0:
@@ -256,7 +268,9 @@ class ComplianceManager:
         if is_compliant:
             recommendations.append("Maintain current security and monitoring practices")
         else:
-            recommendations.append("Immediate attention required for compliance violations")
+            recommendations.append(
+                "Immediate attention required for compliance violations"
+            )
 
         status = ComplianceStatus(
             is_compliant=is_compliant,
@@ -304,17 +318,23 @@ class ComplianceManager:
 
         # Production monitoring report
         if self.production_monitor:
-            security_report = self.production_monitor.generate_security_validation_report()
+            security_report = (
+                self.production_monitor.generate_security_validation_report()
+            )
             report["production_monitoring_report"] = asdict(security_report)
 
         # Consolidate recommendations
         all_recommendations = set(compliance_status.recommendations)
 
         if report["security_compliance_report"]:
-            all_recommendations.update(report["security_compliance_report"]["recommendations"])
+            all_recommendations.update(
+                report["security_compliance_report"]["recommendations"]
+            )
 
         if report["production_monitoring_report"]:
-            all_recommendations.update(report["production_monitoring_report"]["recommendations"])
+            all_recommendations.update(
+                report["production_monitoring_report"]["recommendations"]
+            )
 
         report["recommendations"] = list(all_recommendations)
 
@@ -358,7 +378,9 @@ class ComplianceManager:
             findings.append("High risk score indicates potential security concerns")
 
         if compliance_status.get("error_count", 0) > self.config.error_threshold:
-            findings.append("Error threshold exceeded - system stability may be affected")
+            findings.append(
+                "Error threshold exceeded - system stability may be affected"
+            )
 
         return findings
 
@@ -412,7 +434,9 @@ class ComplianceManager:
                 for error in self.production_monitor.error_history
                 if error.timestamp > cutoff_date
             ]
-            cleaned_error_count = original_error_count - len(self.production_monitor.error_history)
+            cleaned_error_count = original_error_count - len(
+                self.production_monitor.error_history
+            )
 
             original_metrics_count = len(self.production_monitor.performance_metrics)
             self.production_monitor.performance_metrics = [
@@ -434,7 +458,9 @@ class ComplianceManager:
 
         dashboard_data = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "overall_status": ("COMPLIANT" if compliance_status.is_compliant else "NON-COMPLIANT"),
+            "overall_status": (
+                "COMPLIANT" if compliance_status.is_compliant else "NON-COMPLIANT"
+            ),
             "compliance_score": compliance_status.compliance_score,
             "risk_score": compliance_status.risk_score,
             "metrics": {
@@ -448,16 +474,24 @@ class ComplianceManager:
                 * 100,
             },
             "status_indicators": {
-                "security_validation": ("ACTIVE" if self.security_validator else "DISABLED"),
+                "security_validation": (
+                    "ACTIVE" if self.security_validator else "DISABLED"
+                ),
                 "production_monitoring": (
-                    "ACTIVE" if compliance_status.production_monitoring_active else "INACTIVE"
+                    "ACTIVE"
+                    if compliance_status.production_monitoring_active
+                    else "INACTIVE"
                 ),
                 "cloudtrail_integration": (
-                    "ENABLED" if self.config.enable_cloudtrail_integration else "DISABLED"
+                    "ENABLED"
+                    if self.config.enable_cloudtrail_integration
+                    else "DISABLED"
                 ),
             },
             "recent_activity": self._get_recent_activity_summary(),
-            "recommendations": compliance_status.recommendations[:5],  # Top 5 recommendations
+            "recommendations": compliance_status.recommendations[
+                :5
+            ],  # Top 5 recommendations
         }
 
         return dashboard_data

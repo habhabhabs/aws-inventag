@@ -102,7 +102,9 @@ class StateManager:
     def _calculate_checksum(self, resources: List[Dict]) -> str:
         """Calculate checksum for resource data to detect changes"""
         # Sort resources by ARN/ID for consistent checksums
-        sorted_resources = sorted(resources, key=lambda x: x.get("arn", x.get("id", "")))
+        sorted_resources = sorted(
+            resources, key=lambda x: x.get("arn", x.get("id", ""))
+        )
 
         # Create a simplified representation for checksum
         checksum_data = []
@@ -171,7 +173,9 @@ class StateManager:
             resource_count=len(resources),
             checksum=checksum,
             discovery_method=discovery_method,
-            compliance_status=(compliance_data.get("summary") if compliance_data else None),
+            compliance_status=(
+                compliance_data.get("summary") if compliance_data else None
+            ),
             tags=tags,
         )
 
@@ -250,7 +254,9 @@ class StateManager:
                 security_analysis=data.get("security_analysis"),
             )
 
-            logger.info(f"State loaded: {state_id} ({len(snapshot.resources)} resources)")
+            logger.info(
+                f"State loaded: {state_id} ({len(snapshot.resources)} resources)"
+            )
             return snapshot
 
         except Exception as e:
@@ -336,12 +342,16 @@ class StateManager:
 
         try:
             if export_format == "json":
-                export_data = asdict(snapshot) if include_metadata else snapshot.resources
+                export_data = (
+                    asdict(snapshot) if include_metadata else snapshot.resources
+                )
                 with open(output_file, "w") as f:
                     json.dump(export_data, f, indent=2, default=str)
 
             elif export_format == "yaml":
-                export_data = asdict(snapshot) if include_metadata else snapshot.resources
+                export_data = (
+                    asdict(snapshot) if include_metadata else snapshot.resources
+                )
                 with open(output_file, "w") as f:
                     yaml.dump(export_data, f, default_flow_style=False)
 
@@ -386,24 +396,28 @@ class StateManager:
             for state_id, state_info in self.metadata_index.items():
                 try:
                     # Handle timestamp format with potential counter suffix
-                    base_timestamp = state_id.split("_")[0] + "_" + state_id.split("_")[1]
+                    base_timestamp = (
+                        state_id.split("_")[0] + "_" + state_id.split("_")[1]
+                    )
                     if len(state_id.split("_")) == 2:
                         # Standard format: YYYYMMDD_HHMMSS
-                        state_time = datetime.strptime(state_id, "%Y%m%d_%H%M%S").replace(
-                            tzinfo=timezone.utc
-                        )
+                        state_time = datetime.strptime(
+                            state_id, "%Y%m%d_%H%M%S"
+                        ).replace(tzinfo=timezone.utc)
                     else:
                         # Format with counter: YYYYMMDD_HHMMSS_NNN
-                        state_time = datetime.strptime(base_timestamp, "%Y%m%d_%H%M%S").replace(
-                            tzinfo=timezone.utc
-                        )
+                        state_time = datetime.strptime(
+                            base_timestamp, "%Y%m%d_%H%M%S"
+                        ).replace(tzinfo=timezone.utc)
 
                     age_days = (current_time - state_time).days
 
                     if age_days > self.retention_days:
                         states_to_remove.append(state_id)
                 except ValueError as e:
-                    logger.warning(f"Could not parse timestamp for state {state_id}: {e}")
+                    logger.warning(
+                        f"Could not parse timestamp for state {state_id}: {e}"
+                    )
                     continue
 
             # Check retention by count (keep most recent)

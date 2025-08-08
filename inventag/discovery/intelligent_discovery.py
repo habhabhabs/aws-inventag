@@ -212,7 +212,9 @@ class IntelligentFieldMapper:
         try:
             # Pre-extract required fields before initialization
             resource_id = self._extract_resource_id(raw_data)
-            resource_type = self._determine_resource_type(raw_data, operation_name, service_name)
+            resource_type = self._determine_resource_type(
+                raw_data, operation_name, service_name
+            )
 
             # Initialize standard resource with required fields
             resource = StandardResource(
@@ -241,13 +243,17 @@ class IntelligentFieldMapper:
             resource.name_from_tags = raw_tags.get("Name")
             resource.environment = raw_tags.get("Environment") or raw_tags.get("Env")
             resource.project = raw_tags.get("Project") or raw_tags.get("ProjectName")
-            resource.cost_center = raw_tags.get("CostCenter") or raw_tags.get("BillingCode")
+            resource.cost_center = raw_tags.get("CostCenter") or raw_tags.get(
+                "BillingCode"
+            )
 
             # Security and network intelligence
             resource.vpc_id = self._extract_vpc_info(raw_data)
             resource.subnet_ids = self._extract_subnet_info(raw_data)
             resource.security_groups = self._extract_security_groups(raw_data)
-            resource.public_access = self._determine_public_access(raw_data, service_name)
+            resource.public_access = self._determine_public_access(
+                raw_data, service_name
+            )
             resource.encrypted = self._determine_encryption_status(raw_data)
 
             # Resource relationships (advanced AI feature)
@@ -260,7 +266,9 @@ class IntelligentFieldMapper:
             return resource
 
         except Exception as e:
-            self.logger.error(f"Failed to intelligently map resource from {service_name}: {e}")
+            self.logger.error(
+                f"Failed to intelligently map resource from {service_name}: {e}"
+            )
             # Return a basic resource with error information
             return StandardResource(
                 service_name=service_name,
@@ -544,7 +552,9 @@ class IntelligentFieldMapper:
                 if isinstance(sg_data, list):
                     for sg in sg_data:
                         if isinstance(sg, dict):
-                            sgs.append(sg.get("GroupId") or sg.get("GroupName") or str(sg))
+                            sgs.append(
+                                sg.get("GroupId") or sg.get("GroupName") or str(sg)
+                            )
                         else:
                             sgs.append(str(sg))
                 elif isinstance(sg_data, str):
@@ -715,7 +725,9 @@ class IntelligentAWSDiscovery:
             client = self.session.client(service_name, region_name=region)
             return client
         except Exception as e:
-            self.logger.error(f"Failed to create {service_name} client in {region}: {e}")
+            self.logger.error(
+                f"Failed to create {service_name} client in {region}: {e}"
+            )
             return None
         finally:
             with self._client_lock:
@@ -740,7 +752,9 @@ class IntelligentAWSDiscovery:
                     f"Discovered {len(service_resources)} resources from {service_name}"
                 )
             except Exception as e:
-                self.logger.warning(f"Failed to discover resources from {service_name}: {e}")
+                self.logger.warning(
+                    f"Failed to discover resources from {service_name}: {e}"
+                )
 
         self.logger.info(
             f"Intelligent discovery complete: {total_discovered} resources from {len(available_services)} services"
@@ -770,7 +784,8 @@ class IntelligentAWSDiscovery:
                     for op in operations
                     if op.startswith(("List", "Describe", "Get"))
                     and not any(
-                        skip in op for skip in ["Policy", "Version", "Status", "Health", "Metrics"]
+                        skip in op
+                        for skip in ["Policy", "Version", "Status", "Health", "Metrics"]
                     )
                 ]
 
@@ -790,7 +805,9 @@ class IntelligentAWSDiscovery:
                         continue
 
             except Exception as e:
-                self.logger.warning(f"Failed to create {service_name} client in {region}: {e}")
+                self.logger.warning(
+                    f"Failed to create {service_name} client in {region}: {e}"
+                )
 
         # Deduplicate and enhance resources
         service_resources = self._intelligent_deduplication(service_resources)

@@ -47,10 +47,14 @@ class ComprehensiveAWSDiscovery:
             fallback_display_mode = "never"
 
         self.fallback_display_mode = fallback_display_mode
-        self.hide_fallback_resources = hide_fallback_resources  # Keep for backward compatibility
+        self.hide_fallback_resources = (
+            hide_fallback_resources  # Keep for backward compatibility
+        )
 
         if self.fallback_display_mode == "never":
-            self.logger.info("💡 Fallback resources from ResourceGroupsTagging API will be hidden")
+            self.logger.info(
+                "💡 Fallback resources from ResourceGroupsTagging API will be hidden"
+            )
         elif self.fallback_display_mode == "always":
             self.logger.info(
                 "💡 All fallback resources from ResourceGroupsTagging API will be "
@@ -334,7 +338,9 @@ class ComprehensiveAWSDiscovery:
             List of discovered resources with complete metadata
         """
         self.logger.info("🔍 Starting comprehensive AWS resource discovery")
-        self.logger.info("Strategy: Service-specific APIs → Tag enrichment → Billing validation")
+        self.logger.info(
+            "Strategy: Service-specific APIs → Tag enrichment → Billing validation"
+        )
 
         start_time = time.time()
 
@@ -369,9 +375,9 @@ class ComprehensiveAWSDiscovery:
 
             response = ce_client.get_cost_and_usage(
                 TimePeriod={
-                    "Start": (datetime.now().replace(day=1) - timedelta(days=30)).strftime(
-                        "%Y-%m-%d"
-                    ),
+                    "Start": (
+                        datetime.now().replace(day=1) - timedelta(days=30)
+                    ).strftime("%Y-%m-%d"),
                     "End": datetime.now().strftime("%Y-%m-%d"),
                 },
                 Granularity="MONTHLY",
@@ -382,17 +388,27 @@ class ComprehensiveAWSDiscovery:
             for result in response.get("ResultsByTime", []):
                 for group in result.get("Groups", []):
                     service_name = group.get("Keys", [""])[0]
-                    cost = float(group.get("Metrics", {}).get("BlendedCost", {}).get("Amount", "0"))
+                    cost = float(
+                        group.get("Metrics", {})
+                        .get("BlendedCost", {})
+                        .get("Amount", "0")
+                    )
                     usage = float(
-                        group.get("Metrics", {}).get("UsageQuantity", {}).get("Amount", "0")
+                        group.get("Metrics", {})
+                        .get("UsageQuantity", {})
+                        .get("Amount", "0")
                     )
 
                     if cost > 0 or usage > 0:
-                        normalized_service = self._normalize_billing_service_name(service_name)
+                        normalized_service = self._normalize_billing_service_name(
+                            service_name
+                        )
                         self.billing_services.add(normalized_service)
                         self.billing_spend[normalized_service] = cost
 
-            self.logger.info(f"💰 Found {len(self.billing_services)} services with billing usage")
+            self.logger.info(
+                f"💰 Found {len(self.billing_services)} services with billing usage"
+            )
 
         except Exception as e:
             self.logger.warning(f"Billing discovery failed: {e}")
@@ -462,7 +478,9 @@ class ComprehensiveAWSDiscovery:
                         )
 
                 except Exception as e:
-                    self.logger.warning(f"❌ {task['service']} in {task['region']} failed: {e}")
+                    self.logger.warning(
+                        f"❌ {task['service']} in {task['region']} failed: {e}"
+                    )
 
     def _discover_service_in_region(self, task: Dict[str, Any]) -> int:
         """Discover resources for a specific service in a specific region."""
@@ -499,7 +517,9 @@ class ComprehensiveAWSDiscovery:
                     continue
 
         except Exception as e:
-            self.logger.warning(f"Service client creation failed for {service_name}: {e}")
+            self.logger.warning(
+                f"Service client creation failed for {service_name}: {e}"
+            )
 
         return resources_found
 
@@ -601,7 +621,9 @@ class ComprehensiveAWSDiscovery:
                                     self.resources.append(instance_resource)
                                     resources_added += 1
                                     # Track service with primary resources for smart fallback logic
-                                    self.services_with_primary_resources.add(service_name)
+                                    self.services_with_primary_resources.add(
+                                        service_name
+                                    )
                         else:
                             self.resources.append(resource)
                             resources_added += 1
@@ -645,7 +667,9 @@ class ComprehensiveAWSDiscovery:
             # Extract ARN if available
             arn = raw_data.get("Arn") or raw_data.get("ARN")
             if not arn:
-                arn = self._construct_arn(service_name, region, resource_type, resource_id)
+                arn = self._construct_arn(
+                    service_name, region, resource_type, resource_id
+                )
 
             # Extract tags
             tags = self._extract_tags(raw_data)
@@ -829,13 +853,13 @@ class ComprehensiveAWSDiscovery:
             if service == "s3":
                 return f"arn:aws:s3:::{resource_id}"
             elif service == "iam":
-                return f"arn:aws:iam::{account_id}:{resource_type.lower()}/{resource_id}"
+                return (
+                    f"arn:aws:iam::{account_id}:{resource_type.lower()}/{resource_id}"
+                )
             elif service in ["cloudfront", "route53"]:
                 return f"arn:aws:{service}::{account_id}:{resource_type.lower()}/{resource_id}"
             else:
-                return (
-                    f"arn:aws:{service}:{region}:{account_id}:{resource_type.lower()}/{resource_id}"
-                )
+                return f"arn:aws:{service}:{region}:{account_id}:{resource_type.lower()}/{resource_id}"
 
         except Exception:
             return f"arn:aws:{service}:{region}:unknown:{resource_type.lower()}/{resource_id}"
@@ -852,19 +876,25 @@ class ComprehensiveAWSDiscovery:
 
         for region in self.regions:
             try:
-                rgt_client = self.session.client("resourcegroupstaggingapi", region_name=region)
+                rgt_client = self.session.client(
+                    "resourcegroupstaggingapi", region_name=region
+                )
                 paginator = rgt_client.get_paginator("get_resources")
 
                 for page in paginator.paginate():
                     for resource in page.get("ResourceTagMappingList", []):
                         arn = resource.get("ResourceARN", "")
-                        tags = {tag["Key"]: tag["Value"] for tag in resource.get("Tags", [])}
+                        tags = {
+                            tag["Key"]: tag["Value"] for tag in resource.get("Tags", [])
+                        }
 
                         if arn in arn_to_resource:
                             # Enrich existing resource with additional tags
                             existing_resource = arn_to_resource[arn]
                             existing_resource["tags"].update(tags)
-                            existing_resource["tagged"] = bool(existing_resource["tags"])
+                            existing_resource["tagged"] = bool(
+                                existing_resource["tags"]
+                            )
                             enriched_count += 1
                         else:
                             # This is a resource we missed - add it as fallback only
@@ -880,7 +910,8 @@ class ComprehensiveAWSDiscovery:
                                 try:
                                     service = self._extract_service_from_arn(arn)
                                     should_show_fallback = (
-                                        service not in self.services_with_primary_resources
+                                        service
+                                        not in self.services_with_primary_resources
                                     )
                                 except Exception:
                                     # If we can't determine service, default to showing in auto mode
@@ -891,7 +922,9 @@ class ComprehensiveAWSDiscovery:
                                     service = self._extract_service_from_arn(arn)
                                     if service:
                                         resource_id = (
-                                            arn.split("/")[-1] if "/" in arn else arn.split(":")[-1]
+                                            arn.split("/")[-1]
+                                            if "/" in arn
+                                            else arn.split(":")[-1]
                                         )
 
                                         # Apply the same service classification logic for fallback resources
@@ -932,7 +965,9 @@ class ComprehensiveAWSDiscovery:
                                     )
 
             except Exception as e:
-                self.logger.warning(f"ResourceGroupsTagging enrichment failed in {region}: {e}")
+                self.logger.warning(
+                    f"ResourceGroupsTagging enrichment failed in {region}: {e}"
+                )
 
         # Report services with primary resources for transparency
         if self.fallback_display_mode == "auto":
@@ -979,7 +1014,9 @@ class ComprehensiveAWSDiscovery:
             has_billing = service in self.billing_services
             has_resources = service in discovered_services
             billing_cost = self.billing_spend.get(service, 0.0)
-            resource_count = len([r for r in self.resources if r["service"].lower() == service])
+            resource_count = len(
+                [r for r in self.resources if r["service"].lower() == service]
+            )
 
             status = "✅ MATCHED"
             if has_billing and not has_resources:
@@ -1007,11 +1044,15 @@ class ComprehensiveAWSDiscovery:
 
         self.logger.info("=" * 50)
         self.logger.info("📊 DISCOVERY COMPLETENESS SUMMARY:")
-        self.logger.info(f"   ✅ Matched (billing + resources): {len(matched_services)} services")
+        self.logger.info(
+            f"   ✅ Matched (billing + resources): {len(matched_services)} services"
+        )
         self.logger.info(
             f"   ❌ Missing resources (billing only): {len(missing_services)} services"
         )
-        self.logger.info(f"   🆓 Free tier (resources only): {len(unbilled_services)} services")
+        self.logger.info(
+            f"   🆓 Free tier (resources only): {len(unbilled_services)} services"
+        )
 
         if missing_services:
             self.logger.warning("💸 MISSING RESOURCES for services with billing:")
@@ -1024,8 +1065,12 @@ class ComprehensiveAWSDiscovery:
         if unbilled_services:
             self.logger.info("🆓 FREE TIER SERVICES (no billing cost):")
             for service in sorted(unbilled_services):
-                count = len([r for r in self.resources if r["service"].lower() == service])
-                self.logger.info(f"   • {service.upper()}: {count} resources (likely free tier)")
+                count = len(
+                    [r for r in self.resources if r["service"].lower() == service]
+                )
+                self.logger.info(
+                    f"   • {service.upper()}: {count} resources (likely free tier)"
+                )
 
         # Calculate overall detection rate
         total_billing_services = len(self.billing_services)
@@ -1052,7 +1097,9 @@ class ComprehensiveAWSDiscovery:
             resource["billing_validated"] = service in self.billing_services
             resource["monthly_spend"] = self.billing_spend.get(service, 0.0)
 
-        self.logger.info(f"📊 Post-processing complete: {len(self.resources)} unique resources")
+        self.logger.info(
+            f"📊 Post-processing complete: {len(self.resources)} unique resources"
+        )
 
     def _enhance_s3_buckets(self):
         """Use boto3 APIs to get correct regions and metadata for all services."""
@@ -1060,7 +1107,10 @@ class ComprehensiveAWSDiscovery:
         s3_client = self.session.client("s3")
 
         for resource in self.resources:
-            if resource.get("service") == "S3" and resource.get("resource_type") == "Bucket":
+            if (
+                resource.get("service") == "S3"
+                and resource.get("resource_type") == "Bucket"
+            ):
                 bucket_name = resource.get("resource_id")
                 try:
                     # Use boto3 S3 API to get bucket location
@@ -1076,10 +1126,14 @@ class ComprehensiveAWSDiscovery:
                     # Reconstruct ARN with correct region
                     resource["arn"] = f"arn:aws:s3:::{bucket_name}"
 
-                    self.logger.debug(f"Enhanced S3 bucket {bucket_name} with region {region}")
+                    self.logger.debug(
+                        f"Enhanced S3 bucket {bucket_name} with region {region}"
+                    )
 
                 except Exception as e:
-                    self.logger.debug(f"Failed to get S3 bucket region for {bucket_name}: {e}")
+                    self.logger.debug(
+                        f"Failed to get S3 bucket region for {bucket_name}: {e}"
+                    )
                     continue
 
         # Lambda function region/runtime enhancement
@@ -1110,7 +1164,9 @@ class ComprehensiveAWSDiscovery:
                     function_name = resource.get("resource_id")
                     try:
                         # Get detailed function configuration
-                        response = lambda_client.get_function(FunctionName=function_name)
+                        response = lambda_client.get_function(
+                            FunctionName=function_name
+                        )
                         config = response.get("Configuration", {})
 
                         # Update with accurate region and metadata
@@ -1120,10 +1176,14 @@ class ComprehensiveAWSDiscovery:
                         resource["raw_data"]["memory_size"] = config.get("MemorySize")
                         resource["raw_data"]["timeout"] = config.get("Timeout")
 
-                        self.logger.debug(f"Enhanced Lambda function {function_name} in {region}")
+                        self.logger.debug(
+                            f"Enhanced Lambda function {function_name} in {region}"
+                        )
 
                     except Exception as e:
-                        self.logger.debug(f"Failed to enhance Lambda function {function_name}: {e}")
+                        self.logger.debug(
+                            f"Failed to enhance Lambda function {function_name}: {e}"
+                        )
                         continue
 
             except Exception as e:
@@ -1136,7 +1196,8 @@ class ComprehensiveAWSDiscovery:
             rds_instances = [
                 r
                 for r in self.resources
-                if r.get("service") == "RDS" and "Instance" in r.get("resource_type", "")
+                if r.get("service") == "RDS"
+                and "Instance" in r.get("resource_type", "")
             ]
 
             if not rds_instances:
@@ -1160,16 +1221,24 @@ class ComprehensiveAWSDiscovery:
                             resource["region"] = region
                             resource["raw_data"]["boto3_instance"] = instance
                             resource["raw_data"]["engine"] = instance.get("Engine")
-                            resource["raw_data"]["engine_version"] = instance.get("EngineVersion")
-                            resource["raw_data"]["instance_class"] = instance.get("DBInstanceClass")
+                            resource["raw_data"]["engine_version"] = instance.get(
+                                "EngineVersion"
+                            )
+                            resource["raw_data"]["instance_class"] = instance.get(
+                                "DBInstanceClass"
+                            )
                             resource["raw_data"]["availability_zone"] = instance.get(
                                 "AvailabilityZone"
                             )
 
-                            self.logger.debug(f"Enhanced RDS instance {instance_id} in {region}")
+                            self.logger.debug(
+                                f"Enhanced RDS instance {instance_id} in {region}"
+                            )
 
                     except Exception as e:
-                        self.logger.debug(f"Failed to enhance RDS instance {instance_id}: {e}")
+                        self.logger.debug(
+                            f"Failed to enhance RDS instance {instance_id}: {e}"
+                        )
                         continue
 
             except Exception as e:
@@ -1182,7 +1251,8 @@ class ComprehensiveAWSDiscovery:
             cf_stacks = [
                 r
                 for r in self.resources
-                if r.get("service") == "CLOUDFORMATION" and r.get("resource_type") == "Stack"
+                if r.get("service") == "CLOUDFORMATION"
+                and r.get("resource_type") == "Stack"
             ]
 
             if not cf_stacks:
@@ -1203,8 +1273,12 @@ class ComprehensiveAWSDiscovery:
                             # Update with accurate region and metadata
                             resource["region"] = region
                             resource["raw_data"]["boto3_stack"] = stack
-                            resource["raw_data"]["stack_status"] = stack.get("StackStatus")
-                            resource["raw_data"]["creation_time"] = stack.get("CreationTime")
+                            resource["raw_data"]["stack_status"] = stack.get(
+                                "StackStatus"
+                            )
+                            resource["raw_data"]["creation_time"] = stack.get(
+                                "CreationTime"
+                            )
                             resource["raw_data"]["drift_status"] = stack.get(
                                 "DriftInformation", {}
                             ).get("StackDriftStatus")
@@ -1220,7 +1294,9 @@ class ComprehensiveAWSDiscovery:
                         continue
 
             except Exception as e:
-                self.logger.debug(f"Failed to create CloudFormation client for {region}: {e}")
+                self.logger.debug(
+                    f"Failed to create CloudFormation client for {region}: {e}"
+                )
                 continue
 
     def _remove_duplicates_with_priority(self):
@@ -1299,7 +1375,9 @@ class ComprehensiveAWSDiscovery:
         ]
 
         # Check resource ID prefixes
-        if any(resource_id.startswith(indicator) for indicator in vpc_resource_indicators):
+        if any(
+            resource_id.startswith(indicator) for indicator in vpc_resource_indicators
+        ):
             return "vpc"
 
         # Check resource types
@@ -1351,4 +1429,6 @@ class ComprehensiveAWSDiscovery:
             "Amazon CloudWatch Events": "events",
         }
 
-        return mappings.get(billing_name, billing_name.lower().replace(" ", "").replace("-", ""))
+        return mappings.get(
+            billing_name, billing_name.lower().replace(" ", "").replace("-", "")
+        )

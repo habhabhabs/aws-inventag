@@ -129,7 +129,9 @@ class WordBrandingApplicator(BrandingApplicator):
                 try:
                     heading_style = styles[f"Heading {i}"]
                     heading_font = heading_style.font
-                    heading_font.color.rgb = self._hex_to_rgb_color(self.branding.colors.primary)
+                    heading_font.color.rgb = self._hex_to_rgb_color(
+                        self.branding.colors.primary
+                    )
                 except KeyError:
                     continue
 
@@ -181,7 +183,9 @@ class WordBrandingApplicator(BrandingApplicator):
 
         return document
 
-    def apply_conditional_formatting(self, document: Document, theme_name: str) -> Document:
+    def apply_conditional_formatting(
+        self, document: Document, theme_name: str
+    ) -> Document:
         """Apply conditional formatting theme to tables."""
         if theme_name not in self.branding.formatting_themes:
             self.logger.warning(f"Formatting theme not found: {theme_name}")
@@ -251,7 +255,11 @@ class WordBrandingApplicator(BrandingApplicator):
             run.add_picture(
                 self.branding.logo.logo_path,
                 width=logo_width,
-                height=(logo_height if not self.branding.logo.maintain_aspect_ratio else None),
+                height=(
+                    logo_height
+                    if not self.branding.logo.maintain_aspect_ratio
+                    else None
+                ),
             )
 
         except Exception as e:
@@ -285,7 +293,11 @@ class WordBrandingApplicator(BrandingApplicator):
             run.add_picture(
                 self.branding.logo.logo_path,
                 width=logo_width,
-                height=(logo_height if not self.branding.logo.maintain_aspect_ratio else None),
+                height=(
+                    logo_height
+                    if not self.branding.logo.maintain_aspect_ratio
+                    else None
+                ),
             )
 
         except Exception as e:
@@ -312,13 +324,19 @@ class WordBrandingApplicator(BrandingApplicator):
 
             # Add logo
             run = paragraph.add_run()
-            logo_width = Inches(self.branding.logo.size[0] * 1.5)  # Larger for cover page
+            logo_width = Inches(
+                self.branding.logo.size[0] * 1.5
+            )  # Larger for cover page
             logo_height = Inches(self.branding.logo.size[1] * 1.5)
 
             run.add_picture(
                 self.branding.logo.logo_path,
                 width=logo_width,
-                height=(logo_height if not self.branding.logo.maintain_aspect_ratio else None),
+                height=(
+                    logo_height
+                    if not self.branding.logo.maintain_aspect_ratio
+                    else None
+                ),
             )
 
             # Add spacing after logo
@@ -333,7 +351,9 @@ class WordBrandingApplicator(BrandingApplicator):
         try:
             # This is a complex operation in python-docx
             # For now, we'll add a text watermark instead
-            self.logger.warning("Logo watermark not fully implemented, using text watermark")
+            self.logger.warning(
+                "Logo watermark not fully implemented, using text watermark"
+            )
             self._apply_watermark(document)
 
         except Exception as e:
@@ -386,7 +406,9 @@ class WordBrandingApplicator(BrandingApplicator):
                     header_row = table.rows[0]
                     for cell in header_row.cells:
                         # Set background color (this is complex in python-docx)
-                        self._set_cell_background_color(cell, self.branding.colors.header_bg)
+                        self._set_cell_background_color(
+                            cell, self.branding.colors.header_bg
+                        )
 
                         # Set text color
                         for paragraph in cell.paragraphs:
@@ -400,12 +422,16 @@ class WordBrandingApplicator(BrandingApplicator):
                 for i, row in enumerate(table.rows[1:], 1):
                     if i % 2 == 0:  # Even rows
                         for cell in row.cells:
-                            self._set_cell_background_color(cell, self.branding.colors.alt_row)
+                            self._set_cell_background_color(
+                                cell, self.branding.colors.alt_row
+                            )
 
             except Exception as e:
                 self.logger.error(f"Failed to apply color scheme to table: {e}")
 
-    def _apply_table_conditional_formatting(self, table, theme: ConditionalFormattingTheme):
+    def _apply_table_conditional_formatting(
+        self, table, theme: ConditionalFormattingTheme
+    ):
         """Apply conditional formatting to a table based on content."""
         try:
             for row in table.rows[1:]:  # Skip header row
@@ -438,7 +464,9 @@ class WordBrandingApplicator(BrandingApplicator):
             for paragraph in cell.paragraphs:
                 for run in paragraph.runs:
                     if "text_color" in format_config:
-                        run.font.color.rgb = self._hex_to_rgb_color(format_config["text_color"])
+                        run.font.color.rgb = self._hex_to_rgb_color(
+                            format_config["text_color"]
+                        )
 
                     if "font_weight" in format_config:
                         run.font.bold = format_config["font_weight"] == "bold"
@@ -503,7 +531,9 @@ class WordBrandingApplicator(BrandingApplicator):
             if table.rows:
                 header_row = table.rows[0]
                 for cell in header_row.cells:
-                    self._set_cell_background_color(cell, self.branding.colors.header_bg)
+                    self._set_cell_background_color(
+                        cell, self.branding.colors.header_bg
+                    )
 
                     for paragraph in cell.paragraphs:
                         for run in paragraph.runs:
@@ -517,7 +547,9 @@ class WordBrandingApplicator(BrandingApplicator):
             for i, row in enumerate(table.rows[1:], 1):
                 if i % 2 == 0:
                     for cell in row.cells:
-                        self._set_cell_background_color(cell, self.branding.colors.alt_row)
+                        self._set_cell_background_color(
+                            cell, self.branding.colors.alt_row
+                        )
 
                 # Set font size for all cells
                 for cell in row.cells:

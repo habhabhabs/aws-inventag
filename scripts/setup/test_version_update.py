@@ -98,7 +98,9 @@ def test_version_update():
 
             if updated_data["version"] == test_case["expected_version"]:
                 print(f"  ✅ Version updated correctly: {current} → {new_version}")
-                print(f"  ✅ Previous version stored: {updated_data['previous_version']}")
+                print(
+                    f"  ✅ Previous version stored: {updated_data['previous_version']}"
+                )
                 print(f"  ✅ Bump type recorded: {updated_data['version_bump_type']}")
                 print(f"  ✅ Release date updated: {updated_data['release_date']}")
                 print(f"  ✅ Git tag set: {updated_data['git_tag']}")

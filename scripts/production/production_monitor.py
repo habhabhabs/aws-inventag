@@ -11,7 +11,9 @@ import json
 from datetime import datetime
 
 # Add the project root to the Python path to import inventag
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+project_root = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 sys.path.insert(0, project_root)
 
 from inventag.compliance import (
@@ -23,7 +25,9 @@ from inventag.compliance import (
 
 def main():
     parser = argparse.ArgumentParser(description="InvenTag Production Safety Monitor")
-    parser.add_argument("--config", type=str, help="Path to compliance configuration file")
+    parser.add_argument(
+        "--config", type=str, help="Path to compliance configuration file"
+    )
     parser.add_argument(
         "--operations",
         type=str,
@@ -54,7 +58,9 @@ def main():
 
         for operation in args.operations:
             if ":" not in operation:
-                print(f"❌ Invalid operation format: {operation} (expected service:operation)")
+                print(
+                    f"❌ Invalid operation format: {operation} (expected service:operation)"
+                )
                 continue
 
             service, op = operation.split(":", 1)

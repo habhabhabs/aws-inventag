@@ -11,7 +11,9 @@ import json
 from datetime import datetime
 
 # Add the project root to the Python path to import inventag
-project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+project_root = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 sys.path.insert(0, project_root)
 
 from inventag.core import CloudBOMGenerator, MultiAccountConfig
@@ -19,15 +21,21 @@ from inventag.reporting import BOMProcessingConfig
 
 
 def main():
-    parser = argparse.ArgumentParser(description="InvenTag Multi-Account Resource Scanner")
+    parser = argparse.ArgumentParser(
+        description="InvenTag Multi-Account Resource Scanner"
+    )
     parser.add_argument(
         "--accounts-file",
         type=str,
         required=True,
         help="Path to accounts configuration file (JSON/YAML)",
     )
-    parser.add_argument("--regions", type=str, help="Comma-separated list of regions to scan")
-    parser.add_argument("--services", type=str, help="Comma-separated list of services to include")
+    parser.add_argument(
+        "--regions", type=str, help="Comma-separated list of regions to scan"
+    )
+    parser.add_argument(
+        "--services", type=str, help="Comma-separated list of services to include"
+    )
     parser.add_argument(
         "--output-format",
         choices=["excel", "word", "json", "csv"],
@@ -90,7 +98,9 @@ def main():
     )
 
     # Initialize generator
-    generator = CloudBOMGenerator.from_credentials_file(args.accounts_file, **multi_config.__dict__)
+    generator = CloudBOMGenerator.from_credentials_file(
+        args.accounts_file, **multi_config.__dict__
+    )
 
     print(f"🔍 Starting scan across {len(generator.config.accounts)} accounts...")
 
@@ -105,14 +115,22 @@ def main():
     # Display results
     print(f"\n📊 Scan Results:")
     print(f"  ⏱️  Processing Time: {processing_time:.2f} seconds")
-    print(f"  📈 Total Resources: {results['processing_statistics']['total_resources']}")
-    print(f"  ✅ Successful Accounts: {results['processing_statistics']['successful_accounts']}")
-    print(f"  ❌ Failed Accounts: {results['processing_statistics']['failed_accounts']}")
+    print(
+        f"  📈 Total Resources: {results['processing_statistics']['total_resources']}"
+    )
+    print(
+        f"  ✅ Successful Accounts: {results['processing_statistics']['successful_accounts']}"
+    )
+    print(
+        f"  ❌ Failed Accounts: {results['processing_statistics']['failed_accounts']}"
+    )
 
     if results["success"]:
         print(f"  📁 Output Directory: {results['output_directory']}")
 
-        if "bom_generation" in results and results["bom_generation"].get("generated_files"):
+        if "bom_generation" in results and results["bom_generation"].get(
+            "generated_files"
+        ):
             print(f"  📄 Generated Files:")
             for file_path in results["bom_generation"]["generated_files"]:
                 print(f"    • {file_path}")
@@ -134,7 +152,9 @@ def main():
         print(f"  • Review failed accounts for credential or permission issues")
 
     if args.enable_network_analysis:
-        print(f"  • Review network analysis for security and optimization opportunities")
+        print(
+            f"  • Review network analysis for security and optimization opportunities"
+        )
 
     if args.enable_security_analysis:
         print(f"  • Review security analysis for compliance and risk assessment")
