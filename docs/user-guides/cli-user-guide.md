@@ -246,7 +246,8 @@ Create an accounts configuration file (JSON or YAML):
 | `--enable-network-analysis` | Enable network analysis for VPC, subnets, and network security | `--enable-network-analysis` |
 | `--enable-security-analysis` | Enable security analysis for security groups, NACLs, and security posture | `--enable-security-analysis` |
 | `--enable-cost-analysis` | Enable cost analysis and optimization recommendations | `--enable-cost-analysis` |
-| `--hide-fallback-resources` | Hide fallback resources discovered via ResourceGroupsTagging API (default: show all resources) | `--hide-fallback-resources` |
+| `--fallback-display` | Control fallback resource display: `auto` (recommended), `always`, `never` | `--fallback-display=auto` |
+| `--hide-fallback-resources` | Legacy option: equivalent to `--fallback-display=never` (deprecated) | `--hide-fallback-resources` |
 
 ### State Management Options
 
@@ -670,6 +671,56 @@ For additional help:
 2. Enable `--debug` for detailed logging
 3. Check configuration with `--validate-config`
 4. Validate credentials with `--validate-credentials`
+
+## Advanced Features
+
+### Intelligent Fallback Resource Discovery
+
+InvenTag AWS uses a sophisticated dual-tier discovery system to ensure comprehensive AWS resource detection:
+
+#### Discovery Modes
+
+**Auto Mode (Recommended Default)**
+```bash
+inventag-aws --fallback-display=auto
+```
+- Shows fallback resources **only** when no primary resources are found for a service
+- Perfect for debugging missing resources and discovering services like AWS RoboMaker
+- Provides optimal balance between coverage and clean output
+
+**Always Mode (Maximum Visibility)**
+```bash
+inventag-aws --fallback-display=always  
+```
+- Shows all fallback resources for comprehensive auditing
+- Best for compliance scenarios requiring proof of complete discovery
+- May show duplicate entries for validation
+
+**Never Mode (Primary Only)**
+```bash
+inventag-aws --fallback-display=never
+```
+- Only shows resources discovered via direct service APIs
+- Cleanest output with no duplicates
+- May miss resources not discoverable via service APIs
+
+#### When Fallback Resources Appear
+
+**Services with Primary Resources Found**:
+- EC2, S3, RDS, Lambda (fallback hidden in auto mode)
+
+**Services Relying on Fallback Discovery**:
+- AWS RoboMaker: Simulation jobs, applications
+- AWS AppStream: Fleets, stacks, images
+- AWS WorkSpaces: Workspaces, directories
+
+**Debug Example**:
+```bash
+# See which services have primary vs fallback resources
+inventag-aws --fallback-display=auto --verbose
+```
+
+For complete technical details, see: [Advanced Fallback Mechanism Guide](../advanced/fallback-mechanism.md)
 
 ## Migration from Legacy Scripts
 

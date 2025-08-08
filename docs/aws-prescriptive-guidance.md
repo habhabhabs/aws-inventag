@@ -8,14 +8,40 @@ sidebar_position: 2
 
 Professional templates designed following [AWS Prescriptive Guidance for Cost Allocation Tagging](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/) to enable comprehensive financial governance, cost allocation, and compliance reporting.
 
+## 📚 AWS Documentation References
+
+### Core AWS Prescriptive Guidance
+- **[Cost Allocation Tagging Guide](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/)** - Complete AWS methodology
+- **[Tagging Strategy](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/tagging-strategy.html)** - Strategic framework
+- **[Implementation Steps](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/implementation.html)** - 5-step methodology
+
+### AWS Service Documentation
+- **[AWS Organizations Tag Policies](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html)** - Centralized tag governance
+- **[Service Control Policies](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html)** - Preventive controls
+- **[AWS Config Rules](https://docs.aws.amazon.com/config/latest/developerguide/required-tags.html)** - Compliance monitoring
+- **[Cost Allocation Tags](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html)** - Financial reporting
+- **[Resource Groups Tagging API](https://docs.aws.amazon.com/resourcegroupstaggingapi/latest/APIReference/Welcome.html)** - Programmatic tagging
+
+### Best Practices Documentation
+- **[AWS Tagging Best Practices](https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)** - General guidelines
+- **[Well-Architected Cost Optimization](https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html)** - Cost optimization framework
+- **[CloudFormation Resource Tags](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html)** - Infrastructure as Code tagging
+
 ## 🎯 Overview
 
-These templates implement AWS best practices for:
+These templates implement the complete [AWS Prescriptive Guidance 5-Step Methodology](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/tagging-strategy.html):
 
-- **Cost Allocation Tagging** - Comprehensive tag dictionary with validation rules
-- **Financial Governance** - Multi-level cost allocation hierarchy 
-- **Compliance Frameworks** - SOC 2, PCI, HIPAA, GDPR integration
-- **Operational Excellence** - Automation, monitoring, and governance
+1. **[Define tagging dictionary](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step1.html)** - Comprehensive tag dictionary with validation rules
+2. **[Publish tagging dictionary](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step2.html)** - Organization-wide distribution and awareness
+3. **[Define rules for applying tags](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step3.html)** - Automated governance via SCPs and tag policies
+4. **[Apply tags](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step4.html)** - Implementation using AWS native tools
+5. **[Measure, enforce, and evolve](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step5.html)** - Continuous monitoring and optimization
+
+**Key AWS Requirements Addressed:**
+- **[Three-Dimensional Organization](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/dimensions.html)** - Technical, business, and security dimensions
+- **[Multi-Stakeholder Approach](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/stakeholders.html)** - Finance, IT, Engineering, Security, and Operations alignment
+- **[Standardized Naming](https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)** - AWS hyphen-separated naming conventions
+- **[FinOps Integration](https://docs.aws.amazon.com/wellarchitected/latest/cost-optimization-pillar/welcome.html)** - Cost optimization and financial operations
 
 ## 📋 Available Templates
 
@@ -44,12 +70,13 @@ Comprehensive tag definitions following AWS prescriptive guidance:
 - ComplianceFramework: "soc2" (Production only)
 ```
 
-**Key Features:**
-- ✅ Validation patterns and rules
-- ✅ Cost allocation hierarchy
-- ✅ Governance framework integration
-- ✅ Industry-specific configurations
-- ✅ Exception handling processes
+**Key Features (AWS Compliant):**
+- ✅ [AWS standard naming conventions](https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html) (hyphen-separated)
+- ✅ [Three-dimensional organization](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/dimensions.html) (technical, business, security)
+- ✅ [5-step methodology compliance](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/tagging-strategy.html)
+- ✅ [Service Control Policy integration](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html)
+- ✅ [Tag policy enforcement](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html)
+- ✅ [AWS Config rule templates](https://docs.aws.amazon.com/config/latest/developerguide/required-tags.html)
 
 ### 2. Service Descriptions Template  
 **File**: [service-descriptions.yaml](/files/service-descriptions.yaml)
@@ -76,12 +103,12 @@ services:
     governance_notes: "Implement lifecycle policies for optimal spend visibility"
 ```
 
-**Key Features:**
-- 🎯 Cost allocation priorities per service
-- 💰 Detailed cost factor analysis
-- 🏷️ Service-specific tagging requirements
-- 📊 Industry template configurations
-- 🔧 Automation recommendations
+**Key Features (AWS Aligned):**
+- 🎯 [Cost allocation priorities](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html) per service
+- 💰 [AWS Cost Explorer integration](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/ce-what-is.html) ready
+- 🏷️ [Service-specific tagging requirements](https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
+- 📊 [Multi-dimensional cost analysis](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/dimensions.html)
+- 🔧 [AWS native tool integration](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step4.html)
 
 ### 3. Tag Mappings Template
 **File**: [tag-mappings.yaml](/files/tag-mappings.yaml)
@@ -107,12 +134,12 @@ organizational:
     report_grouping: "primary"
 ```
 
-**Key Features:**
-- 📈 Multi-level cost allocation hierarchy
-- 📊 Executive and operational dashboards
-- ✅ Comprehensive validation rules
-- 🎨 Professional report formatting
-- 📋 Compliance audit configurations
+**Key Features (AWS Standards):**
+- 📈 [AWS-recommended cost allocation hierarchy](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html)
+- 📊 [AWS QuickSight integration](https://docs.aws.amazon.com/quicksight/latest/user/cost-analysis.html) ready
+- ✅ [Tag policy validation rules](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html)
+- 🎨 [Cost Explorer compatible formatting](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/ce-what-is.html)
+- 📋 [AWS Config compliance templates](https://docs.aws.amazon.com/config/latest/developerguide/required-tags.html)
 
 ## 🚀 Quick Start
 
@@ -235,23 +262,35 @@ audit_trail_required: true
 
 ## 🔧 Implementation Roadmap
 
-### Phase 1: Foundation (30 days)
-- ✅ Deploy tagging dictionary
-- ✅ Implement required tags on production resources
-- ✅ Setup basic cost allocation reporting
+### Phase 1: [Dictionary Development](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step1.html) (2 weeks)
+- ✅ [Define tagging dictionary](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step1.html) with stakeholder engagement
+- ✅ Establish [three-dimensional framework](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/dimensions.html)
+- ✅ Create [AWS-compliant naming conventions](https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
+- 🎯 **Target**: Complete dictionary with stakeholder approval
+
+### Phase 2: [Publication](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step2.html) (1 week)
+- ✅ [Publish dictionary organization-wide](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step2.html)
+- ✅ Conduct all-hands meetings and training
+- ✅ Create internal documentation and wikis
+- 🎯 **Target**: 100% stakeholder awareness and formal approval
+
+### Phase 3: [Rule Definition](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step3.html) (1 week)
+- ✅ [Deploy Service Control Policies](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html)
+- ✅ [Configure Tag Policies](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html)
+- ✅ [Setup AWS Config Rules](https://docs.aws.amazon.com/config/latest/developerguide/required-tags.html)
+- 🎯 **Target**: Automated enforcement policies active
+
+### Phase 4: [Tag Application](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step4.html) (4-6 weeks)
+- ✅ [Use Tag Editor for existing resources](https://docs.aws.amazon.com/resourcegroupstaggingapi/latest/userguide/resource-groups-tagging-api-overview.html)
+- ✅ [Update CloudFormation templates](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html)
+- ✅ [Enable cost allocation tags](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html)
 - 🎯 **Target**: 90% compliance on required tags
 
-### Phase 2: Enhancement (60 days)  
-- ✅ Add recommended tags across all environments
-- ✅ Deploy governance automation (SCPs, Tag Policies)
-- ✅ Setup monitoring dashboards
-- 🎯 **Target**: 85% compliance on recommended tags
-
-### Phase 3: Optimization (30 days)
-- ✅ Full enforcement with conditional tags
-- ✅ Advanced cost allocation and chargeback
-- ✅ Compliance audit automation
-- 🎯 **Target**: 95% overall compliance
+### Phase 5: [Measure and Evolve](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step5.html) (Ongoing)
+- ✅ [Monitor KPIs](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/kpis.html) and compliance metrics
+- ✅ [Use Cost Explorer](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/ce-what-is.html) for cost analysis
+- ✅ Quarterly strategy reviews and optimization
+- 🎯 **Target**: 95% compliance maintained with continuous improvement
 
 ## 📈 Expected Outcomes
 
@@ -275,12 +314,13 @@ audit_trail_required: true
 
 ## 🛠️ Tools and Automation
 
-### Native AWS Tools
-- **AWS Cost Explorer** - Cost analysis and reporting
-- **AWS Budgets** - Budget alerts and controls
-- **AWS Tag Policies** - Centralized tag governance
-- **Service Control Policies** - Preventive controls
-- **AWS Config Rules** - Compliance monitoring
+### [AWS Native Tools](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/step4.html)
+- **[AWS Cost Explorer](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/ce-what-is.html)** - Cost analysis and reporting
+- **[AWS Budgets](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/budgets-managing-costs.html)** - Budget alerts and controls
+- **[AWS Tag Policies](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_tag-policies.html)** - Centralized tag governance
+- **[Service Control Policies](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html)** - Preventive controls
+- **[AWS Config Rules](https://docs.aws.amazon.com/config/latest/developerguide/required-tags.html)** - Compliance monitoring
+- **[Resource Groups Tag Editor](https://docs.aws.amazon.com/resourcegroupstaggingapi/latest/userguide/resource-groups-tagging-api-overview.html)** - Bulk tagging operations
 
 ### Third-Party Integration
 - **CloudHealth** - Advanced cost management
@@ -291,9 +331,13 @@ audit_trail_required: true
 ## 📚 Additional Resources
 
 ### AWS Documentation
-- [AWS Prescriptive Guidance: Cost Allocation Tagging](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/)
-- [AWS Tagging Best Practices](https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
-- [AWS Cost Management User Guide](https://docs.aws.amazon.com/cost-management/)
+- **[AWS Prescriptive Guidance: Cost Allocation Tagging](https://docs.aws.amazon.com/prescriptive-guidance/latest/cost-allocation-tagging/)** - Complete methodology
+- **[AWS Tagging Best Practices](https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)** - General tagging guidelines
+- **[AWS Cost Management User Guide](https://docs.aws.amazon.com/cost-management/)** - Financial operations
+- **[AWS Organizations User Guide](https://docs.aws.amazon.com/organizations/latest/userguide/)** - Multi-account governance
+- **[AWS Config Developer Guide](https://docs.aws.amazon.com/config/latest/developerguide/)** - Compliance monitoring
+- **[AWS CloudFormation User Guide](https://docs.aws.amazon.com/cloudformation/)** - Infrastructure as Code
+- **[Resource Groups and Tags User Guide](https://docs.aws.amazon.com/resourcegroupstaggingapi/latest/userguide/)** - Programmatic tagging
 
 ### InvenTag Resources
 - [Getting Started Guide](/getting-started/quick-start)

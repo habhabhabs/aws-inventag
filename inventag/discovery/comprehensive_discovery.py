@@ -34,22 +34,44 @@ class ComprehensiveAWSDiscovery:
         self,
         session: boto3.Session = None,
         regions: List[str] = None,
-        hide_fallback_resources: bool = False,
+        hide_fallback_resources: bool = False,  # Legacy, deprecated
+        fallback_display_mode: str = "auto",  # "auto", "always", "never"
     ):
         self.session = session or boto3.Session()
         self.logger = logging.getLogger(__name__)
         self.logger.propagate = False  # Prevent duplicate logging
         self.regions = regions or ["us-east-1"]
-        self.hide_fallback_resources = hide_fallback_resources
 
-        if self.hide_fallback_resources:
+        # Handle legacy parameter
+        if hide_fallback_resources and fallback_display_mode == "auto":
+            fallback_display_mode = "never"
+
+        self.fallback_display_mode = fallback_display_mode
+        self.hide_fallback_resources = (
+            hide_fallback_resources  # Keep for backward compatibility
+        )
+
+        if self.fallback_display_mode == "never":
             self.logger.info(
                 "💡 Fallback resources from ResourceGroupsTagging API will be hidden"
+            )
+        elif self.fallback_display_mode == "always":
+            self.logger.info(
+                "💡 All fallback resources from ResourceGroupsTagging API will be "
+                "shown (maximum visibility mode)"
+            )
+        else:  # auto mode
+            self.logger.info(
+                "💡 Smart fallback mode: fallback resources shown only when no "
+                "primary resources found for a service (recommended for debugging)"
             )
 
         # Resource storage
         self.resources = []
         self.discovered_services = set()
+
+        # Track services with primary discoveries for smart fallback logic
+        self.services_with_primary_resources = set()
 
         # Billing data for validation
         self.billing_services = set()
@@ -598,9 +620,15 @@ class ComprehensiveAWSDiscovery:
                                 if instance_resource:
                                     self.resources.append(instance_resource)
                                     resources_added += 1
+                                    # Track service with primary resources for smart fallback logic
+                                    self.services_with_primary_resources.add(
+                                        service_name
+                                    )
                         else:
                             self.resources.append(resource)
                             resources_added += 1
+                            # Track service with primary resources for smart fallback logic
+                            self.services_with_primary_resources.add(service_name)
                 elif isinstance(item, str):
                     # Handle string responses (like SQS queue URLs)
                     resource = self._create_string_resource(
@@ -609,6 +637,8 @@ class ComprehensiveAWSDiscovery:
                     if resource:
                         self.resources.append(resource)
                         resources_added += 1
+                        # Track service with primary resources for smart fallback logic
+                        self.services_with_primary_resources.add(service_name)
 
             return resources_added
 
@@ -868,7 +898,26 @@ class ComprehensiveAWSDiscovery:
                             enriched_count += 1
                         else:
                             # This is a resource we missed - add it as fallback only
-                            if not self.hide_fallback_resources:
+                            # Check if we should show this fallback resource based on display mode
+                            should_show_fallback = False
+
+                            if self.fallback_display_mode == "always":
+                                should_show_fallback = True
+                            elif self.fallback_display_mode == "never":
+                                should_show_fallback = False
+                            else:  # auto mode
+                                # Show fallback only if no primary resources were found for this service
+                                try:
+                                    service = self._extract_service_from_arn(arn)
+                                    should_show_fallback = (
+                                        service
+                                        not in self.services_with_primary_resources
+                                    )
+                                except Exception:
+                                    # If we can't determine service, default to showing in auto mode
+                                    should_show_fallback = True
+
+                            if should_show_fallback:
                                 try:
                                     service = self._extract_service_from_arn(arn)
                                     if service:
@@ -905,13 +954,31 @@ class ComprehensiveAWSDiscovery:
                                         f"Failed to process tagged resource {arn}: {e}"
                                     )
                             else:
-                                # Resource would have been added as fallback but is hidden
-                                pass  # Could add debug logging here if needed
+                                # Resource would have been added as fallback but is filtered
+                                if self.fallback_display_mode == "auto":
+                                    self.logger.debug(
+                                        f"Skipping fallback resource {arn} - primary resources exist for service"
+                                    )
+                                elif self.fallback_display_mode == "never":
+                                    self.logger.debug(
+                                        f"Skipping fallback resource {arn} - fallback display disabled"
+                                    )
 
             except Exception as e:
                 self.logger.warning(
                     f"ResourceGroupsTagging enrichment failed in {region}: {e}"
                 )
+
+        # Report services with primary resources for transparency
+        if self.fallback_display_mode == "auto":
+            if self.services_with_primary_resources:
+                self.logger.info(
+                    f"📊 Services with primary resources found: {sorted(self.services_with_primary_resources)}"
+                )
+            self.logger.info(
+                "🔍 Auto mode: Fallback resources shown only for services "
+                "without primary discoveries"
+            )
 
         self.logger.info(
             f"🏷️ Tag enrichment complete: enriched {enriched_count} resources, "
