@@ -107,7 +107,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.VERSION_BUMP_WORKFLOW }}
         persist-credentials: true
 
     - name: Set up Python
@@ -623,6 +623,8 @@ jobs:
         echo "  - Git tag: ${{ steps.version.outputs.tag_name }}"
 
     - name: Commit and push version.json changes
+      env:
+        GITHUB_TOKEN: ${{ secrets.VERSION_BUMP_WORKFLOW }}
       run: |
         # Configure git user for the commit
         git config --local user.email "action@github.com"
@@ -635,22 +637,22 @@ jobs:
           # Add and commit the version.json changes directly to main
           git add version.json
           git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}
-        
-        Automated version bump after release creation.
-        Previous version: ${{ steps.version.outputs.current_version }}
-        New version: ${{ steps.version.outputs.new_version }}
-        Bump type: ${{ needs.check-for-release.outputs.version_bump }}
-        
-        🤖 Generated with [Claude Code](https://claude.ai/code)
-        
-        Co-Authored-By: Claude <noreply@anthropic.com>"
+
+Automated version bump after release creation.
+Previous version: ${{ steps.version.outputs.current_version }}
+New version: ${{ steps.version.outputs.new_version }}
+Bump type: ${{ needs.check-for-release.outputs.version_bump }}
+
+"
           
-          # Push directly to main (GitHub Actions can bypass branch protection)
+          # Push directly to main using the VERSION_BUMP_WORKFLOW token
           git push origin main
           echo "✅ Successfully pushed version bump to main"
         fi
 
     - name: Create Git Tag
+      env:
+        GITHUB_TOKEN: ${{ secrets.VERSION_BUMP_WORKFLOW }}
       run: |
         # Create tag from main branch (after version bump commit)
         git tag ${{ steps.version.outputs.tag_name }}
@@ -659,7 +661,7 @@ jobs:
 
     - name: Create GitHub Release
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.VERSION_BUMP_WORKFLOW }}
       run: |
         gh release create ${{ steps.version.outputs.tag_name }} \
           --title "🏷️ InvenTag Release ${{ steps.version.outputs.new_version }}" \
@@ -668,7 +670,7 @@ jobs:
 
     - name: Upload Release Assets
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.VERSION_BUMP_WORKFLOW }}
       run: |
         # Create a source archive
         git archive --format=tar.gz --prefix=inventag-aws-${{ steps.version.outputs.new_version }}/ HEAD > inventag-aws-${{ steps.version.outputs.new_version }}.tar.gz
@@ -677,6 +679,8 @@ jobs:
         gh release upload ${{ steps.version.outputs.tag_name }} inventag-aws-${{ steps.version.outputs.new_version }}.tar.gz
 
     - name: Create ZIP archive for release
+      env:
+        GH_TOKEN: ${{ secrets.VERSION_BUMP_WORKFLOW }}
       run: |
         # Create a clean ZIP archive of the repository
         mkdir -p inventag-aws-${{ steps.version.outputs.new_version }}
@@ -687,8 +691,6 @@ jobs:
         
         # Upload ZIP to release
         gh release upload ${{ steps.version.outputs.tag_name }} inventag-aws-${{ steps.version.outputs.new_version }}.zip
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Post-release notification
       run: |
