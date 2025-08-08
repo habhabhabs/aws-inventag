@@ -128,7 +128,9 @@ class OptimizedFieldMapper:
             # Extract core fields
             resource_id = self._extract_resource_id(raw_data, service_key)
             resource_name = self._extract_resource_name(raw_data, service_key)
-            resource_type = self._extract_resource_type(raw_data, operation_name, service_key)
+            resource_type = self._extract_resource_type(
+                raw_data, operation_name, service_key
+            )
 
             # Create optimized resource
             resource = OptimizedResource(
@@ -160,15 +162,17 @@ class OptimizedFieldMapper:
                     or resource.tags.get("ProjectName")
                     or resource.tags.get("Application")
                 )
-                resource.cost_center = resource.tags.get("CostCenter") or resource.tags.get(
-                    "BillingCode"
-                )
+                resource.cost_center = resource.tags.get(
+                    "CostCenter"
+                ) or resource.tags.get("BillingCode")
 
             # Extract security and network info
             resource.vpc_id = self._extract_vpc_id(raw_data)
             resource.subnet_ids = self._extract_subnet_ids(raw_data)
             resource.security_groups = self._extract_security_groups(raw_data)
-            resource.public_access = self._determine_public_access(raw_data, service_key)
+            resource.public_access = self._determine_public_access(
+                raw_data, service_key
+            )
             resource.encrypted = self._determine_encryption(raw_data)
 
             # Calculate confidence score
@@ -196,7 +200,9 @@ class OptimizedFieldMapper:
 
         return "unknown"
 
-    def _extract_resource_name(self, data: Dict[str, Any], service_key: str) -> Optional[str]:
+    def _extract_resource_name(
+        self, data: Dict[str, Any], service_key: str
+    ) -> Optional[str]:
         """Extract resource name using service-specific patterns."""
 
         if service_key in self.service_patterns:
@@ -356,7 +362,9 @@ class OptimizedFieldMapper:
                 if isinstance(sg_data, list):
                     for sg in sg_data:
                         if isinstance(sg, dict):
-                            sgs.append(sg.get("GroupId") or sg.get("GroupName") or str(sg))
+                            sgs.append(
+                                sg.get("GroupId") or sg.get("GroupName") or str(sg)
+                            )
                         else:
                             sgs.append(str(sg))
                 elif isinstance(sg_data, str):
@@ -390,13 +398,22 @@ class OptimizedFieldMapper:
     def _determine_encryption(self, data: Dict[str, Any]) -> Optional[bool]:
         """Determine if resource is encrypted."""
 
-        encryption_fields = ["Encrypted", "EncryptionAtRest", "ServerSideEncryption", "KmsKeyId"]
+        encryption_fields = [
+            "Encrypted",
+            "EncryptionAtRest",
+            "ServerSideEncryption",
+            "KmsKeyId",
+        ]
         for field in encryption_fields:
             if field in data:
                 value = data[field]
                 if isinstance(value, bool):
                     return value
-                elif isinstance(value, str) and value.lower() in ["true", "enabled", "aes256"]:
+                elif isinstance(value, str) and value.lower() in [
+                    "true",
+                    "enabled",
+                    "aes256",
+                ]:
                     return True
                 elif isinstance(value, dict) and value.get("Enabled"):
                     return True
@@ -484,7 +501,9 @@ class OptimizedAWSDiscovery:
 
         all_resources = []
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=self.max_workers
+        ) as executor:
             # Submit discovery tasks
             future_to_service = {
                 executor.submit(self._safe_discover_service, service): service
@@ -492,12 +511,16 @@ class OptimizedAWSDiscovery:
             }
 
             # Collect results
-            for future in concurrent.futures.as_completed(future_to_service, timeout=120):
+            for future in concurrent.futures.as_completed(
+                future_to_service, timeout=120
+            ):
                 service = future_to_service[future]
                 try:
                     resources = future.result(timeout=self.operation_timeout)
                     all_resources.extend(resources)
-                    self.logger.info(f"Parallel discovery: {service} -> {len(resources)} resources")
+                    self.logger.info(
+                        f"Parallel discovery: {service} -> {len(resources)} resources"
+                    )
                 except Exception as e:
                     self.logger.warning(f"Parallel discovery failed for {service}: {e}")
 
@@ -505,7 +528,9 @@ class OptimizedAWSDiscovery:
         all_resources = self._deduplicate_resources(all_resources)
         self.discovered_resources.extend(all_resources)
 
-        self.logger.info(f"Optimized parallel discovery complete: {len(all_resources)} resources")
+        self.logger.info(
+            f"Optimized parallel discovery complete: {len(all_resources)} resources"
+        )
         return all_resources
 
     def _discover_sequential(self) -> List[OptimizedResource]:
@@ -517,7 +542,9 @@ class OptimizedAWSDiscovery:
             try:
                 resources = self._safe_discover_service(service)
                 all_resources.extend(resources)
-                self.logger.info(f"Sequential discovery: {service} -> {len(resources)} resources")
+                self.logger.info(
+                    f"Sequential discovery: {service} -> {len(resources)} resources"
+                )
             except Exception as e:
                 self.logger.warning(f"Sequential discovery failed for {service}: {e}")
 
@@ -568,7 +595,9 @@ class OptimizedAWSDiscovery:
                         continue
 
             except Exception as e:
-                self.logger.warning(f"Failed to create {service_name} client in {region}: {e}")
+                self.logger.warning(
+                    f"Failed to create {service_name} client in {region}: {e}"
+                )
 
         return self._deduplicate_resources(service_resources)
 
@@ -580,7 +609,9 @@ class OptimizedAWSDiscovery:
 
         # Use service-specific operations if available
         if service_key in self.field_mapper.service_patterns:
-            preferred_ops = self.field_mapper.service_patterns[service_key]["operations"]
+            preferred_ops = self.field_mapper.service_patterns[service_key][
+                "operations"
+            ]
             operations = [op for op in preferred_ops if op in all_operations]
             if operations:
                 return operations
@@ -590,7 +621,9 @@ class OptimizedAWSDiscovery:
             op
             for op in all_operations
             if op.startswith(("List", "Describe"))
-            and not any(skip in op for skip in ["Policy", "Version", "Status", "Health"])
+            and not any(
+                skip in op for skip in ["Policy", "Version", "Status", "Health"]
+            )
         ]
 
         # Prioritize List operations
@@ -624,7 +657,11 @@ class OptimizedAWSDiscovery:
         return resources
 
     def _extract_resources_from_response(
-        self, response: Dict[str, Any], service_name: str, operation_name: str, region: str
+        self,
+        response: Dict[str, Any],
+        service_name: str,
+        operation_name: str,
+        region: str,
     ) -> List[OptimizedResource]:
         """Extract resources from API response."""
 
@@ -646,7 +683,9 @@ class OptimizedAWSDiscovery:
 
         return resources
 
-    def _find_resource_lists(self, response: Dict[str, Any]) -> List[List[Dict[str, Any]]]:
+    def _find_resource_lists(
+        self, response: Dict[str, Any]
+    ) -> List[List[Dict[str, Any]]]:
         """Find resource lists in API response."""
 
         resource_lists = []
@@ -664,13 +703,17 @@ class OptimizedAWSDiscovery:
 
         service_key = service_name.lower()
         if service_key in self.field_mapper.service_patterns:
-            return self.field_mapper.service_patterns[service_key].get("global_service", False)
+            return self.field_mapper.service_patterns[service_key].get(
+                "global_service", False
+            )
 
         # Default global services
         global_services = {"cloudfront", "iam", "route53", "waf"}
         return service_key in global_services
 
-    def _deduplicate_resources(self, resources: List[OptimizedResource]) -> List[OptimizedResource]:
+    def _deduplicate_resources(
+        self, resources: List[OptimizedResource]
+    ) -> List[OptimizedResource]:
         """Remove duplicate resources."""
 
         if not resources:
@@ -713,7 +756,9 @@ class OptimizedAWSDiscovery:
                 best_resource = max(group, key=lambda r: r.confidence_score)
                 deduplicated.append(best_resource)
 
-        self.logger.info(f"Deduplication: {len(resources)} -> {len(deduplicated)} resources")
+        self.logger.info(
+            f"Deduplication: {len(resources)} -> {len(deduplicated)} resources"
+        )
         return deduplicated
 
     def _get_available_regions(self) -> List[str]:
@@ -805,7 +850,9 @@ def test_optimized_discovery():
 
 if __name__ == "__main__":
     # Configure logging
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
 
     # Test the system
     test_optimized_discovery()

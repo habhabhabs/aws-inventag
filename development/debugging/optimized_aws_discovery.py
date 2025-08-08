@@ -218,7 +218,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
     def discover_all_services(self) -> List[StandardResource]:
         """Optimized discovery focusing on problematic services."""
 
-        self.logger.info("Starting optimized AWS discovery with enhanced service coverage...")
+        self.logger.info(
+            "Starting optimized AWS discovery with enhanced service coverage..."
+        )
 
         if self.enable_parallel:
             return self._discover_parallel()
@@ -230,7 +232,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
 
         all_resources = []
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=self.max_workers
+        ) as executor:
             # Submit tasks for priority services
             future_to_service = {
                 executor.submit(self._safe_discover_service, service): service
@@ -238,7 +242,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             }
 
             # Collect results
-            for future in concurrent.futures.as_completed(future_to_service, timeout=60):
+            for future in concurrent.futures.as_completed(
+                future_to_service, timeout=60
+            ):
                 service = future_to_service[future]
                 try:
                     resources = future.result(timeout=self.operation_timeout)
@@ -253,7 +259,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         all_resources = self._intelligent_deduplication(all_resources)
         self.discovered_resources.extend(all_resources)
 
-        self.logger.info(f"Optimized parallel discovery complete: {len(all_resources)} resources")
+        self.logger.info(
+            f"Optimized parallel discovery complete: {len(all_resources)} resources"
+        )
         return all_resources
 
     def _discover_sequential(self) -> List[StandardResource]:
@@ -265,7 +273,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             try:
                 resources = self._safe_discover_service(service)
                 all_resources.extend(resources)
-                self.logger.info(f"Sequential discovery: {service} -> {len(resources)} resources")
+                self.logger.info(
+                    f"Sequential discovery: {service} -> {len(resources)} resources"
+                )
             except Exception as e:
                 self.logger.warning(f"Sequential discovery failed for {service}: {e}")
 
@@ -316,7 +326,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                         continue
 
             except Exception as e:
-                self.logger.warning(f"Failed to create {service_name} client in {region}: {e}")
+                self.logger.warning(
+                    f"Failed to create {service_name} client in {region}: {e}"
+                )
 
         return self._intelligent_deduplication(service_resources)
 
@@ -328,7 +340,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         # Use service-specific operations if available
         service_key = service_name.lower()
         if service_key in self.field_mapper.service_enhancements:
-            preferred_ops = self.field_mapper.service_enhancements[service_key]["operations"]
+            preferred_ops = self.field_mapper.service_enhancements[service_key][
+                "operations"
+            ]
             operations = [op for op in preferred_ops if op in all_operations]
             if operations:
                 return operations
@@ -338,7 +352,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             op
             for op in all_operations
             if op.startswith(("List", "Describe"))
-            and not any(skip in op for skip in ["Policy", "Version", "Status", "Health"])
+            and not any(
+                skip in op for skip in ["Policy", "Version", "Status", "Health"]
+            )
         ]
 
         # Prioritize List operations

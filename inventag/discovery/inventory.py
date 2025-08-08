@@ -99,7 +99,9 @@ class AWSResourceInventory:
             session=self.session, regions=self.regions
         )
         self.comprehensive_discovery = ComprehensiveAWSDiscovery(
-            session=self.session, regions=self.regions, hide_fallback_resources=self.hide_fallback_resources
+            session=self.session,
+            regions=self.regions,
+            hide_fallback_resources=self.hide_fallback_resources,
         )
 
         # Store original regions for fallback logic

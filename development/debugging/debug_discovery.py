@@ -14,7 +14,10 @@ from datetime import datetime
 sys.path.append(".")
 
 from inventag.discovery import AWSResourceInventory
-from inventag.discovery.intelligent_discovery import IntelligentAWSDiscovery, IntelligentFieldMapper
+from inventag.discovery.intelligent_discovery import (
+    IntelligentAWSDiscovery,
+    IntelligentFieldMapper,
+)
 
 # Configure detailed logging
 logging.basicConfig(
@@ -37,7 +40,9 @@ class DiscoveryDebugger:
         # Test legacy discovery
         print("\n1. Testing Legacy Discovery...")
         legacy_inventory = AWSResourceInventory(regions=[self.test_region])
-        legacy_inventory.configure_discovery_mode(use_intelligent=False, standardized_output=False)
+        legacy_inventory.configure_discovery_mode(
+            use_intelligent=False, standardized_output=False
+        )
         legacy_resources = legacy_inventory.discover_resources()
 
         print(f"Legacy Discovery: Found {len(legacy_resources)} resources")
@@ -53,7 +58,9 @@ class DiscoveryDebugger:
         intelligent_resources = intelligent_inventory.discover_resources()
 
         print(f"Intelligent Discovery: Found {len(intelligent_resources)} resources")
-        intelligent_services = set(r.get("service", "unknown") for r in intelligent_resources)
+        intelligent_services = set(
+            r.get("service", "unknown") for r in intelligent_resources
+        )
         print(f"Intelligent Services: {sorted(intelligent_services)}")
 
         # Compare results
@@ -64,10 +71,14 @@ class DiscoveryDebugger:
         extra_in_intelligent = intelligent_services - legacy_services
 
         if missing_in_intelligent:
-            print(f"❌ Services missing in intelligent discovery: {missing_in_intelligent}")
+            print(
+                f"❌ Services missing in intelligent discovery: {missing_in_intelligent}"
+            )
 
         if extra_in_intelligent:
-            print(f"✅ Extra services found by intelligent discovery: {extra_in_intelligent}")
+            print(
+                f"✅ Extra services found by intelligent discovery: {extra_in_intelligent}"
+            )
 
         # Resource type analysis
         print("\n4. Resource Type Analysis")
@@ -136,14 +147,19 @@ class DiscoveryDebugger:
                     ],
                     "VpcId": "vpc-12345678",
                     "SubnetId": "subnet-12345678",
-                    "SecurityGroups": [{"GroupId": "sg-12345678", "GroupName": "web-sg"}],
+                    "SecurityGroups": [
+                        {"GroupId": "sg-12345678", "GroupName": "web-sg"}
+                    ],
                 },
                 "service": "ec2",
                 "operation": "DescribeInstances",
             },
             {
                 "name": "S3 Bucket",
-                "data": {"Name": "my-test-bucket", "CreationDate": "2023-01-01T00:00:00.000Z"},
+                "data": {
+                    "Name": "my-test-bucket",
+                    "CreationDate": "2023-01-01T00:00:00.000Z",
+                },
                 "service": "s3",
                 "operation": "ListBuckets",
             },
@@ -249,9 +265,15 @@ class DiscoveryDebugger:
                 quality_issues.append("unknown_types")
 
         print(f"\nQuality Analysis:")
-        print(f"  - Resources with missing names: {quality_issues.count('missing_names')}")
-        print(f"  - Resources with missing tags: {quality_issues.count('missing_tags')}")
-        print(f"  - Resources with unknown types: {quality_issues.count('unknown_types')}")
+        print(
+            f"  - Resources with missing names: {quality_issues.count('missing_names')}"
+        )
+        print(
+            f"  - Resources with missing tags: {quality_issues.count('missing_tags')}"
+        )
+        print(
+            f"  - Resources with unknown types: {quality_issues.count('unknown_types')}"
+        )
 
         # Suggest optimizations
         print(f"\n💡 Optimization Suggestions:")

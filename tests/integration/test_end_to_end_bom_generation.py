@@ -80,13 +80,17 @@ class TestEndToEndBOMGeneration:
         ]
 
         # Mock the discovery process
-        with patch("inventag.discovery.inventory.AWSResourceInventory") as mock_discovery:
+        with patch(
+            "inventag.discovery.inventory.AWSResourceInventory"
+        ) as mock_discovery:
             mock_discovery_instance = Mock()
             mock_discovery_instance.scan_resources.return_value = sample_resources
             mock_discovery.return_value = mock_discovery_instance
 
             # Mock the compliance checking
-            with patch("inventag.compliance.checker.TagComplianceChecker") as mock_compliance:
+            with patch(
+                "inventag.compliance.checker.TagComplianceChecker"
+            ) as mock_compliance:
                 mock_compliance_instance = Mock()
                 mock_compliance_instance.check_compliance.return_value = {
                     "compliant_resources": 2,
@@ -105,14 +109,18 @@ class TestEndToEndBOMGeneration:
                         successful_formats=2,
                         failed_formats=0,
                         results=[
-                            Mock(format_type="excel", success=True, filename="test.xlsx"),
+                            Mock(
+                                format_type="excel", success=True, filename="test.xlsx"
+                            ),
                             Mock(format_type="csv", success=True, filename="test.csv"),
                         ],
                     )
                     mock_doc_gen.return_value = mock_doc_gen_instance
 
                     # Create and run BOM generator
-                    generator = CloudBOMGenerator(session=mock_session, config=self.config)
+                    generator = CloudBOMGenerator(
+                        session=mock_session, config=self.config
+                    )
 
                     result = generator.generate_bom()
 
@@ -160,7 +168,9 @@ class TestEndToEndBOMGeneration:
         ]
 
         # Mock network analyzer
-        with patch("inventag.discovery.network_analyzer.NetworkAnalyzer") as mock_network:
+        with patch(
+            "inventag.discovery.network_analyzer.NetworkAnalyzer"
+        ) as mock_network:
             mock_network_instance = Mock()
             mock_network_instance.analyze_vpc_resources.return_value = {
                 "vpc-12345": Mock(
@@ -183,7 +193,9 @@ class TestEndToEndBOMGeneration:
             mock_network.return_value = mock_network_instance
 
             # Mock BOM processor
-            with patch("inventag.reporting.bom_processor.BOMDataProcessor") as mock_processor:
+            with patch(
+                "inventag.reporting.bom_processor.BOMDataProcessor"
+            ) as mock_processor:
                 mock_processor_instance = Mock()
                 mock_processor_instance.process_inventory_data.return_value = Mock(
                     resources=sample_resources,
@@ -231,7 +243,9 @@ class TestEndToEndBOMGeneration:
         ]
 
         # Mock security analyzer
-        with patch("inventag.discovery.security_analyzer.SecurityAnalyzer") as mock_security:
+        with patch(
+            "inventag.discovery.security_analyzer.SecurityAnalyzer"
+        ) as mock_security:
             mock_security_instance = Mock()
             mock_security_instance.analyze_security_groups.return_value = {
                 "sg-12345": Mock(
@@ -255,7 +269,9 @@ class TestEndToEndBOMGeneration:
             mock_security.return_value = mock_security_instance
 
             # Mock BOM processor
-            with patch("inventag.reporting.bom_processor.BOMDataProcessor") as mock_processor:
+            with patch(
+                "inventag.reporting.bom_processor.BOMDataProcessor"
+            ) as mock_processor:
                 mock_processor_instance = Mock()
                 mock_processor_instance.process_inventory_data.return_value = Mock(
                     resources=sample_resources,
@@ -317,7 +333,9 @@ class TestEndToEndBOMGeneration:
             mock_enricher.return_value = mock_enricher_instance
 
             # Mock BOM processor
-            with patch("inventag.reporting.bom_processor.BOMDataProcessor") as mock_processor:
+            with patch(
+                "inventag.reporting.bom_processor.BOMDataProcessor"
+            ) as mock_processor:
                 mock_processor_instance = Mock()
                 mock_processor_instance.enrich_with_service_attributes.return_value = (
                     sample_resources
@@ -372,7 +390,9 @@ class TestEndToEndBOMGeneration:
             mock_discovery_instance.discover_all_resources.return_value = large_dataset
             mock_discovery.return_value = mock_discovery_instance
 
-            with patch("inventag.compliance.checker.ComplianceChecker") as mock_compliance:
+            with patch(
+                "inventag.compliance.checker.ComplianceChecker"
+            ) as mock_compliance:
                 mock_compliance_instance = Mock()
                 mock_compliance_instance.check_compliance.return_value = {
                     "compliant_resources": 1000,
@@ -381,7 +401,9 @@ class TestEndToEndBOMGeneration:
                 }
                 mock_compliance.return_value = mock_compliance_instance
 
-                with patch("inventag.reporting.bom_processor.BOMDataProcessor") as mock_processor:
+                with patch(
+                    "inventag.reporting.bom_processor.BOMDataProcessor"
+                ) as mock_processor:
                     mock_processor_instance = Mock()
                     mock_processor_instance.process_inventory_data.return_value = Mock(
                         resources=large_dataset,
@@ -421,7 +443,9 @@ class TestEndToEndBOMGeneration:
         }
 
         # Mock document generator
-        with patch("inventag.reporting.document_generator.DocumentGenerator") as mock_doc_gen:
+        with patch(
+            "inventag.reporting.document_generator.DocumentGenerator"
+        ) as mock_doc_gen:
             mock_doc_gen_instance = Mock()
             mock_doc_gen_instance.generate_bom_documents.return_value = Mock(
                 total_formats=3,
@@ -436,7 +460,9 @@ class TestEndToEndBOMGeneration:
             mock_doc_gen.return_value = mock_doc_gen_instance
 
             # Mock BOM processor
-            with patch("inventag.reporting.bom_processor.BOMDataProcessor") as mock_processor:
+            with patch(
+                "inventag.reporting.bom_processor.BOMDataProcessor"
+            ) as mock_processor:
                 mock_processor_instance = Mock()
                 mock_processor_instance.process_inventory_data.return_value = Mock(
                     resources=sample_resources,

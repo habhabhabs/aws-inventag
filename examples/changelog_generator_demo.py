@@ -250,7 +250,9 @@ def create_historical_reports():
                 service=["EC2", "RDS", "S3", "Lambda"][j % 4],
                 resource_type="Instance",
                 region="us-east-1",
-                change_type=[ChangeType.ADDED, ChangeType.MODIFIED, ChangeType.REMOVED][j % 3],
+                change_type=[ChangeType.ADDED, ChangeType.MODIFIED, ChangeType.REMOVED][
+                    j % 3
+                ],
                 severity=severity_pattern,
                 timestamp=timestamp,
             )
@@ -262,8 +264,12 @@ def create_historical_reports():
             timestamp=timestamp,
             summary={"total_changes": change_count},
             added_resources=[r for r in resources if r.change_type == ChangeType.ADDED],
-            removed_resources=[r for r in resources if r.change_type == ChangeType.REMOVED],
-            modified_resources=[r for r in resources if r.change_type == ChangeType.MODIFIED],
+            removed_resources=[
+                r for r in resources if r.change_type == ChangeType.REMOVED
+            ],
+            modified_resources=[
+                r for r in resources if r.change_type == ChangeType.MODIFIED
+            ],
             unchanged_resources=[],
             compliance_changes={},
             security_changes={},
@@ -328,7 +334,9 @@ def demonstrate_changelog_generation():
     for service, count in changelog.summary.changes_by_service.items():
         print(f"     - {service}: {count}")
 
-    print(f"   • Most Impacted Services: {', '.join(changelog.summary.most_impacted_services)}")
+    print(
+        f"   • Most Impacted Services: {', '.join(changelog.summary.most_impacted_services)}"
+    )
 
     # Generate changelog with trend analysis
     print("\n5. Generating changelog with trend analysis...")
@@ -390,7 +398,9 @@ def demonstrate_changelog_generation():
         print(f"   Description: {section.description}")
         print(f"   Changes: {section.summary_stats['total_changes']}")
 
-        for j, entry in enumerate(section.entries[:2]):  # Show first 2 entries per section
+        for j, entry in enumerate(
+            section.entries[:2]
+        ):  # Show first 2 entries per section
             print(f"\n   Entry {j+1}:")
             print(f"     • Summary: {entry.summary}")
             print(f"     • Resource: {entry.resource_type} '{entry.resource_id}'")

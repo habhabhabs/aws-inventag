@@ -77,7 +77,9 @@ class PerformanceMonitor:
 
     def benchmark_service(self, service_name, iterations=3):
         """Benchmark a specific service discovery"""
-        print(f"\n🏃 Benchmarking {service_name.upper()} service ({iterations} iterations)...")
+        print(
+            f"\n🏃 Benchmarking {service_name.upper()} service ({iterations} iterations)..."
+        )
 
         times = []
         resource_counts = []
@@ -182,7 +184,9 @@ class PerformanceMonitor:
             return
 
         # Sort by throughput (resources per second)
-        sorted_results = sorted(results.items(), key=lambda x: x[1]["throughput"], reverse=True)
+        sorted_results = sorted(
+            results.items(), key=lambda x: x[1]["throughput"], reverse=True
+        )
 
         print(f"🎯 Service Performance Ranking:")
         for i, (service, data) in enumerate(sorted_results, 1):
@@ -194,15 +198,21 @@ class PerformanceMonitor:
         fast_services = [s for s, d in results.items() if d["avg_time"] < 2.0]
         slow_services = [s for s, d in results.items() if d["avg_time"] > 10.0]
 
-        print(f"\n⚡ Fast Services (< 2s): {', '.join(fast_services) if fast_services else 'None'}")
-        print(f"🐌 Slow Services (> 10s): {', '.join(slow_services) if slow_services else 'None'}")
+        print(
+            f"\n⚡ Fast Services (< 2s): {', '.join(fast_services) if fast_services else 'None'}"
+        )
+        print(
+            f"🐌 Slow Services (> 10s): {', '.join(slow_services) if slow_services else 'None'}"
+        )
 
         # Resource discovery stats
         total_resources = sum(d["avg_resources"] for d in results.values())
         print(f"\n📊 Discovery Statistics:")
         print(f"  📈 Total resources discovered: {total_resources:.0f}")
         print(f"  ⏱️  Total benchmark time: {total_time:.1f}s")
-        print(f"  🎯 Overall throughput: {total_resources/total_time:.1f} resources/sec")
+        print(
+            f"  🎯 Overall throughput: {total_resources/total_time:.1f} resources/sec"
+        )
 
         # System resource usage
         if self.cpu_usage and self.memory_usage:
@@ -227,12 +237,18 @@ class PerformanceMonitor:
         # Identify slow services
         slow_services = [s for s, d in results.items() if d["avg_time"] > 5.0]
         if slow_services:
-            recommendations.append(f"🐌 Optimize slow services: {', '.join(slow_services)}")
-            recommendations.append("   - Consider parallel processing for these services")
+            recommendations.append(
+                f"🐌 Optimize slow services: {', '.join(slow_services)}"
+            )
+            recommendations.append(
+                "   - Consider parallel processing for these services"
+            )
             recommendations.append("   - Review API call patterns and add caching")
 
         # Check for high resource count services
-        high_resource_services = [s for s, d in results.items() if d["avg_resources"] > 50]
+        high_resource_services = [
+            s for s, d in results.items() if d["avg_resources"] > 50
+        ]
         if high_resource_services:
             recommendations.append(
                 f"📊 High resource count services: {', '.join(high_resource_services)}"
@@ -241,7 +257,9 @@ class PerformanceMonitor:
             recommendations.append("   - Implement resource filtering at API level")
 
         # Check for low throughput
-        low_throughput_services = [s for s, d in results.items() if d["throughput"] < 5.0]
+        low_throughput_services = [
+            s for s, d in results.items() if d["throughput"] < 5.0
+        ]
         if low_throughput_services:
             recommendations.append(
                 f"⚡ Low throughput services: {', '.join(low_throughput_services)}"
@@ -256,12 +274,16 @@ class PerformanceMonitor:
             )
 
         if self.memory_usage and max(self.memory_usage) > 80:
-            recommendations.append("💾 High memory usage detected - implement resource streaming")
+            recommendations.append(
+                "💾 High memory usage detected - implement resource streaming"
+            )
 
         # Error rate recommendations
         error_services = [s for s, count in self.error_counts.items() if count > 0]
         if error_services:
-            recommendations.append(f"❌ Services with errors: {', '.join(error_services)}")
+            recommendations.append(
+                f"❌ Services with errors: {', '.join(error_services)}"
+            )
             recommendations.append("   - Review error handling and retry logic")
 
         if recommendations:
@@ -295,7 +317,11 @@ class PerformanceMonitor:
         print(f"📊 Final memory: {final:.1f} MB")
         print(f"📊 Memory delta: {delta:+.1f} MB")
         print(f"📊 Resources found: {len(resources)}")
-        print(f"📊 Memory per resource: {delta/len(resources):.3f} MB" if resources else "N/A")
+        print(
+            f"📊 Memory per resource: {delta/len(resources):.3f} MB"
+            if resources
+            else "N/A"
+        )
         print(f"⏱️  Discovery time: {end_time - start_time:.2f}s")
 
         # Get top memory allocations
@@ -367,7 +393,9 @@ class PerformanceMonitor:
                 avg_resources = sum(counts) / len(counts) if counts else 0
 
                 print(f"📊 {service.upper()}:")
-                print(f"  ⏱️  Time: {avg_time:.2f}s avg ({min_time:.2f}s - {max_time:.2f}s)")
+                print(
+                    f"  ⏱️  Time: {avg_time:.2f}s avg ({min_time:.2f}s - {max_time:.2f}s)"
+                )
                 print(f"  📈 Resources: {avg_resources:.0f} avg")
                 print(f"  🔄 Iterations: {len(times)}")
 

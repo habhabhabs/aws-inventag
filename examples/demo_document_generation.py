@@ -205,8 +205,12 @@ def main():
     try:
         summary = generator.generate_bom_documents(bom_data)
 
-        print(f"   ✓ Generation completed in {summary.total_generation_time:.2f} seconds")
-        print(f"   ✓ Successful formats: {summary.successful_formats}/{summary.total_formats}")
+        print(
+            f"   ✓ Generation completed in {summary.total_generation_time:.2f} seconds"
+        )
+        print(
+            f"   ✓ Successful formats: {summary.successful_formats}/{summary.total_formats}"
+        )
 
         if summary.failed_formats > 0:
             print(f"   ⚠️  Failed formats: {summary.failed_formats}")
@@ -217,10 +221,16 @@ def main():
         print("\n📋 Generated Documents:")
         for result in summary.results:
             status = "✅" if result.success else "❌"
-            size_mb = result.file_size_bytes / 1024 / 1024 if result.file_size_bytes > 0 else 0
+            size_mb = (
+                result.file_size_bytes / 1024 / 1024
+                if result.file_size_bytes > 0
+                else 0
+            )
             print(f"   {status} {result.format_type.upper()}: {result.filename}")
             if result.success:
-                print(f"      Size: {size_mb:.2f} MB, Time: {result.generation_time_seconds:.2f}s")
+                print(
+                    f"      Size: {size_mb:.2f} MB, Time: {result.generation_time_seconds:.2f}s"
+                )
                 full_path = os.path.join(output_dir, result.filename)
                 print(f"      Path: {full_path}")
             else:

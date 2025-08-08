@@ -111,7 +111,9 @@ def compare_with_legacy():
 
         new_services = optimized_services - legacy_services
         if new_services:
-            print(f"\n   🆕 New services found by optimized system: {sorted(new_services)}")
+            print(
+                f"\n   🆕 New services found by optimized system: {sorted(new_services)}"
+            )
 
     except ImportError:
         print("   ⚠️  Legacy system not available for comparison")

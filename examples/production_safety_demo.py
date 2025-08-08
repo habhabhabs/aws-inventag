@@ -81,7 +81,9 @@ def demo_operation_validation(manager):
     ]
 
     for service, operation in blocked_operations:
-        result = manager.validate_and_monitor_operation(service=service, operation=operation)
+        result = manager.validate_and_monitor_operation(
+            service=service, operation=operation
+        )
 
         status = "✓ ALLOWED" if result["validation_passed"] else "✗ BLOCKED"
         print(f"     {service}:{operation} - {status}")
@@ -101,7 +103,9 @@ def demo_error_handling(manager):
         from botocore.exceptions import ClientError
 
         raise ClientError(
-            error_response={"Error": {"Code": "AccessDenied", "Message": "Access denied"}},
+            error_response={
+                "Error": {"Code": "AccessDenied", "Message": "Access denied"}
+            },
             operation_name="DescribeInstances",
         )
 
@@ -135,7 +139,9 @@ def demo_compliance_assessment(manager):
     # Get compliance status
     status = manager.assess_compliance_status()
 
-    print(f"   Overall Compliance: {'✓ COMPLIANT' if status.is_compliant else '✗ NON-COMPLIANT'}")
+    print(
+        f"   Overall Compliance: {'✓ COMPLIANT' if status.is_compliant else '✗ NON-COMPLIANT'}"
+    )
     print(f"   Compliance Score: {status.compliance_score:.1f}%")
     print(f"   Risk Score: {status.risk_score:.1f}/100")
     print(f"   Total Operations: {status.total_operations}")

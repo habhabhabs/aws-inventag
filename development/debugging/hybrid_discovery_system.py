@@ -58,7 +58,9 @@ class HybridDiscoverySystem:
         intelligent_resources = self.intelligent_discovery.discover_all_services()
         intelligent_time = (datetime.now() - start_time).total_seconds()
 
-        print(f"   ✅ Found {len(intelligent_resources)} resources in {intelligent_time:.2f}s")
+        print(
+            f"   ✅ Found {len(intelligent_resources)} resources in {intelligent_time:.2f}s"
+        )
 
         # Step 3: Merge and enhance resources
         print("\n3. 🔗 Merging and Enhancing Resources")
@@ -131,10 +133,14 @@ class HybridDiscoverySystem:
                 enhanced_resource = legacy_resource.copy()
 
                 # Enhance with intelligent data where legacy is missing or less detailed
-                if not enhanced_resource.get("account_id") and intelligent_data.get("account_id"):
+                if not enhanced_resource.get("account_id") and intelligent_data.get(
+                    "account_id"
+                ):
                     enhanced_resource["account_id"] = intelligent_data["account_id"]
 
-                if not enhanced_resource.get("status") and intelligent_data.get("status"):
+                if not enhanced_resource.get("status") and intelligent_data.get(
+                    "status"
+                ):
                     enhanced_resource["status"] = intelligent_data["status"]
 
                 if not enhanced_resource.get("created_date") and intelligent_data.get(
@@ -155,7 +161,9 @@ class HybridDiscoverySystem:
                         "security_groups": intelligent_data.get("security_groups", []),
                         "availability_zone": intelligent_data.get("availability_zone"),
                         "discovery_method": "Hybrid",
-                        "confidence_score": intelligent_data.get("confidence_score", 0.8),
+                        "confidence_score": intelligent_data.get(
+                            "confidence_score", 0.8
+                        ),
                     }
                 )
 
@@ -163,7 +171,9 @@ class HybridDiscoverySystem:
             else:
                 # No intelligent enhancement available, use legacy as-is but mark it
                 legacy_resource["discovery_method"] = "Legacy"
-                legacy_resource["confidence_score"] = 0.6  # Default confidence for legacy
+                legacy_resource["confidence_score"] = (
+                    0.6  # Default confidence for legacy
+                )
                 enhanced_resources.append(legacy_resource)
 
         # Add intelligent-only resources (not found in legacy)
@@ -191,7 +201,9 @@ class HybridDiscoverySystem:
 
         # Confidence score analysis
         high_confidence = [r for r in resources if r.get("confidence_score", 0) >= 0.7]
-        medium_confidence = [r for r in resources if 0.4 <= r.get("confidence_score", 0) < 0.7]
+        medium_confidence = [
+            r for r in resources if 0.4 <= r.get("confidence_score", 0) < 0.7
+        ]
         low_confidence = [r for r in resources if r.get("confidence_score", 0) < 0.4]
 
         print(f"\nConfidence Distribution:")
@@ -241,13 +253,17 @@ class HybridDiscoverySystem:
         # Get legacy-only results
         print("\n📊 Legacy-Only Discovery")
         legacy_only = AWSResourceInventory(regions=self.regions)
-        legacy_only.configure_discovery_mode(use_intelligent=False, standardized_output=False)
+        legacy_only.configure_discovery_mode(
+            use_intelligent=False, standardized_output=False
+        )
         legacy_resources = legacy_only.discover_resources()
 
         print(f"\nComparison Results:")
         print(f"  - Legacy-Only: {len(legacy_resources)} resources")
         print(f"  - Hybrid: {len(hybrid_resources)} resources")
-        print(f"  - Improvement: +{len(hybrid_resources) - len(legacy_resources)} resources")
+        print(
+            f"  - Improvement: +{len(hybrid_resources) - len(legacy_resources)} resources"
+        )
 
         # Service comparison
         legacy_services = set(r.get("service", "") for r in legacy_resources)
@@ -293,7 +309,9 @@ def main():
 
     # Show sample enhanced resources
     print(f"\n🌟 Sample Enhanced Resources:")
-    enhanced_resources = [r for r in resources if r.get("discovery_method") == "Hybrid"][:5]
+    enhanced_resources = [
+        r for r in resources if r.get("discovery_method") == "Hybrid"
+    ][:5]
 
     for i, resource in enumerate(enhanced_resources):
         print(f"  {i+1}. {resource.get('service')} - {resource.get('type')}")
@@ -303,7 +321,9 @@ def main():
         print(f"     Confidence: {resource.get('confidence_score', 0):.2f}")
 
     print(f"\n✅ Hybrid Discovery Complete!")
-    print(f"The system successfully combines legacy reliability with intelligent enhancement.")
+    print(
+        f"The system successfully combines legacy reliability with intelligent enhancement."
+    )
 
     return resources
 

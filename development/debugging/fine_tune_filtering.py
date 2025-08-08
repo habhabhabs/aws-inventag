@@ -15,7 +15,10 @@ from datetime import datetime
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "."))
 
 try:
-    from inventag.discovery.optimized_discovery import OptimizedAWSDiscovery, OptimizedFieldMapper
+    from inventag.discovery.optimized_discovery import (
+        OptimizedAWSDiscovery,
+        OptimizedFieldMapper,
+    )
     import boto3
 except ImportError as e:
     print(f"Import error: {e}")
@@ -118,10 +121,13 @@ class FilteringTuner:
         for pattern in aws_indicators:
             if re.search(pattern, resource_id, re.IGNORECASE):
                 # Check if this pattern is already covered
-                current_patterns = self.field_mapper.aws_managed_patterns.get(service, [])
+                current_patterns = self.field_mapper.aws_managed_patterns.get(
+                    service, []
+                )
 
                 if not any(
-                    re.search(existing, resource_id, re.IGNORECASE) for existing in current_patterns
+                    re.search(existing, resource_id, re.IGNORECASE)
+                    for existing in current_patterns
                 ):
                     self.pattern_suggestions[service].append(
                         {
@@ -165,10 +171,13 @@ class FilteringTuner:
         for pattern in user_indicators:
             if re.search(pattern, resource_id, re.IGNORECASE):
                 # This should NOT be filtered as AWS managed
-                current_patterns = self.field_mapper.aws_managed_patterns.get(service, [])
+                current_patterns = self.field_mapper.aws_managed_patterns.get(
+                    service, []
+                )
 
                 if any(
-                    re.search(existing, resource_id, re.IGNORECASE) for existing in current_patterns
+                    re.search(existing, resource_id, re.IGNORECASE)
+                    for existing in current_patterns
                 ):
                     self.false_positives.append(
                         {
@@ -198,10 +207,14 @@ class FilteringTuner:
                 continue
 
             # Group by pattern type
-            aws_managed_suggestions = [s for s in suggestions if s["type"] == "aws_managed"]
+            aws_managed_suggestions = [
+                s for s in suggestions if s["type"] == "aws_managed"
+            ]
 
             if aws_managed_suggestions:
-                print(f"  🔒 AWS Managed Pattern Suggestions ({len(aws_managed_suggestions)}):")
+                print(
+                    f"  🔒 AWS Managed Pattern Suggestions ({len(aws_managed_suggestions)}):"
+                )
 
                 # Count pattern frequency
                 pattern_counts = Counter(s["pattern"] for s in aws_managed_suggestions)
@@ -211,7 +224,9 @@ class FilteringTuner:
                     pattern_frequency[pattern] += count
 
                     # Show example resources
-                    examples = [s for s in aws_managed_suggestions if s["pattern"] == pattern][:3]
+                    examples = [
+                        s for s in aws_managed_suggestions if s["pattern"] == pattern
+                    ][:3]
                     for example in examples:
                         print(
                             f"      💡 Example: {example['resource_type']}:{example['resource_id']}"
@@ -232,7 +247,9 @@ class FilteringTuner:
             print("  These user-created resources may be incorrectly filtered:")
 
             for fp in self.false_positives[:10]:  # Show first 10
-                print(f"    🚨 {fp['service']}:{fp['resource_type']}:{fp['resource_id']}")
+                print(
+                    f"    🚨 {fp['service']}:{fp['resource_type']}:{fp['resource_id']}"
+                )
                 print(f"       Reason: {fp['reason']}")
         else:
             print(f"\n✅ No false positives detected")
@@ -254,15 +271,21 @@ class FilteringTuner:
         applied_count = 0
 
         for service, suggestions in recommendations["pattern_suggestions"].items():
-            aws_managed_suggestions = [s for s in suggestions if s["type"] == "aws_managed"]
+            aws_managed_suggestions = [
+                s for s in suggestions if s["type"] == "aws_managed"
+            ]
 
             if aws_managed_suggestions:
                 # Get unique patterns with high frequency
                 pattern_counts = Counter(s["pattern"] for s in aws_managed_suggestions)
-                high_frequency_patterns = [p for p, c in pattern_counts.items() if c >= 2]
+                high_frequency_patterns = [
+                    p for p, c in pattern_counts.items() if c >= 2
+                ]
 
                 if high_frequency_patterns:
-                    print(f"\n📊 {service.upper()}: Adding {len(high_frequency_patterns)} patterns")
+                    print(
+                        f"\n📊 {service.upper()}: Adding {len(high_frequency_patterns)} patterns"
+                    )
 
                     for pattern in high_frequency_patterns:
                         print(f"  ➕ Adding pattern: {pattern}")
@@ -272,8 +295,13 @@ class FilteringTuner:
                             if service not in self.field_mapper.aws_managed_patterns:
                                 self.field_mapper.aws_managed_patterns[service] = []
 
-                            if pattern not in self.field_mapper.aws_managed_patterns[service]:
-                                self.field_mapper.aws_managed_patterns[service].append(pattern)
+                            if (
+                                pattern
+                                not in self.field_mapper.aws_managed_patterns[service]
+                            ):
+                                self.field_mapper.aws_managed_patterns[service].append(
+                                    pattern
+                                )
                                 applied_count += 1
 
         if dry_run:
@@ -323,8 +351,12 @@ class FilteringTuner:
 
         print(f"\n🎯 ANALYSIS SUMMARY:")
         print(f"  📊 Resources analyzed: {len(resources)}")
-        print(f"  🔧 Services with suggestions: {len(recommendations['pattern_suggestions'])}")
-        print(f"  ⚠️  False positives detected: {len(recommendations['false_positives'])}")
+        print(
+            f"  🔧 Services with suggestions: {len(recommendations['pattern_suggestions'])}"
+        )
+        print(
+            f"  ⚠️  False positives detected: {len(recommendations['false_positives'])}"
+        )
         print(f"  📄 Patterns exported to: {patterns_file}")
 
         return recommendations
@@ -344,7 +376,9 @@ def main():
 
         # Ask user if they want to apply recommendations
         print(f"\n❓ Apply recommended filtering patterns?")
-        response = input("Enter 'yes' to apply, anything else to skip: ").lower().strip()
+        response = (
+            input("Enter 'yes' to apply, anything else to skip: ").lower().strip()
+        )
 
         if response == "yes":
             applied = tuner.apply_recommended_patterns(recommendations, dry_run=False)

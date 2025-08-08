@@ -30,15 +30,22 @@ class ComprehensiveAWSDiscovery:
     and validates against billing data.
     """
 
-    def __init__(self, session: boto3.Session = None, regions: List[str] = None, hide_fallback_resources: bool = False):
+    def __init__(
+        self,
+        session: boto3.Session = None,
+        regions: List[str] = None,
+        hide_fallback_resources: bool = False,
+    ):
         self.session = session or boto3.Session()
         self.logger = logging.getLogger(__name__)
         self.logger.propagate = False  # Prevent duplicate logging
         self.regions = regions or ["us-east-1"]
         self.hide_fallback_resources = hide_fallback_resources
-        
+
         if self.hide_fallback_resources:
-            self.logger.info("💡 Fallback resources from ResourceGroupsTagging API will be hidden")
+            self.logger.info(
+                "💡 Fallback resources from ResourceGroupsTagging API will be hidden"
+            )
 
         # Resource storage
         self.resources = []

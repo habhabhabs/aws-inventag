@@ -73,7 +73,9 @@ class TestCICDIntegration:
             integration = CICDIntegration(config)
 
             # Mock BOM generation
-            with patch("inventag.core.cloud_bom_generator.CloudBOMGenerator") as mock_generator:
+            with patch(
+                "inventag.core.cloud_bom_generator.CloudBOMGenerator"
+            ) as mock_generator:
                 mock_generator_instance = Mock()
                 mock_generator_instance.generate_bom.return_value = {
                     "resources": sample_resources,
@@ -310,7 +312,9 @@ class TestCICDIntegration:
                 mock_session.return_value = mock_session_instance
 
                 # Mock resource discovery
-                with patch("inventag.discovery.inventory.ResourceDiscovery") as mock_discovery:
+                with patch(
+                    "inventag.discovery.inventory.ResourceDiscovery"
+                ) as mock_discovery:
                     mock_discovery_instance = Mock()
                     mock_discovery_instance.discover_all_resources.return_value = [
                         {
@@ -324,7 +328,9 @@ class TestCICDIntegration:
                     mock_discovery.return_value = mock_discovery_instance
 
                     # Mock compliance checking
-                    with patch("inventag.compliance.checker.ComplianceChecker") as mock_compliance:
+                    with patch(
+                        "inventag.compliance.checker.ComplianceChecker"
+                    ) as mock_compliance:
                         mock_compliance_instance = Mock()
                         mock_compliance_instance.check_compliance.return_value = {
                             "total_resources": 1,
@@ -356,7 +362,9 @@ class TestCICDIntegration:
                                     # Run the workflow
                                     config = {
                                         "output_formats": ["excel", "csv"],
-                                        "compliance_gates": {"minimum_compliance_percentage": 90.0},
+                                        "compliance_gates": {
+                                            "minimum_compliance_percentage": 90.0
+                                        },
                                         "cicd": {
                                             "upload_to_s3": True,
                                             "s3_bucket": "test-bucket",
@@ -373,8 +381,10 @@ class TestCICDIntegration:
 
                                     # Execute workflow steps
                                     bom_result = generator.generate_bom()
-                                    compliance_gates = integration.check_compliance_gates(
-                                        bom_result.get("compliance_summary", {})
+                                    compliance_gates = (
+                                        integration.check_compliance_gates(
+                                            bom_result.get("compliance_summary", {})
+                                        )
                                     )
 
                                     # Verify workflow completed successfully
@@ -424,7 +434,9 @@ class TestCICDIntegration:
         # Test discovery failure
         with patch("inventag.discovery.inventory.ResourceDiscovery") as mock_discovery:
             mock_discovery_instance = Mock()
-            mock_discovery_instance.discover_all_resources.side_effect = Exception("AWS API Error")
+            mock_discovery_instance.discover_all_resources.side_effect = Exception(
+                "AWS API Error"
+            )
             mock_discovery.return_value = mock_discovery_instance
 
             # Should handle error gracefully in CI/CD mode

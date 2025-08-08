@@ -709,7 +709,9 @@ The optimized system is designed to be a drop-in replacement that provides bette
     print(f"  - ✅ Enhanced confidence scoring")
     print(f"  - ✅ Drop-in replacement for existing system")
     print(f"")
-    print(f"This optimized system addresses all the issues found in the debugging session!")
+    print(
+        f"This optimized system addresses all the issues found in the debugging session!"
+    )
 
     return True
 

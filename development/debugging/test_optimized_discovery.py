@@ -15,7 +15,10 @@ from collections import defaultdict
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "."))
 
 try:
-    from inventag.discovery.optimized_discovery import OptimizedAWSDiscovery, OptimizedFieldMapper
+    from inventag.discovery.optimized_discovery import (
+        OptimizedAWSDiscovery,
+        OptimizedFieldMapper,
+    )
     from inventag.discovery.intelligent_discovery import IntelligentAWSDiscovery
     import boto3
 except ImportError as e:
@@ -69,7 +72,9 @@ class DiscoveryTester:
             else:
                 status = "❌ FAIL"
 
-            print(f"  {status}: {service}:{resource_type}:{resource_id} -> Filtered: {is_filtered}")
+            print(
+                f"  {status}: {service}:{resource_type}:{resource_id} -> Filtered: {is_filtered}"
+            )
 
             if is_filtered:
                 filtered_count += 1
@@ -97,7 +102,9 @@ class DiscoveryTester:
             unique_regions = len(region_stats)
             total_buckets = sum(region_stats.values())
 
-            if unique_regions > 1 or (unique_regions == 1 and "us-east-1" not in region_stats):
+            if unique_regions > 1 or (
+                unique_regions == 1 and "us-east-1" not in region_stats
+            ):
                 print("  ✅ Region detection working correctly")
                 return True
             else:
@@ -173,13 +180,17 @@ class DiscoveryTester:
 
             # Compare results
             if len(resources1) != len(resources2):
-                print(f"  ❌ Resource count mismatch: {len(resources1)} vs {len(resources2)}")
+                print(
+                    f"  ❌ Resource count mismatch: {len(resources1)} vs {len(resources2)}"
+                )
                 return False
 
             # Check ordering consistency
             for i, (r1, r2) in enumerate(zip(resources1, resources2)):
                 if r1.arn != r2.arn:
-                    print(f"  ❌ Ordering inconsistency at position {i}: {r1.arn} vs {r2.arn}")
+                    print(
+                        f"  ❌ Ordering inconsistency at position {i}: {r1.arn} vs {r2.arn}"
+                    )
                     return False
 
             print(f"  ✅ State consistency verified with {len(resources1)} resources")
@@ -206,7 +217,9 @@ class DiscoveryTester:
 
                 # Test intelligent discovery
                 start_time = time.time()
-                intelligent_resources = self.intelligent_discovery.discover_service(service)
+                intelligent_resources = self.intelligent_discovery.discover_service(
+                    service
+                )
                 intelligent_time = time.time() - start_time
 
                 print(
@@ -268,7 +281,9 @@ class DiscoveryTester:
 
         print(f"\n  📊 Service Coverage Summary:")
         total_resources = sum(service_results.values())
-        services_with_resources = sum(1 for count in service_results.values() if count > 0)
+        services_with_resources = sum(
+            1 for count in service_results.values() if count > 0
+        )
 
         for service, count in sorted(service_results.items()):
             status = "✅" if count > 0 else "⚪"
@@ -321,7 +336,9 @@ class DiscoveryTester:
         print(f"⏱️  Total test time: {total_time:.2f} seconds")
 
         if passed_tests == total_tests:
-            print("\n🎉 All tests passed! Optimized discovery system is working correctly.")
+            print(
+                "\n🎉 All tests passed! Optimized discovery system is working correctly."
+            )
         else:
             print(
                 f"\n⚠️  {total_tests - passed_tests} tests failed. Review the output above for details."

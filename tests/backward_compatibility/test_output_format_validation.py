@@ -278,7 +278,9 @@ class TestOutputComparison:
                         normalized[key] = sorted(value, key=lambda x: x.get("id", ""))
                     else:
                         normalized[key] = (
-                            sorted(value) if all(isinstance(x, str) for x in value) else value
+                            sorted(value)
+                            if all(isinstance(x, str) for x in value)
+                            else value
                         )
                 elif isinstance(value, dict):
                     normalized[key] = self.normalize_json_output(value)
@@ -287,7 +289,9 @@ class TestOutputComparison:
             return normalized
         return data
 
-    def compare_json_outputs(self, output1: Dict[str, Any], output2: Dict[str, Any]) -> bool:
+    def compare_json_outputs(
+        self, output1: Dict[str, Any], output2: Dict[str, Any]
+    ) -> bool:
         """Compare two JSON outputs for structural equivalence"""
         norm1 = self.normalize_json_output(output1)
         norm2 = self.normalize_json_output(output2)
@@ -316,14 +320,18 @@ class TestOutputComparison:
         output2 = reference_inventory_output.copy()
 
         # Reverse the order of resources
-        output2["all_discovered_resources"] = list(reversed(output2["all_discovered_resources"]))
+        output2["all_discovered_resources"] = list(
+            reversed(output2["all_discovered_resources"])
+        )
 
         # Should still be considered equal after normalization
         assert self.compare_json_outputs(output1, output2)
 
     def calculate_output_hash(self, data: Any) -> str:
         """Calculate hash of output for change detection"""
-        normalized = self.normalize_json_output(data) if isinstance(data, dict) else data
+        normalized = (
+            self.normalize_json_output(data) if isinstance(data, dict) else data
+        )
         json_str = json.dumps(normalized, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(json_str.encode()).hexdigest()
 
@@ -414,7 +422,9 @@ class TestRegressionValidation:
         assert "summary" in compliance_data
         assert compliance_data["summary"]["compliance_percentage"] == 100.0
 
-    def validate_against_fixtures(self, output_data: Dict[str, Any], fixture_name: str) -> bool:
+    def validate_against_fixtures(
+        self, output_data: Dict[str, Any], fixture_name: str
+    ) -> bool:
         """Validate output against reference fixtures"""
         fixtures_dir = Path(__file__).parent / "fixtures"
         fixture_file = fixtures_dir / f"{fixture_name}.json"
@@ -427,7 +437,9 @@ class TestRegressionValidation:
 
         return self.compare_json_outputs(output_data, reference_data)
 
-    def compare_json_outputs(self, output1: Dict[str, Any], output2: Dict[str, Any]) -> bool:
+    def compare_json_outputs(
+        self, output1: Dict[str, Any], output2: Dict[str, Any]
+    ) -> bool:
         """Compare two JSON outputs (reused from TestOutputComparison)"""
 
         def normalize(data):

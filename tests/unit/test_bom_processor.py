@@ -366,7 +366,9 @@ class TestBOMDataProcessor(unittest.TestCase):
 
         # Find the EC2 instance (should be the more complete one)
         ec2_resource = next(
-            r for r in deduplicated if r.get("service") == "EC2" or "instance" in r.get("arn", "")
+            r
+            for r in deduplicated
+            if r.get("service") == "EC2" or "instance" in r.get("arn", "")
         )
         self.assertIn("extra_field", ec2_resource)
 
@@ -430,16 +432,24 @@ class TestBOMDataProcessor(unittest.TestCase):
         mock_network_analyzer.return_value.enrich_resource_with_network_info.side_effect = (
             lambda x: x
         )
-        mock_network_analyzer.return_value.generate_network_summary.return_value = {"vpc_count": 1}
+        mock_network_analyzer.return_value.generate_network_summary.return_value = {
+            "vpc_count": 1
+        }
 
         mock_security_analyzer.return_value.enrich_resource_with_security_info.side_effect = (
             lambda x: x
         )
-        mock_security_analyzer.return_value.generate_security_summary.return_value = {"sg_count": 2}
+        mock_security_analyzer.return_value.generate_security_summary.return_value = {
+            "sg_count": 2
+        }
 
         mock_service_enricher.return_value.enrich_resource.side_effect = lambda x: x
-        mock_desc_manager.return_value.apply_description_to_resource.side_effect = lambda x: x
-        mock_tag_engine.return_value.apply_mappings_to_resource.side_effect = lambda x: x
+        mock_desc_manager.return_value.apply_description_to_resource.side_effect = (
+            lambda x: x
+        )
+        mock_tag_engine.return_value.apply_mappings_to_resource.side_effect = (
+            lambda x: x
+        )
 
         processor = BOMDataProcessor(self.config, self.mock_session)
 
@@ -462,8 +472,8 @@ class TestBOMDataProcessor(unittest.TestCase):
     def test_process_inventory_data_with_errors(self, mock_network_analyzer):
         """Test inventory data processing with errors."""
         # Setup mock to raise exception
-        mock_network_analyzer.return_value.generate_network_summary.side_effect = Exception(
-            "Network error"
+        mock_network_analyzer.return_value.generate_network_summary.side_effect = (
+            Exception("Network error")
         )
 
         config = BOMProcessingConfig(
@@ -540,8 +550,8 @@ class TestBOMDataProcessorErrorHandling(unittest.TestCase):
         """Test handling of partial enrichment failures."""
         # Setup mock to fail for network enrichment at the resource level
         mock_analyzer_instance = Mock()
-        mock_analyzer_instance.enrich_resource_with_network_info.side_effect = Exception(
-            "Network failed"
+        mock_analyzer_instance.enrich_resource_with_network_info.side_effect = (
+            Exception("Network failed")
         )
         mock_analyzer_instance.generate_network_summary.return_value = {}
         mock_network_analyzer.return_value = mock_analyzer_instance
