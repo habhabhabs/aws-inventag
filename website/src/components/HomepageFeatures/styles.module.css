@@ -10,7 +10,12 @@
 
 /* Ensure proper spacing between feature cards in grid layout */
 .features .container .row .col {
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
+}
+
+/* Better separation for cards that wrap to next row */
+.features .container .row .col:nth-child(n+4) {
+  margin-top: 1rem;
 }
 
 [data-theme='dark'] .features {
@@ -118,7 +123,12 @@
   }
   
   .features .container .row .col {
-    margin-bottom: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+  
+  /* Cards wrapping to next row on tablet */
+  .features .container .row .col:nth-child(n+3) {
+    margin-top: 1rem;
   }
 }
 
@@ -133,7 +143,12 @@
   }
   
   .features .container .row .col {
-    margin-bottom: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  /* All cards stack vertically on mobile - add separation between each */
+  .features .container .row .col:nth-child(n+2) {
+    margin-top: 0.5rem;
   }
   
   .featureCard {
