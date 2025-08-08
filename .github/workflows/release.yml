@@ -636,14 +636,7 @@ jobs:
         else
           # Add and commit the version.json changes directly to main
           git add version.json
-          git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}
-
-Automated version bump after release creation.
-Previous version: ${{ steps.version.outputs.current_version }}
-New version: ${{ steps.version.outputs.new_version }}
-Bump type: ${{ needs.check-for-release.outputs.version_bump }}
-
-"
+          git commit -m "chore: bump version to ${{ steps.version.outputs.new_version }}" -m "Automated version bump after release creation." -m "Previous version: ${{ steps.version.outputs.current_version }}" -m "New version: ${{ steps.version.outputs.new_version }}" -m "Bump type: ${{ needs.check-for-release.outputs.version_bump }}"
           
           # Push directly to main using the VERSION_BUMP_WORKFLOW token
           git push origin main
