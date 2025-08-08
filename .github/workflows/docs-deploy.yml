@@ -7,6 +7,7 @@ name: Documentation Deployment
       - 'docs/**'
       - 'website/**'
       - 'version.json'
+      - 'create_version.sh'
       - '.github/workflows/docs-deploy.yml'
   pull_request:
     branches: [ main ]
@@ -14,6 +15,7 @@ name: Documentation Deployment
       - 'docs/**'
       - 'website/**'
       - 'version.json'
+      - 'create_version.sh'
       - '.github/workflows/docs-deploy.yml'
   workflow_dispatch: # Allow manual triggering
 
@@ -101,16 +103,35 @@ jobs:
             echo "Warning: docs/index.md not found - this should be the main documentation entry point"
           fi
           
-          # Count markdown files
+          # Count markdown files in current docs
           md_count=$(find docs -name "*.md" -type f | wc -l)
-          echo "Found $md_count markdown files in docs/"
+          echo "Found $md_count markdown files in current docs/"
           
-          if [ $md_count -eq 0 ]; then
-            echo "Error: No markdown files found in docs/ directory"
+          # Check versioned documentation
+          if [ -d "website/versioned_docs" ]; then
+            versioned_count=$(find website/versioned_docs -name "*.md" -type f | wc -l)
+            echo "Found $versioned_count markdown files in versioned docs/"
+          else
+            versioned_count=0
+            echo "No versioned documentation found"
+          fi
+          
+          # Check versions.json
+          if [ -f "website/versions.json" ]; then
+            version_count=$(jq length website/versions.json)
+            echo "Found $version_count documented versions"
+            echo "Versions: $(jq -r '.[]' website/versions.json | tr '\n' ' ')"
+          else
+            echo "No versions.json found - this is normal for new versioning setups"
+          fi
+          
+          total_docs=$((md_count + versioned_count))
+          if [ $total_docs -eq 0 ]; then
+            echo "Error: No markdown files found in docs/ or versioned docs"
             exit 1
           fi
           
-          echo "Documentation structure validation passed"
+          echo "Documentation structure validation passed (Current: $md_count, Versioned: $versioned_count)"
 
       - name: Run GitHub → Docusaurus transformation pipeline
         id: transform
@@ -253,12 +274,21 @@ jobs:
           }
           EOF
           
-          # Run link checking on documentation files
-          echo "Checking internal and external links..."
+          # Run link checking on current documentation files
+          echo "Checking internal and external links in current docs..."
           find docs -name "*.md" -type f | head -10 | while read file; do
             echo "Checking links in: $file"
             markdown-link-check "$file" --config .markdown-link-check.json --quiet || echo "⚠️ Some links failed in $file"
           done
+          
+          # Check versioned documentation links (sample)
+          if [ -d "website/versioned_docs" ]; then
+            echo "Checking links in versioned documentation (sampling)..."
+            find website/versioned_docs -name "*.md" -type f | head -5 | while read file; do
+              echo "Checking versioned links in: $file"
+              markdown-link-check "$file" --config .markdown-link-check.json --quiet || echo "⚠️ Some versioned links failed in $file"
+            done
+          fi
           
           echo "✅ Link validation completed"
 
@@ -321,16 +351,33 @@ jobs:
       - name: Build documentation site with fallback
         working-directory: ./website
         run: |
-          echo "Building Docusaurus documentation site..."
+          echo "Building Docusaurus documentation site with versioning support..."
           
           # Set environment variables for build
           export NODE_ENV=production
           export DOCUSAURUS_SSR_CONCURRENCY=2
           
+          # Check for versioned documentation before building
+          if [ -d "versioned_docs" ]; then
+            echo "📚 Versioned documentation detected"
+            version_count=$(find versioned_docs -name "version-*" -type d | wc -l)
+            echo "Found $version_count documented versions"
+            
+            # List versions for debugging
+            if [ -f "versions.json" ]; then
+              echo "Available versions:"
+              jq -r '.[]' versions.json | while read version; do
+                echo "  - $version"
+              done
+            fi
+          else
+            echo "📖 No versioned documentation found - building current docs only"
+          fi
+          
           # Attempt to build the site
           build_success=false
           
-          echo "Attempting primary build..."
+          echo "Attempting primary build with versioning..."
           if npm run build; then
             echo "✅ Primary build successful"
             build_success=true
@@ -382,6 +429,17 @@ jobs:
           # Check build size
           build_size=$(du -sh build | cut -f1)
           echo "Build size: $build_size"
+          
+          # Check for version-specific build outputs
+          if [ -d "versioned_docs" ]; then
+            echo "Checking version-specific build outputs..."
+            # Look for version-specific paths in the build
+            if find build -type d -name "*version*" | head -5; then
+              echo "✅ Version-specific build paths found"
+            else
+              echo "ℹ️ No version-specific paths detected in build output"
+            fi
+          fi
           
           # List key files
           echo "Build contents:"
@@ -473,6 +531,17 @@ jobs:
               fi
             else
               echo "ℹ️ Search index not accessible (may be generated only in production build)"
+            fi
+            
+            # Test version dropdown (if versioned)
+            if [ -f "../website/versions.json" ]; then
+              echo "Testing version dropdown functionality..."
+              homepage_content=$(curl -s http://localhost:3001/inventag-aws/)
+              if echo "$homepage_content" | grep -q 'version.*dropdown\|docsVersionDropdown'; then
+                echo "✅ Version dropdown functionality detected"
+              else
+                echo "ℹ️ Version dropdown not detected in homepage HTML"
+              fi
             fi
             
             # Basic mobile viewport test
@@ -714,6 +783,11 @@ jobs:
               npm install
               npm start
               \`\`\`
+              
+              **Version Information:**
+              - Current development version in use
+              - Available versions: $([ -f website/versions.json ] && jq -r '.[]' website/versions.json | tr '\n' ',' | sed 's/,$//' || echo 'None')
+              - Version dropdown: $([ -f website/versions.json ] && echo 'Available' || echo 'Not configured')
               
               ---
               *This comment was automatically generated by the documentation deployment workflow.*`;

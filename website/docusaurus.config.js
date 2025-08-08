@@ -75,6 +75,23 @@ const config = {
             '**/template-system-summary.md',
             '**/complete-readme-backup.md',
           ],
+          // Documentation versioning configuration
+          includeCurrentVersion: true,
+          lastVersion: 'current',
+          versions: {
+            current: {
+              label: 'v5.0.0-dev (Current)',
+              badge: true,
+            },
+            'v4.2.1': {
+              label: 'v4.2.1',
+              badge: false,
+            },
+          },
+          // Version-specific edit URLs
+          editLocalizedFiles: false,
+          // Version dropdown configuration
+          disableVersioning: false
         },
         blog: false, // Disable blog functionality for this documentation site
         theme: {
@@ -146,6 +163,11 @@ const config = {
             position: 'left',
             label: 'Documentation',
             docsPluginId: 'default',
+          },
+          {
+            type: 'docsVersionDropdown',
+            position: 'left',
+            dropdownActiveClassDisabled: true,
           },
           {
             type: 'search',
