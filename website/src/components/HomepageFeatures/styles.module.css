@@ -4,7 +4,12 @@
 }
 
 .features .container .row {
-  row-gap: 3rem;
+  row-gap: 4rem;
+}
+
+/* Ensure proper spacing between feature cards in grid layout */
+.features .container .row .col {
+  margin-bottom: 2rem;
 }
 
 [data-theme='dark'] .features {
@@ -107,7 +112,11 @@
   }
   
   .features .container .row {
-    row-gap: 2rem;
+    row-gap: 3rem;
+  }
+  
+  .features .container .row .col {
+    margin-bottom: 1.5rem;
   }
 }
 
@@ -117,7 +126,11 @@
   }
   
   .features .container .row {
-    row-gap: 1.5rem;
+    row-gap: 2rem;
+  }
+  
+  .features .container .row .col {
+    margin-bottom: 1rem;
   }
   
   .featureCard {
