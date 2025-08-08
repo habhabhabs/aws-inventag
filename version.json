@@ -1,11 +1,11 @@
 {
-  "version": "4.2.1",
-  "release_notes": "Release 4.2.1 - 2025-08-08\\✨ New Features:\\  • feat(testing): add comprehensive regression test suite\\  • feat: implement intelligent fallback resource display with AWS Prescriptive Guidance enhancements\\  • feat: implement GitHub → Docusaurus transformation + AWS Prescriptive Guidance templates\\  • feat: add comprehensive fork PR security workflow\\🐛 Bug Fixes:\\  • fix: apply black formatting with correct line length (88)\\  • fix(testing): resolve flake8 and black formatting issues in regression tests\\💄 Style Changes:\\  • style: apply black formatting to entire repository\\  • style: apply black formatting and fix critical flake8 issues\\📊 Summary: 8 commits in this release\\🔀 Triggered by PR #25",
-  "release_date": "2025-08-08T14:55:56.143961",
-  "previous_version": "4.2.0",
+  "version": "4.2.2",
+  "release_notes": "Release 4.2.2 - 2025-08-08\\✨ New Features:\\  • feat: integrate comprehensive SBOM generation with documentation build process\\  • feat: implement comprehensive documentation versioning system\\🐛 Bug Fixes:\\  • fix: resolve GitLeaks false positives with proper configuration\\📊 Summary: 3 commits in this release\\🔀 Triggered by PR #26",
+  "release_date": "2025-08-08T19:52:47.268247",
+  "previous_version": "4.2.1",
   "version_bump_type": "patch",
-  "git_tag": "v4.2.1",
-  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.1",
-  "triggered_by_pr": "25",
-  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/25"
+  "git_tag": "v4.2.2",
+  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.2",
+  "triggered_by_pr": "26",
+  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/26"
 }
