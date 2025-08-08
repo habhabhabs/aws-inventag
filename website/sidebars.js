@@ -81,16 +81,17 @@ const sidebars = {
     },
 
     // Security section - SBOM, vulnerability tracking, and security information
-    {
-      type: 'category',
-      label: '🔒 Security',
-      collapsed: true,
-      items: [
-        'security/index',
-        'security/sbom-overview',
-        'security/monitoring',
-      ],
-    },
+    // Note: Security docs are generated during workflow runs, so temporarily commented out
+    // {
+    //   type: 'category',
+    //   label: '🔒 Security',
+    //   collapsed: true,
+    //   items: [
+    //     'security/index',
+    //     'security/sbom-overview', 
+    //     'security/monitoring',
+    //   ],
+    // },
 
     // Development section - auto-generated from development directory
     {
