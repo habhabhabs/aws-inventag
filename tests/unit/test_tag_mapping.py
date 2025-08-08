@@ -55,9 +55,7 @@ class TestTagNormalizer:
 
     def test_normalize_remove_special_chars(self):
         """Test special character removal."""
-        result = self.normalizer.normalize_value(
-            "test@#$value!", "remove_special_chars"
-        )
+        result = self.normalizer.normalize_value("test@#$value!", "remove_special_chars")
         assert result == "testvalue"
 
     def test_normalize_alphanumeric_only(self):
@@ -164,9 +162,7 @@ class TestTagMappingEngine:
     def test_load_mappings_from_json_file(self):
         """Test loading mappings from JSON file."""
         config_data = {
-            "tag_mappings": [
-                {"tag": "json:test", "name": "JSON Test", "default_value": "test"}
-            ]
+            "tag_mappings": [{"tag": "json:test", "name": "JSON Test", "default_value": "test"}]
         }
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
@@ -200,9 +196,7 @@ class TestTagMappingEngine:
         ]
 
         for config_data in invalid_configs:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".json", delete=False
-            ) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
                 json.dump(config_data, f)
                 temp_path = f.name
 
@@ -252,9 +246,7 @@ class TestTagMappingEngine:
         result = self.engine.extract_custom_attributes(resource)
 
         # Should use default values for missing tags (normalized)
-        assert (
-            result.mapped_attributes["Cost Center"] == "UNKNOWN"
-        )  # Normalized to uppercase
+        assert result.mapped_attributes["Cost Center"] == "UNKNOWN"  # Normalized to uppercase
         assert result.mapped_attributes["Owner"] == "Unknown"
 
     def test_extract_custom_attributes_case_insensitive(self):
@@ -450,9 +442,7 @@ class TestTagMappingEngine:
 
     def test_add_mapping(self):
         """Test adding new mapping."""
-        mapping = TagMapping(
-            tag="test:new", name="New Test", description="Test mapping"
-        )
+        mapping = TagMapping(tag="test:new", name="New Test", description="Test mapping")
 
         initial_count = len(self.engine.mappings)
         self.engine.add_mapping(mapping)
@@ -495,9 +485,7 @@ class TestTagMappingEngine:
     def test_reload_mappings(self):
         """Test reloading mappings from file."""
         # Create initial config
-        config_data = {
-            "tag_mappings": [{"tag": "test:initial", "name": "Initial Test"}]
-        }
+        config_data = {"tag_mappings": [{"tag": "test:initial", "name": "Initial Test"}]}
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(config_data, f)
@@ -509,9 +497,7 @@ class TestTagMappingEngine:
             assert "test:initial" in self.engine.mappings
 
             # Update config file
-            updated_config = {
-                "tag_mappings": [{"tag": "test:updated", "name": "Updated Test"}]
-            }
+            updated_config = {"tag_mappings": [{"tag": "test:updated", "name": "Updated Test"}]}
 
             with open(temp_path, "w") as f:
                 yaml.dump(updated_config, f)
@@ -608,9 +594,7 @@ class TestTagMappingEngine:
             {"id": "missing-tags-resource", "tags": {}},  # Missing tags
             {
                 "id": "invalid-resource",
-                "tags": {
-                    "inventag:environment": "invalid-env"
-                },  # Should fail validation
+                "tags": {"inventag:environment": "invalid-env"},  # Should fail validation
             },
         ]
 
@@ -706,9 +690,7 @@ class TestTagMappingIntegration:
 
             # Resource 1 - should be valid with normalization
             r1 = enriched[0]
-            assert (
-                r1["custom_attributes"]["Project Name"] == "Web Application"
-            )  # Title case
+            assert r1["custom_attributes"]["Project Name"] == "Web Application"  # Title case
             assert r1["custom_attributes"]["Cost Center"] == "IT-1234"  # Uppercase
             assert r1["custom_attributes"]["Environment"] == "prod"  # Lowercase
             assert len(r1["tag_mapping_metadata"]["validation_errors"]) == 0
@@ -716,12 +698,8 @@ class TestTagMappingIntegration:
 
             # Resource 2 - should have validation errors
             r2 = enriched[1]
-            assert (
-                r2["custom_attributes"]["Project Name"] == "Mobile App"
-            )  # Case insensitive match
-            assert (
-                len(r2["tag_mapping_metadata"]["validation_errors"]) > 0
-            )  # Invalid cost center
+            assert r2["custom_attributes"]["Project Name"] == "Mobile App"  # Case insensitive match
+            assert len(r2["tag_mapping_metadata"]["validation_errors"]) > 0  # Invalid cost center
 
             # Resource 3 - should have missing required tags
             r3 = enriched[2]

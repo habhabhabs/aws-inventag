@@ -39,9 +39,7 @@ def get_python_command():
 
 def main():
     parser = argparse.ArgumentParser(description="AWS Resource Inventory Tool")
-    parser.add_argument(
-        "--regions", nargs="+", help="AWS regions to scan (default: all regions)"
-    )
+    parser.add_argument("--regions", nargs="+", help="AWS regions to scan (default: all regions)")
     parser.add_argument(
         "--format",
         choices=["json", "yaml"],
@@ -116,9 +114,7 @@ def main():
                 sys.exit(1)
 
     except NoCredentialsError:
-        print(
-            "Error: AWS credentials not found. Please configure your AWS credentials."
-        )
+        print("Error: AWS credentials not found. Please configure your AWS credentials.")
         sys.exit(1)
     except Exception as e:
         print(f"Error: {e}")

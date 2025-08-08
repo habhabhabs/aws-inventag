@@ -115,9 +115,7 @@ Environment Variables:
         help="S3 key prefix for uploaded documents (default: inventag-bom)",
     )
 
-    parser.add_argument(
-        "--s3-region", default="us-east-1", help="S3 region (default: us-east-1)"
-    )
+    parser.add_argument("--s3-region", default="us-east-1", help="S3 region (default: us-east-1)")
 
     parser.add_argument(
         "--s3-encryption",
@@ -231,9 +229,7 @@ Environment Variables:
         help="Perform dry run without actual execution",
     )
 
-    parser.add_argument(
-        "--fail-fast", action="store_true", help="Exit immediately on first error"
-    )
+    parser.add_argument("--fail-fast", action="store_true", help="Exit immediately on first error")
 
     return parser.parse_args()
 
@@ -338,9 +334,7 @@ def _apply_github_secrets_credentials(accounts):
                 secret_key_pattern = access_key_pattern.replace(
                     "ACCESS_KEY_ID", "SECRET_ACCESS_KEY"
                 )
-                session_token_pattern = access_key_pattern.replace(
-                    "ACCESS_KEY_ID", "SESSION_TOKEN"
-                )
+                session_token_pattern = access_key_pattern.replace("ACCESS_KEY_ID", "SESSION_TOKEN")
 
                 secret_key = os.environ.get(secret_key_pattern)
                 session_token = os.environ.get(session_token_pattern)
@@ -407,9 +401,7 @@ def _apply_aws_secrets_manager_credentials(accounts):
         # Try multiple secret name patterns
         secret_patterns = [
             # Pattern 1: Environment variable override (highest priority)
-            os.environ.get(
-                f"INVENTAG_SECRET_{_sanitize_env_name(account_name).upper()}"
-            ),
+            os.environ.get(f"INVENTAG_SECRET_{_sanitize_env_name(account_name).upper()}"),
             os.environ.get(f"INVENTAG_SECRET_{account_id}"),
             # Pattern 2: Standard naming conventions
             f"inventag/credentials/{account_id}",
@@ -436,10 +428,7 @@ def _apply_aws_secrets_manager_credentials(accounts):
                 secret_data = json.loads(response["SecretString"])
 
                 # Apply credentials
-                if (
-                    "aws_access_key_id" in secret_data
-                    and "aws_secret_access_key" in secret_data
-                ):
+                if "aws_access_key_id" in secret_data and "aws_secret_access_key" in secret_data:
                     account.access_key_id = secret_data["aws_access_key_id"]
                     account.secret_access_key = secret_data["aws_secret_access_key"]
                     if "aws_session_token" in secret_data:
@@ -508,11 +497,7 @@ def _apply_local_environment_credentials(accounts):
 
         # Apply to accounts that don't have credentials specified
         for account in accounts:
-            if (
-                not account.access_key_id
-                and not account.profile_name
-                and not account.role_arn
-            ):
+            if not account.access_key_id and not account.profile_name and not account.role_arn:
                 account.access_key_id = global_access_key
                 account.secret_access_key = global_secret_key
                 if global_session_token:
@@ -531,9 +516,7 @@ def _validate_account_credentials(accounts):
     accounts_without_credentials = []
 
     for account in accounts:
-        has_credentials = bool(
-            account.access_key_id or account.profile_name or account.role_arn
-        )
+        has_credentials = bool(account.access_key_id or account.profile_name or account.role_arn)
 
         if not has_credentials:
             accounts_without_credentials.append(account)
@@ -545,9 +528,7 @@ def _validate_account_credentials(accounts):
 
         logger.error("\nCredential configuration options:")
         logger.error("1. Add credentials directly to the account configuration file")
-        logger.error(
-            "2. Set up AWS CLI profiles and specify profile_name in the config"
-        )
+        logger.error("2. Set up AWS CLI profiles and specify profile_name in the config")
         logger.error("3. Configure cross-account roles with role_arn in the config")
         logger.error("4. Set environment variables (GitHub Actions, CodeBuild, etc.)")
         logger.error("5. Use AWS Secrets Manager (CodeBuild environment)")
@@ -613,9 +594,7 @@ def create_notification_config(args) -> NotificationConfig:
 
 def create_prometheus_config(args) -> PrometheusConfig:
     """Create Prometheus configuration."""
-    gateway_url = args.prometheus_gateway or os.environ.get(
-        "PROMETHEUS_PUSH_GATEWAY_URL"
-    )
+    gateway_url = args.prometheus_gateway or os.environ.get("PROMETHEUS_PUSH_GATEWAY_URL")
 
     return PrometheusConfig(
         push_gateway_url=gateway_url,
@@ -651,9 +630,7 @@ def print_configuration_summary(
 
     print(f"\nCompliance Gate Configuration:")
     print(f"  Minimum Compliance: {compliance_config.minimum_compliance_percentage}%")
-    print(
-        f"  Critical Violations Threshold: {compliance_config.critical_violations_threshold}"
-    )
+    print(f"  Critical Violations Threshold: {compliance_config.critical_violations_threshold}")
     print(f"  Required Tags: {compliance_config.required_tags}")
     print(f"  Fail on Security Issues: {compliance_config.fail_on_security_issues}")
     print(f"  Fail on Network Issues: {compliance_config.fail_on_network_issues}")
@@ -746,9 +723,7 @@ def main():
         print("=" * 60)
 
         print(f"Success: {'✅ YES' if result.success else '❌ NO'}")
-        print(
-            f"Compliance Gate: {'✅ PASSED' if result.compliance_gate_passed else '❌ FAILED'}"
-        )
+        print(f"Compliance Gate: {'✅ PASSED' if result.compliance_gate_passed else '❌ FAILED'}")
         print(f"Execution Time: {result.execution_time_seconds:.2f} seconds")
         print(f"Generated Documents: {len(result.generated_documents)}")
         print(f"S3 Uploads: {len(result.s3_uploads)}")
@@ -766,9 +741,7 @@ def main():
             print(f"\nMetrics Summary:")
             print(f"  Total Resources: {result.metrics.total_resources}")
             print(f"  Compliant Resources: {result.metrics.compliant_resources}")
-            print(
-                f"  Compliance Percentage: {result.metrics.compliance_percentage:.1f}%"
-            )
+            print(f"  Compliance Percentage: {result.metrics.compliance_percentage:.1f}%")
             print(f"  Total Accounts: {result.metrics.total_accounts}")
             print(f"  Successful Accounts: {result.metrics.successful_accounts}")
             print(f"  Failed Accounts: {result.metrics.failed_accounts}")

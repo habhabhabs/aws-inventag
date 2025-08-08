@@ -177,9 +177,7 @@ class TestCredentialManager:
 
     def test_create_session_from_credentials_profile(self, credential_manager):
         """Test creating session from profile credentials."""
-        credentials = AccountCredentials(
-            account_id="123456789012", profile_name="test-profile"
-        )
+        credentials = AccountCredentials(account_id="123456789012", profile_name="test-profile")
 
         with patch("inventag.core.credential_manager.boto3.Session") as mock_session:
             session = credential_manager._create_session_from_credentials(credentials)
@@ -292,9 +290,7 @@ class TestCredentialManager:
         mock_s3.list_buckets.return_value = {}
 
         # IAM throws access denied (but service is available)
-        mock_iam.get_user.side_effect = ClientError(
-            {"Error": {"Code": "AccessDenied"}}, "GetUser"
-        )
+        mock_iam.get_user.side_effect = ClientError({"Error": {"Code": "AccessDenied"}}, "GetUser")
 
         mock_session.client.side_effect = [mock_ec2, mock_s3, mock_iam]
 
@@ -350,9 +346,7 @@ class TestCredentialManager:
         assert summary["read_only_confirmed"] is True  # EC2 + Config access
 
     @patch("inventag.core.credential_manager.boto3.Session")
-    def test_validate_account_credentials_success(
-        self, mock_session_class, credential_manager
-    ):
+    def test_validate_account_credentials_success(self, mock_session_class, credential_manager):
         """Test successful credential validation."""
         # Mock session and clients
         mock_session = Mock()
@@ -380,9 +374,7 @@ class TestCredentialManager:
         }
 
         # Mock IAM response
-        mock_iam.list_account_aliases.return_value = {
-            "AccountAliases": ["test-account"]
-        }
+        mock_iam.list_account_aliases.return_value = {"AccountAliases": ["test-account"]}
         mock_iam.get_user.return_value = {}
 
         # Mock EC2 response for region testing
@@ -432,9 +424,7 @@ class TestCredentialManager:
             "Arn": "arn:aws:iam::999999999999:user/test",
         }
 
-        credentials = AccountCredentials(
-            account_id="123456789012", profile_name="test-profile"
-        )
+        credentials = AccountCredentials(account_id="123456789012", profile_name="test-profile")
 
         with patch.object(
             credential_manager,
@@ -449,9 +439,7 @@ class TestCredentialManager:
 
     def test_validate_account_credentials_failure(self, credential_manager):
         """Test credential validation failure."""
-        credentials = AccountCredentials(
-            account_id="123456789012", profile_name="invalid-profile"
-        )
+        credentials = AccountCredentials(account_id="123456789012", profile_name="invalid-profile")
 
         with patch.object(
             credential_manager,
@@ -625,9 +613,7 @@ class TestCredentialManager:
 
         manager.remove_from_keyring("123456789012")
 
-        mock_keyring.delete_password.assert_any_call(
-            "inventag", "inventag_account_123456789012"
-        )
+        mock_keyring.delete_password.assert_any_call("inventag", "inventag_account_123456789012")
         mock_keyring.delete_password.assert_any_call(
             "inventag", "inventag_account_123456789012_token"
         )
@@ -639,9 +625,7 @@ class TestCredentialManagerIntegration:
     @patch("inventag.core.credential_manager.input")
     @patch("inventag.core.credential_manager.getpass.getpass")
     @patch.object(CredentialManager, "validate_account_credentials")
-    def test_interactive_credential_setup_success(
-        self, mock_validate, mock_getpass, mock_input
-    ):
+    def test_interactive_credential_setup_success(self, mock_validate, mock_getpass, mock_input):
         """Test successful interactive credential setup."""
         # Mock user inputs
         mock_input.side_effect = [

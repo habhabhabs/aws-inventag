@@ -126,9 +126,7 @@ class ComprehensiveIntegration:
 
             # Extract key metrics
             passed_tests = sum(1 for result in test_results.values() if result is True)
-            total_tests = len(
-                [k for k, v in test_results.items() if isinstance(v, bool)]
-            )
+            total_tests = len([k for k, v in test_results.items() if isinstance(v, bool)])
 
             print(f"✅ System tests complete: {passed_tests}/{total_tests} passed")
 
@@ -154,21 +152,15 @@ class ComprehensiveIntegration:
             benchmark_results = {}
 
             for service in services:
-                result = self.performance_monitor.benchmark_service(
-                    service, iterations=1
-                )
+                result = self.performance_monitor.benchmark_service(service, iterations=1)
                 if result:
                     benchmark_results[service] = result
 
             # Calculate overall metrics
             total_time = sum(r["avg_time"] for r in benchmark_results.values())
-            total_resources = sum(
-                r["avg_resources"] for r in benchmark_results.values()
-            )
+            total_resources = sum(r["avg_resources"] for r in benchmark_results.values())
 
-            print(
-                f"✅ Performance benchmarks complete: {len(benchmark_results)} services tested"
-            )
+            print(f"✅ Performance benchmarks complete: {len(benchmark_results)} services tested")
 
             return {
                 "services_tested": len(benchmark_results),
@@ -192,14 +184,10 @@ class ComprehensiveIntegration:
             recommendations = self.filtering_tuner.run_comprehensive_analysis()
 
             # Extract key metrics
-            services_with_suggestions = len(
-                recommendations.get("pattern_suggestions", {})
-            )
+            services_with_suggestions = len(recommendations.get("pattern_suggestions", {}))
             false_positives = len(recommendations.get("false_positives", []))
 
-            print(
-                f"✅ Filtering analysis complete: {services_with_suggestions} services analyzed"
-            )
+            print(f"✅ Filtering analysis complete: {services_with_suggestions} services analyzed")
 
             return {
                 "services_analyzed": services_with_suggestions,
@@ -230,9 +218,7 @@ class ComprehensiveIntegration:
 
             if sample_resources:
                 # Apply AI predictions
-                predicted_resources = self.discovery._apply_ai_predictions(
-                    sample_resources
-                )
+                predicted_resources = self.discovery._apply_ai_predictions(sample_resources)
 
                 print(
                     f"✅ AI predictions complete: {len(predicted_resources)} predictions generated"
@@ -242,9 +228,7 @@ class ComprehensiveIntegration:
                     "source_resources": len(sample_resources),
                     "predicted_resources": len(predicted_resources),
                     "prediction_rate": (
-                        len(predicted_resources) / len(sample_resources)
-                        if sample_resources
-                        else 0
+                        len(predicted_resources) / len(sample_resources) if sample_resources else 0
                     ),
                 }
             else:
@@ -326,9 +310,7 @@ class ComprehensiveIntegration:
                 print(f"  ✅ Enhanced patterns: {len(patterns)} services configured")
             else:
                 validation_results["components_tested"] += 1
-                validation_results["issues"].append(
-                    "Enhanced patterns: Insufficient patterns"
-                )
+                validation_results["issues"].append("Enhanced patterns: Insufficient patterns")
                 print("  ❌ Enhanced patterns: Insufficient patterns")
         except Exception as e:
             validation_results["components_tested"] += 1
@@ -338,9 +320,7 @@ class ComprehensiveIntegration:
         # Test 3: AWS managed filtering
         try:
             mapper = self.discovery.field_mapper
-            test_result = mapper._is_aws_managed_resource(
-                {}, "iam", "AWSServiceRoleForEC2", "Role"
-            )
+            test_result = mapper._is_aws_managed_resource({}, "iam", "AWSServiceRoleForEC2", "Role")
             if test_result:
                 validation_results["components_tested"] += 1
                 validation_results["components_passed"] += 1
@@ -372,8 +352,7 @@ class ComprehensiveIntegration:
             print(f"  ❌ AI predictions: {e}")
 
         success_rate = (
-            validation_results["components_passed"]
-            / validation_results["components_tested"]
+            validation_results["components_passed"] / validation_results["components_tested"]
             if validation_results["components_tested"] > 0
             else 0
         )
@@ -426,14 +405,9 @@ class ComprehensiveIntegration:
             print("🔍 Filtering: ❌ Failed")
 
         # AI predictions
-        if (
-            "ai_predictions" in self.results
-            and "error" not in self.results["ai_predictions"]
-        ):
+        if "ai_predictions" in self.results and "error" not in self.results["ai_predictions"]:
             prediction_rate = self.results["ai_predictions"]["prediction_rate"]
-            print(
-                f"🤖 AI Predictions: {prediction_rate:.1f} predictions per source resource"
-            )
+            print(f"🤖 AI Predictions: {prediction_rate:.1f} predictions per source resource")
         else:
             print("🤖 AI Predictions: ❌ Failed")
 
@@ -462,9 +436,7 @@ class ComprehensiveIntegration:
                     print(f"  • {issue}")
 
         # Overall status
-        print(
-            f"\n🎯 OVERALL STATUS: {'✅ SUCCESS' if overall_success else '⚠️  PARTIAL SUCCESS'}"
-        )
+        print(f"\n🎯 OVERALL STATUS: {'✅ SUCCESS' if overall_success else '⚠️  PARTIAL SUCCESS'}")
 
         if overall_success:
             print(
@@ -569,9 +541,7 @@ def main():
     try:
         results = integration.run_comprehensive_integration()
 
-        print(
-            f"\n🎉 Integration complete! Check the generated files for detailed results."
-        )
+        print(f"\n🎉 Integration complete! Check the generated files for detailed results.")
 
         return results
 

@@ -198,9 +198,7 @@ class TestComplianceValidation:
         """Test compliance check for compliant resource"""
         compliant_resource = sample_resources[0]  # Has all required tags
 
-        is_compliant, violations = checker._check_resource_compliance(
-            compliant_resource
-        )
+        is_compliant, violations = checker._check_resource_compliance(compliant_resource)
 
         assert is_compliant is True
         assert len(violations) == 0
@@ -209,9 +207,7 @@ class TestComplianceValidation:
         """Test compliance check for resource with missing tags"""
         non_compliant_resource = sample_resources[1]  # Missing Role tag
 
-        is_compliant, violations = checker._check_resource_compliance(
-            non_compliant_resource
-        )
+        is_compliant, violations = checker._check_resource_compliance(non_compliant_resource)
 
         assert is_compliant is False
         assert len(violations) > 0
@@ -288,9 +284,7 @@ class TestAdvancedPolicyFeatures:
             },
         }
 
-        is_compliant, violations = advanced_checker._check_resource_compliance(
-            exempt_resource
-        )
+        is_compliant, violations = advanced_checker._check_resource_compliance(exempt_resource)
 
         # Should be compliant due to exemption
         assert is_compliant is True
@@ -311,14 +305,11 @@ class TestAdvancedPolicyFeatures:
             },
         }
 
-        is_compliant, violations = advanced_checker._check_resource_compliance(
-            invalid_resource
-        )
+        is_compliant, violations = advanced_checker._check_resource_compliance(invalid_resource)
 
         assert is_compliant is False
         assert any(
-            "Environment" in violation and "pattern" in violation
-            for violation in violations
+            "Environment" in violation and "pattern" in violation for violation in violations
         )
 
     def test_service_specific_rules(self, advanced_checker):
@@ -336,9 +327,7 @@ class TestAdvancedPolicyFeatures:
             },
         }
 
-        is_compliant, violations = advanced_checker._check_resource_compliance(
-            lambda_resource
-        )
+        is_compliant, violations = advanced_checker._check_resource_compliance(lambda_resource)
 
         # Should be compliant with Lambda-specific rules
         assert is_compliant is True
@@ -359,9 +348,7 @@ class TestAdvancedPolicyFeatures:
             },
         }
 
-        is_compliant, violations = advanced_checker._check_resource_compliance(
-            resource_upper
-        )
+        is_compliant, violations = advanced_checker._check_resource_compliance(resource_upper)
 
         # Should fail pattern validation (patterns are case-sensitive)
         assert is_compliant is False
@@ -538,9 +525,7 @@ class TestPerformanceScenarios:
         assert summary["total_resources"] == 1000
 
         # Verify performance - should complete without timeout
-        assert (
-            summary["compliant_resources"] + summary["non_compliant_resources"] == 1000
-        )
+        assert summary["compliant_resources"] + summary["non_compliant_resources"] == 1000
 
     def test_memory_efficiency_large_dataset(self, checker, large_resource_dataset):
         """Test memory efficiency with large dataset"""
@@ -597,9 +582,7 @@ class TestSecurityValidation:
         }
 
         # Should handle without causing ReDoS
-        is_compliant, violations = checker._check_resource_compliance(
-            malicious_resource
-        )
+        is_compliant, violations = checker._check_resource_compliance(malicious_resource)
 
         # Should complete without hanging
         assert isinstance(is_compliant, bool)
