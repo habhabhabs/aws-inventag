@@ -172,17 +172,16 @@ jobs:
           echo "- Node.js Components: TBD" >> "docs/security/versions/$VERSION/README.md"
           echo "" >> "docs/security/versions/$VERSION/README.md"
           echo "## Version Tracking" >> "docs/security/versions/$VERSION/README.md"
-
-This SBOM enables:
-- Supply chain security tracking for this specific version
-- Vulnerability analysis at the version level
-- License compliance for this release
-- Change tracking between versions
-
----
-
-*This SBOM is part of InvenTag's comprehensive security documentation and was generated during the version creation process.*
-EOF
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "This SBOM enables:" >> "docs/security/versions/$VERSION/README.md"
+          echo "- Supply chain security tracking for this specific version" >> "docs/security/versions/$VERSION/README.md"
+          echo "- Vulnerability analysis at the version level" >> "docs/security/versions/$VERSION/README.md"
+          echo "- License compliance for this release" >> "docs/security/versions/$VERSION/README.md"
+          echo "- Change tracking between versions" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "---" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "*This SBOM is part of InvenTag's comprehensive security documentation and was generated during the version creation process.*" >> "docs/security/versions/$VERSION/README.md"
           
           echo "✅ Version-specific SBOM generated for $VERSION"
 
