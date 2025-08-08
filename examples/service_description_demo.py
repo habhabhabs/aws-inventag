@@ -73,7 +73,11 @@ def main():
                     "enabled": True,
                     "ServerSideEncryptionConfiguration": {
                         "Rules": [
-                            {"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}
+                            {
+                                "ApplyServerSideEncryptionByDefault": {
+                                    "SSEAlgorithm": "AES256"
+                                }
+                            }
                         ]
                     },
                 },
@@ -137,7 +141,9 @@ def main():
         if "description_metadata" in resource:
             metadata = resource["description_metadata"]
             print(f"     Template used: {metadata.get('template_used', 'None')}")
-            print(f"     Custom description: {metadata.get('has_custom_description', False)}")
+            print(
+                f"     Custom description: {metadata.get('has_custom_description', False)}"
+            )
         print()
 
     print("3. Creating custom configuration with advanced templates...")
@@ -180,7 +186,9 @@ def main():
                     "service_attributes.InstanceType",
                     "service_attributes.State.Name",
                 ],
-                "optional_attributes": ["service_attributes.Placement.AvailabilityZone"],
+                "optional_attributes": [
+                    "service_attributes.Placement.AvailabilityZone"
+                ],
                 "fallback_template": "custom_ec2_default",
             },
             "custom_ec2_volume": {
@@ -231,7 +239,9 @@ def main():
     custom_manager = ServiceDescriptionManager(config_path=config_file)
 
     # Apply custom descriptions
-    custom_enriched_resources = custom_manager.apply_descriptions_to_resources(sample_resources)
+    custom_enriched_resources = custom_manager.apply_descriptions_to_resources(
+        sample_resources
+    )
 
     for resource in custom_enriched_resources:
         print(f"   {resource['service']} {resource['type']} ({resource['id']}):")
@@ -240,7 +250,9 @@ def main():
         if "description_metadata" in resource:
             metadata = resource["description_metadata"]
             print(f"     Template used: {metadata.get('template_used', 'None')}")
-            print(f"     Has custom description: {metadata.get('has_custom_description', False)}")
+            print(
+                f"     Has custom description: {metadata.get('has_custom_description', False)}"
+            )
         print()
 
     print("5. Demonstrating template engine capabilities...")
@@ -275,8 +287,12 @@ def main():
     print(f"   Config path: {updated_config_info['config_path']}")
     print(f"   Last reload: {updated_config_info['last_reload']}")
     print(f"   Custom services: {updated_config_info['custom_services']}")
-    print(f"   Total custom descriptions: {updated_config_info['total_custom_descriptions']}")
-    print(f"   Registered templates: {len(updated_config_info['registered_templates'])}")
+    print(
+        f"   Total custom descriptions: {updated_config_info['total_custom_descriptions']}"
+    )
+    print(
+        f"   Registered templates: {len(updated_config_info['registered_templates'])}"
+    )
     print()
 
     print("7. Exporting configuration template for customization...")

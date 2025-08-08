@@ -157,14 +157,18 @@ def print_service_handler_info():
         handlers = factory.list_registered_handlers()
         for handler in handlers:
             if handler == "*":
-                print(f"- {handler} - Dynamic Service Handler (fallback for unknown services)")
+                print(
+                    f"- {handler} - Dynamic Service Handler (fallback for unknown services)"
+                )
             else:
                 print(f"- {handler} - Dedicated service handler")
         print()
 
     except Exception as e:
         print(f"Note: AWS session not available for handler demonstration: {e}")
-        print("In a real environment, handlers would be initialized with valid AWS credentials.")
+        print(
+            "In a real environment, handlers would be initialized with valid AWS credentials."
+        )
         print()
 
 
@@ -178,7 +182,9 @@ def demonstrate_service_specific_enrichment():
     print("S3 AMAZON S3 HANDLER")
     print("-" * 40)
     print("Deep bucket analysis with comprehensive configuration extraction:")
-    print("- Encryption Configuration - Server-side encryption settings, KMS key details")
+    print(
+        "- Encryption Configuration - Server-side encryption settings, KMS key details"
+    )
     print("- Versioning Status - Bucket versioning configuration and status")
     print("- Lifecycle Management - Lifecycle rules and transition policies")
     print("- Public Access Controls - Public access block configuration")
@@ -193,7 +199,9 @@ def demonstrate_service_specific_enrichment():
     print("- Engine Details - Database engine, version, and class information")
     print("- Storage Configuration - Allocated storage, type, and encryption settings")
     print("- High Availability - Multi-AZ deployment and backup configuration")
-    print("- Security Settings - VPC security groups, subnet groups, and parameter groups")
+    print(
+        "- Security Settings - VPC security groups, subnet groups, and parameter groups"
+    )
     print("- Performance Insights - Monitoring and performance configuration")
     print("- Maintenance Windows - Backup and maintenance scheduling")
     print()
@@ -204,10 +212,18 @@ def demonstrate_service_specific_enrichment():
     print("Instance and volume analysis with detailed configuration data:")
     print("- Instance Configuration - Type, state, platform, and architecture details")
     print("- Network Configuration - VPC, subnet, security groups, and IP addresses")
-    print("- Storage Details - EBS optimization, block device mappings, and root device info")
-    print("- Security Features - IAM instance profiles, key pairs, and monitoring state")
-    print("- Advanced Features - CPU options, hibernation, metadata options, and enclave settings")
-    print("- Volume Attributes - Size, type, IOPS, throughput, encryption, and attachment details")
+    print(
+        "- Storage Details - EBS optimization, block device mappings, and root device info"
+    )
+    print(
+        "- Security Features - IAM instance profiles, key pairs, and monitoring state"
+    )
+    print(
+        "- Advanced Features - CPU options, hibernation, metadata options, and enclave settings"
+    )
+    print(
+        "- Volume Attributes - Size, type, IOPS, throughput, encryption, and attachment details"
+    )
     print()
 
     # Lambda Handler Capabilities
@@ -227,8 +243,12 @@ def demonstrate_service_specific_enrichment():
     print("-" * 40)
     print("Container service details with cluster and service configuration:")
     print("- Cluster Configuration - Status, capacity providers, and service counts")
-    print("- Service Configuration - Task definitions, desired count, and deployment settings")
-    print("- Network Configuration - Load balancers, service registries, and VPC settings")
+    print(
+        "- Service Configuration - Task definitions, desired count, and deployment settings"
+    )
+    print(
+        "- Network Configuration - Load balancers, service registries, and VPC settings"
+    )
     print("- Scaling Configuration - Auto scaling and capacity provider strategies")
     print()
 
@@ -238,8 +258,12 @@ def demonstrate_service_specific_enrichment():
     print("Kubernetes cluster analysis with comprehensive configuration data:")
     print("- Cluster Configuration - Version, endpoint, and platform details")
     print("- Network Configuration - VPC settings and Kubernetes network config")
-    print("- Security Configuration - Encryption, identity providers, and access controls")
-    print("- Node Group Details - Instance types, scaling configuration, and launch templates")
+    print(
+        "- Security Configuration - Encryption, identity providers, and access controls"
+    )
+    print(
+        "- Node Group Details - Instance types, scaling configuration, and launch templates"
+    )
     print("- Add-on Configuration - Installed add-ons and their versions")
     print()
 
@@ -262,7 +286,9 @@ def demonstrate_dynamic_discovery():
     )
     print("- Response Analysis - Extracts meaningful attributes from API responses")
     print("- Caching System - Optimizes performance by caching successful patterns")
-    print("- Comprehensive Coverage - Attempts multiple API patterns for maximum data extraction")
+    print(
+        "- Comprehensive Coverage - Attempts multiple API patterns for maximum data extraction"
+    )
     print()
     print("DISCOVERY PROCESS:")
     print(
@@ -270,7 +296,9 @@ def demonstrate_dynamic_discovery():
     )
     print("2. Parameter Pattern Matching - Maps resource identifiers to API parameters")
     print("3. Safe API Execution - Validates operations as read-only before execution")
-    print("4. Response Extraction - Intelligently extracts attributes from API responses")
+    print(
+        "4. Response Extraction - Intelligently extracts attributes from API responses"
+    )
     print("5. Result Caching - Caches successful patterns for performance optimization")
     print()
 
@@ -318,7 +346,9 @@ def simulate_enrichment_process(resources):
             print(f"   Status: Attempting pattern-based discovery")
             unknown_services.add(service)
             enrichment_stats["unknown_services_count"] += 1
-            enrichment_stats["enriched_resources"] += 1  # Assume dynamic discovery succeeds
+            enrichment_stats[
+                "enriched_resources"
+            ] += 1  # Assume dynamic discovery succeeds
 
         print()
 
@@ -520,7 +550,9 @@ def main():
 
     print("BENEFITS OF SERVICE ENRICHMENT")
     print("=" * 80)
-    print("- Enhanced Compliance Analysis - Detailed configuration data for compliance checking")
+    print(
+        "- Enhanced Compliance Analysis - Detailed configuration data for compliance checking"
+    )
     print("- Security Auditing - Deep security configuration analysis")
     print("- Cost Optimization - Resource utilization and configuration insights")
     print("- Operational Intelligence - Comprehensive operational data for monitoring")

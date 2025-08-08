@@ -319,7 +319,9 @@ class TestTemplateVariableResolver:
     def test_resolve_variables_nested(self):
         """Test nested variable resolution."""
         template_text = "{{header.title}} - {{header.subtitle}}"
-        variables = {"header": {"title": "BOM Report", "subtitle": "Infrastructure Inventory"}}
+        variables = {
+            "header": {"title": "BOM Report", "subtitle": "Infrastructure Inventory"}
+        }
 
         result = self.resolver.resolve_variables(template_text, variables)
         assert result == "BOM Report - Infrastructure Inventory"

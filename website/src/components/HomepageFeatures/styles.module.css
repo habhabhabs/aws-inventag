@@ -3,6 +3,21 @@
   background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
 }
 
+.features .container .row {
+  row-gap: 2.5rem;
+  column-gap: 2.5rem;
+}
+
+/* Ensure proper spacing between feature cards in grid layout */
+.features .container .row .col {
+  margin-bottom: 3rem;
+}
+
+/* Better separation for cards that wrap to next row */
+.features .container .row .col:nth-child(n+4) {
+  margin-top: 1rem;
+}
+
 [data-theme='dark'] .features {
   background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 }
@@ -10,14 +25,14 @@
 .featureCard {
   background: white;
   border-radius: 1rem;
-  padding: 2rem;
+  padding: 2.5rem;
   height: 100%;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
-  margin-bottom: 2rem;
+  margin-bottom: 0;
 }
 
 .featureCard:hover {
@@ -102,8 +117,18 @@
     padding: 3rem 0;
   }
   
-  .featureCard {
-    margin-bottom: 1.5rem;
+  .features .container .row {
+    row-gap: 2rem;
+    column-gap: 2rem;
+  }
+  
+  .features .container .row .col {
+    margin-bottom: 2.5rem;
+  }
+  
+  /* Cards wrapping to next row on tablet */
+  .features .container .row .col:nth-child(n+3) {
+    margin-top: 1rem;
   }
 }
 
@@ -112,9 +137,22 @@
     padding: 2rem 0;
   }
   
+  .features .container .row {
+    row-gap: 1.5rem;
+    column-gap: 1.5rem;
+  }
+  
+  .features .container .row .col {
+    margin-bottom: 2rem;
+  }
+  
+  /* All cards stack vertically on mobile - add separation between each */
+  .features .container .row .col:nth-child(n+2) {
+    margin-top: 0.5rem;
+  }
+  
   .featureCard {
     padding: 1.5rem;
-    margin-bottom: 1rem;
   }
   
   .featureIcon {

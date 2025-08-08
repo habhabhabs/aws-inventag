@@ -458,7 +458,9 @@ class TestVPCEnrichment:
         assert vpc_enabled_converter.enrich_vpc_info is True
 
     @patch("boto3.Session")
-    def test_enrich_with_vpc_info(self, mock_session, vpc_enabled_converter, sample_inventory_data):
+    def test_enrich_with_vpc_info(
+        self, mock_session, vpc_enabled_converter, sample_inventory_data
+    ):
         """Test VPC information enrichment"""
         # Mock EC2 client
         mock_ec2 = Mock()
@@ -545,7 +547,9 @@ class TestErrorHandling:
         }
 
         # Should handle missing tags gracefully
-        tag_value = converter._extract_tag_value(resource_no_tags.get("tags"), "Environment")
+        tag_value = converter._extract_tag_value(
+            resource_no_tags.get("tags"), "Environment"
+        )
         assert tag_value == ""
 
     def test_file_write_error_handling(self):

@@ -197,7 +197,7 @@ print(f'Found {len(resources)} resources')
 
 ## Related Documentation
 
-- [IAM Permissions](./iam-permissions.md)
-- [Performance Optimization](./performance-optimization.md)
-- [Service Coverage](./service-coverage.md)
-- [Resource Normalization](./resource-normalization.md)
+- [IAM Permissions](./iam-permissions)
+- [Performance Optimization](./performance-optimization)
+- [Service Coverage](./service-coverage)
+- [Resource Normalization](./resource-normalization)

@@ -373,7 +373,7 @@ class WordBrandingApplicator(BrandingApplicator):
         """Add watermark to a document section."""
         try:
             # Create watermark XML
-            watermark_xml = f"""
+            watermark_xml = """
             <w:p xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
                 <w:pPr>
                     <w:pStyle w:val="Header"/>

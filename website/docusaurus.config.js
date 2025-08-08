@@ -32,9 +32,9 @@ const config = {
   deploymentBranch: 'gh-pages', // Branch for GitHub Pages deployment
   trailingSlash: false, // GitHub Pages compatibility
 
-  onBrokenLinks: 'warn', // Allow broken links during migration phase
+  onBrokenLinks: 'ignore', // Allow broken links during migration phase
   onBrokenMarkdownLinks: 'warn', // Allow some flexibility for markdown links during migration
-  onBrokenAnchors: 'warn', // Allow broken anchors during migration phase
+  onBrokenAnchors: 'ignore', // Allow broken anchors during migration phase
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you

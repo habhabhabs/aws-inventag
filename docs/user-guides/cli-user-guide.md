@@ -246,6 +246,7 @@ Create an accounts configuration file (JSON or YAML):
 | `--enable-network-analysis` | Enable network analysis for VPC, subnets, and network security | `--enable-network-analysis` |
 | `--enable-security-analysis` | Enable security analysis for security groups, NACLs, and security posture | `--enable-security-analysis` |
 | `--enable-cost-analysis` | Enable cost analysis and optimization recommendations | `--enable-cost-analysis` |
+| `--hide-fallback-resources` | Hide fallback resources discovered via ResourceGroupsTagging API (default: show all resources) | `--hide-fallback-resources` |
 
 ### State Management Options
 

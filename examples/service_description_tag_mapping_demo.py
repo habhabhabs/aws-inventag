@@ -54,7 +54,11 @@ def main():
                 "encryption": {
                     "ServerSideEncryptionConfiguration": {
                         "Rules": [
-                            {"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}
+                            {
+                                "ApplyServerSideEncryptionByDefault": {
+                                    "SSEAlgorithm": "AES256"
+                                }
+                            }
                         ]
                     }
                 }
@@ -78,7 +82,9 @@ def main():
     print("-" * 40)
 
     # Apply service descriptions
-    enriched_with_descriptions = desc_manager.apply_descriptions_to_resources(sample_resources)
+    enriched_with_descriptions = desc_manager.apply_descriptions_to_resources(
+        sample_resources
+    )
 
     for resource in enriched_with_descriptions:
         print(f"Resource: {resource['id']}")

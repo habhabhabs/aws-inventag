@@ -565,11 +565,15 @@ if __name__ == "__main__":
 
     print(f"\n🎉 Integration Complete!")
     print(f"=" * 50)
-    print(f"The optimized discovery system has been integrated into your inventag package.")
+    print(
+        f"The optimized discovery system has been integrated into your inventag package."
+    )
     print(f"")
     print(f"📋 What was done:")
     print(f"  1. ✅ Backed up original intelligent_discovery.py")
-    print(f"  2. ✅ Created enhanced intelligent discovery with better service coverage")
+    print(
+        f"  2. ✅ Created enhanced intelligent discovery with better service coverage"
+    )
     print(f"  3. ✅ Updated inventory.py to use enhanced discovery")
     print(f"  4. ✅ Created configuration file for easy customization")
     print(f"  5. ✅ Created test script for validation")
@@ -577,7 +581,9 @@ if __name__ == "__main__":
     print(f"🚀 Next Steps:")
     print(f"  1. Run the test script: python inventag/discovery/test_optimized.py")
     print(f"  2. Customize settings in: inventag/discovery/optimized_config.ini")
-    print(f"  3. Use your existing scripts - they will automatically use the enhanced system")
+    print(
+        f"  3. Use your existing scripts - they will automatically use the enhanced system"
+    )
     print(f"")
     print(f"🔧 Key Improvements:")
     print(f"  - Better service coverage (CloudFront, IAM, Route53, S3, Lambda)")

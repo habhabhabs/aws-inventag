@@ -316,7 +316,7 @@ class CredentialManager:
             validation_result = self.validate_account_credentials(credentials)
 
             if validation_result.is_valid:
-                print(f"✓ Credentials validated successfully!")
+                print("✓ Credentials validated successfully!")
                 print(f"  Account: {validation_result.account_id}")
                 print(
                     f"  Accessible regions: {len(validation_result.accessible_regions)}"

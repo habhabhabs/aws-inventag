@@ -211,13 +211,39 @@ code {
   border: 1px solid var(--ifm-color-emphasis-200);
 }
 
-/* Language labels for code blocks */
+/* Language labels for code blocks - Fix plaintext display */
 .prism-code[class*="language-"]::before {
   content: attr(class);
   position: absolute;
   top: 0;
   right: 0;
   background: var(--inventag-blue);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-bottom-left-radius: var(--ifm-global-radius);
+}
+
+/* Hide ugly prism class names for text blocks */
+.prism-code[class*="language-text"]::before,
+.prism-code[class*="codeblock"]::before,
+.prism-code[class*="thin-scrollbar"]::before {
+  display: none !important;
+}
+
+/* Clean plaintext code blocks */
+.prism-code[class*="language-text"] {
+  position: relative;
+}
+
+.prism-code[class*="language-text"]::after {
+  content: "TEXT";
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--inventag-gray);
   color: white;
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
@@ -279,14 +305,16 @@ code {
   border-right: 1px solid var(--ifm-color-emphasis-200);
 }
 
+/* Fix light theme sidebar text visibility */
 .menu__link {
   border-radius: var(--ifm-global-radius);
   transition: all 0.2s ease;
+  color: var(--ifm-color-content) !important; /* Ensure text is always visible */
 }
 
 .menu__link:hover {
   background-color: rgba(37, 99, 235, 0.1);
-  color: var(--inventag-blue);
+  color: var(--inventag-blue) !important;
 }
 
 .menu__link--active {
@@ -297,6 +325,78 @@ code {
 
 .menu__link--active:hover {
   background-color: var(--inventag-blue-dark);
+}
+
+/* Light theme specific sidebar fixes */
+[data-theme='light'] .menu__link {
+  color: var(--ifm-color-content-secondary) !important;
+}
+
+[data-theme='light'] .menu__link:hover {
+  color: var(--inventag-blue-dark) !important;
+}
+
+[data-theme='light'] .menu__list-item-collapsible .menu__link {
+  color: var(--ifm-color-emphasis-800) !important;
+}
+
+/* Critical fix: Light theme active menu item visibility */
+[data-theme='light'] .menu__link--active {
+  background-color: var(--inventag-blue) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  border: 1px solid var(--inventag-blue-dark) !important;
+}
+
+[data-theme='light'] .menu__link--active:hover {
+  background-color: var(--inventag-blue-dark) !important;
+  color: white !important;
+}
+
+/* Ensure high contrast for selected items in light mode */
+[data-theme='light'] .menu__list-item--collapsed .menu__link--active,
+[data-theme='light'] .menu__list-item .menu__link--active {
+  background: linear-gradient(135deg, var(--inventag-blue) 0%, var(--inventag-blue-dark) 100%) !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 6px !important;
+}
+
+/* Fix for parent category text when child is selected - keep parent text dark */
+[data-theme='light'] .menu__link--sublist.menu__link--active,
+[data-theme='light'] .menu__link--sublist-caret.menu__link--active,
+[data-theme='light'] .menu__list-item-collapsible .menu__link--active {
+  background: transparent !important;
+  color: var(--ifm-color-emphasis-800) !important;
+  font-weight: 600 !important;
+  border: none !important;
+  text-shadow: none !important;
+}
+
+/* Ensure parent categories remain readable when expanded with active children */
+[data-theme='light'] .menu__link--sublist:hover,
+[data-theme='light'] .menu__link--sublist-caret:hover {
+  background: rgba(37, 99, 235, 0.05) !important;
+  color: var(--inventag-blue-dark) !important;
+}
+
+/* Only actual leaf menu items (non-sublist items) should have white text on blue background */
+[data-theme='light'] .menu__link--active:not(.menu__link--sublist):not(.menu__link--sublist-caret) {
+  background: linear-gradient(135deg, var(--inventag-blue) 0%, var(--inventag-blue-dark) 100%) !important;
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+  border: 1px solid var(--inventag-blue-dark) !important;
+}
+
+/* Dark theme sidebar improvements */
+[data-theme='dark'] .menu__link {
+  color: var(--ifm-color-content) !important;
+}
+
+[data-theme='dark'] .menu__link:hover {
+  color: var(--inventag-blue-light) !important;
 }
 
 /* ===== FOOTER STYLING ===== */

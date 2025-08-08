@@ -4,6 +4,14 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import styles from './styles.module.css';
 
+// Import version dynamically
+let versionInfo;
+try {
+  versionInfo = require('../../../../version.json');
+} catch (error) {
+  versionInfo = { version: '4.0.0' }; // fallback
+}
+
 function HomepageHero() {
   const {siteConfig} = useDocusaurusContext();
   
@@ -17,7 +25,7 @@ function HomepageHero() {
                 🏷️ InvenTag
               </h1>
               <div className={styles.versionBadge}>
-                <span>v3.0+</span>
+                <span>v{versionInfo.version}</span>
               </div>
             </div>
             <p className={styles.heroSubtitle}>
@@ -115,7 +123,7 @@ function HomepageHero() {
                   </div>
                 </div>
                 <div className={styles.chartRow}>
-                  <span className={styles.chartLabel}>InvenTag v3.0+</span>
+                  <span className={styles.chartLabel}>InvenTag v{versionInfo.version}</span>
                   <div className={styles.chartBar}>
                     <div className={styles.chartFill} style={{width: '95%', backgroundColor: '#22c55e'}}></div>
                     <span className={styles.chartValue}>Cost-Validated ✨</span>

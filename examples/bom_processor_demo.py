@@ -126,10 +126,14 @@ def main():
     print("\n[OK] Data Extraction and Standardization:")
     print("   Stage 1: Extracting resources from input data...")
     print(f"   - Found {len(sample_resources)} resources")
-    print("   - Formats supported: Direct lists, inventory containers, compliance reports")
+    print(
+        "   - Formats supported: Direct lists, inventory containers, compliance reports"
+    )
 
     print("\n   Stage 2: Resource standardization...")
-    print("   - Service name standardization (EC2 -> EC2, CloudFormation -> CLOUDFORMATION)")
+    print(
+        "   - Service name standardization (EC2 -> EC2, CloudFormation -> CLOUDFORMATION)"
+    )
     print("   - Resource type fixes (LoadBalancer -> Load-Balancer)")
     print("   - ID extraction from ARNs when missing")
     print("   - Account ID population from ARNs")

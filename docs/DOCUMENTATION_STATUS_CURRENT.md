@@ -1,3 +1,7 @@
+---
+title: DOCUMENTATION STATUS CURRENT
+---
+
 # InvenTag Documentation Status - Current State
 
 ## 📋 Overview

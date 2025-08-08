@@ -84,7 +84,9 @@ class DiscoveryMonitor:
         # Create console handler
         if not self.logger.handlers:
             handler = logging.StreamHandler()
-            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+            formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
             handler.setFormatter(formatter)
             self.logger.addHandler(handler)
 
@@ -151,7 +153,11 @@ class DiscoveryMonitor:
             except Exception as e:
                 self.logger.error(f"Monitoring cycle failed: {e}")
                 self.error_history.append(
-                    {"timestamp": datetime.now(), "error": str(e), "type": "monitoring_cycle"}
+                    {
+                        "timestamp": datetime.now(),
+                        "error": str(e),
+                        "type": "monitoring_cycle",
+                    }
                 )
                 time.sleep(30)  # Shorter wait on error
 
@@ -271,7 +277,9 @@ class DiscoveryMonitor:
         severity_emoji = {"info": "ℹ️", "warning": "⚠️", "critical": "🚨"}
         emoji = severity_emoji.get(alert["severity"], "📢")
 
-        self.logger.warning(f"{emoji} ALERT [{alert['type'].upper()}]: {alert['message']}")
+        self.logger.warning(
+            f"{emoji} ALERT [{alert['type'].upper()}]: {alert['message']}"
+        )
         print(f"{emoji} ALERT [{alert['type'].upper()}]: {alert['message']}")
 
         # Send email alert if configured
@@ -285,7 +293,9 @@ class DiscoveryMonitor:
         """Send email alert"""
 
         if not EMAIL_AVAILABLE:
-            self.logger.warning("Email functionality not available - skipping email alert")
+            self.logger.warning(
+                "Email functionality not available - skipping email alert"
+            )
             return
 
         try:
@@ -308,11 +318,13 @@ This is an automated alert from the AWS Discovery monitoring system.
             msg.attach(MimeText(body, "plain"))
 
             server = smtplib.SMTP(
-                self.config["email_alerts"]["smtp_server"], self.config["email_alerts"]["smtp_port"]
+                self.config["email_alerts"]["smtp_server"],
+                self.config["email_alerts"]["smtp_port"],
             )
             server.starttls()
             server.login(
-                self.config["email_alerts"]["username"], self.config["email_alerts"]["password"]
+                self.config["email_alerts"]["username"],
+                self.config["email_alerts"]["password"],
             )
 
             text = msg.as_string()
@@ -333,7 +345,10 @@ This is an automated alert from the AWS Discovery monitoring system.
 
         if alert["type"] == "performance" and alert["severity"] == "warning":
             # For performance issues, try reducing parallel workers
-            if hasattr(self.discovery, "max_workers") and self.discovery.max_workers > 1:
+            if (
+                hasattr(self.discovery, "max_workers")
+                and self.discovery.max_workers > 1
+            ):
                 self.discovery.max_workers = max(1, self.discovery.max_workers - 1)
                 self.logger.info(
                     f"🔧 Auto-remediation: Reduced parallel workers to {self.discovery.max_workers}"
@@ -352,14 +367,20 @@ This is an automated alert from the AWS Discovery monitoring system.
             return {"status": "no_data", "message": "No monitoring data available"}
 
         latest_cycle = self.discovery_history[-1]
-        latest_performance = self.performance_history[-1] if self.performance_history else None
+        latest_performance = (
+            self.performance_history[-1] if self.performance_history else None
+        )
 
         # Calculate averages over last 10 cycles
         recent_cycles = list(self.performance_history)[-10:]
 
         if recent_cycles:
-            avg_duration = sum(c["duration"] for c in recent_cycles) / len(recent_cycles)
-            avg_resources = sum(c["total_resources"] for c in recent_cycles) / len(recent_cycles)
+            avg_duration = sum(c["duration"] for c in recent_cycles) / len(
+                recent_cycles
+            )
+            avg_resources = sum(c["total_resources"] for c in recent_cycles) / len(
+                recent_cycles
+            )
             total_errors = sum(c["errors"] for c in recent_cycles)
         else:
             avg_duration = 0
@@ -390,7 +411,9 @@ This is an automated alert from the AWS Discovery monitoring system.
 
         status = self.get_monitoring_status()
 
-        print(f"🔄 Monitoring Status: {'Active' if status['monitoring_active'] else 'Inactive'}")
+        print(
+            f"🔄 Monitoring Status: {'Active' if status['monitoring_active'] else 'Inactive'}"
+        )
         print(f"📅 Last Cycle: {status['last_cycle']}")
         print(f"📊 Total Resources: {status['total_resources']}")
 
@@ -420,7 +443,10 @@ This is an automated alert from the AWS Discovery monitoring system.
         # Resource trend analysis
         print(f"\n📈 Resource Trends:")
         for service in self.config["services_to_monitor"]:
-            if service in self.resource_counts and len(self.resource_counts[service]) >= 2:
+            if (
+                service in self.resource_counts
+                and len(self.resource_counts[service]) >= 2
+            ):
                 history = list(self.resource_counts[service])
                 current = history[-1]["count"]
                 previous = history[-2]["count"]
@@ -471,7 +497,8 @@ This is an automated alert from the AWS Discovery monitoring system.
             ],
             "resource_counts": {
                 service: [
-                    {"timestamp": r["timestamp"].isoformat(), "count": r["count"]} for r in history
+                    {"timestamp": r["timestamp"].isoformat(), "count": r["count"]}
+                    for r in history
                 ]
                 for service, history in self.resource_counts.items()
             },

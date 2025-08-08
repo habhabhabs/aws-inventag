@@ -1,3 +1,7 @@
+---
+title: Regression Test Results
+---
+
 # Comprehensive Regression Test Results
 
 *Last Updated: August 7, 2025*

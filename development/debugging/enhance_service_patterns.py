@@ -258,7 +258,10 @@ class EnhancedServicePatterns:
             "elasticache": [r"^default$", r"^default\..*$"],
             "cloudformation": [r"^aws-.*$", r"^AWSServiceRole.*$"],
             "kms": [r"^alias/aws/.*$", r"^aws/.*$"],  # AWS managed KMS keys
-            "secretsmanager": [r"^aws/.*$", r"^rds-db-credentials/.*$"],  # RDS managed secrets
+            "secretsmanager": [
+                r"^aws/.*$",
+                r"^rds-db-credentials/.*$",
+            ],  # RDS managed secrets
         }
 
     @staticmethod

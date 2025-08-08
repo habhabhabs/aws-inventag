@@ -114,12 +114,16 @@ class TestDocumentGenerator:
         mock_document = Mock()
 
         # Test Excel branding
-        with patch.object(self.generator.excel_branding_applicator, "apply_branding") as mock_apply:
+        with patch.object(
+            self.generator.excel_branding_applicator, "apply_branding"
+        ) as mock_apply:
             self.generator.apply_branding(mock_document, "excel")
             mock_apply.assert_called_once_with(mock_document, self.config.branding)
 
         # Test Word branding
-        with patch.object(self.generator.word_branding_applicator, "apply_branding") as mock_apply:
+        with patch.object(
+            self.generator.word_branding_applicator, "apply_branding"
+        ) as mock_apply:
             self.generator.apply_branding(mock_document, "word")
             mock_apply.assert_called_once_with(mock_document, self.config.branding)
 
@@ -135,7 +139,9 @@ class TestDocumentGenerator:
         ):
             with patch.object(self.generator, "apply_branding"):
                 with patch("os.path.getsize", return_value=1024):
-                    result = self.generator._generate_single_format("excel", self.mock_bom_data)
+                    result = self.generator._generate_single_format(
+                        "excel", self.mock_bom_data
+                    )
 
         assert result.success is True
         assert result.format_type == "excel"
@@ -155,7 +161,9 @@ class TestDocumentGenerator:
         ):
             with patch.object(self.generator, "apply_branding"):
                 with patch("os.path.getsize", return_value=2048):
-                    result = self.generator._generate_single_format("word", self.mock_bom_data)
+                    result = self.generator._generate_single_format(
+                        "word", self.mock_bom_data
+                    )
 
         assert result.success is True
         assert result.format_type == "word"
@@ -164,9 +172,13 @@ class TestDocumentGenerator:
 
     def test_generate_single_format_csv_success(self):
         """Test successful single format generation for CSV."""
-        with patch.object(self.generator.csv_builder, "create_bom_csv", return_value="test.csv"):
+        with patch.object(
+            self.generator.csv_builder, "create_bom_csv", return_value="test.csv"
+        ):
             with patch("os.path.getsize", return_value=512):
-                result = self.generator._generate_single_format("csv", self.mock_bom_data)
+                result = self.generator._generate_single_format(
+                    "csv", self.mock_bom_data
+                )
 
         assert result.success is True
         assert result.format_type == "csv"
@@ -188,7 +200,9 @@ class TestDocumentGenerator:
 
     def test_generate_single_format_unsupported(self):
         """Test single format generation with unsupported format."""
-        result = self.generator._generate_single_format("unsupported", self.mock_bom_data)
+        result = self.generator._generate_single_format(
+            "unsupported", self.mock_bom_data
+        )
 
         assert result.success is False
         assert result.format_type == "unsupported"
@@ -196,7 +210,9 @@ class TestDocumentGenerator:
 
     def test_generate_bom_documents_sequential(self):
         """Test BOM document generation in sequential mode."""
-        config = DocumentConfig(output_formats=["excel", "word"], enable_parallel_generation=False)
+        config = DocumentConfig(
+            output_formats=["excel", "word"], enable_parallel_generation=False
+        )
         generator = DocumentGenerator(config)
 
         with patch.object(generator, "_generate_single_format") as mock_generate:
@@ -239,7 +255,9 @@ class TestDocumentGenerator:
         with patch.object(self.generator, "_generate_single_format") as mock_generate:
             mock_generate.side_effect = [
                 DocumentGenerationResult("excel", "test.xlsx", True),
-                DocumentGenerationResult("word", "", False, error_message="Word generation failed"),
+                DocumentGenerationResult(
+                    "word", "", False, error_message="Word generation failed"
+                ),
             ]
 
             summary = self.generator.generate_bom_documents(self.mock_bom_data)
@@ -255,7 +273,9 @@ class TestDocumentGenerator:
         invalid_data = Mock(spec=BOMData)
         invalid_data.resources = None
 
-        with patch.object(self.generator, "validate_document_structure", return_value=False):
+        with patch.object(
+            self.generator, "validate_document_structure", return_value=False
+        ):
             summary = self.generator.generate_bom_documents(invalid_data)
 
         assert summary.total_formats == 0
@@ -277,12 +297,16 @@ class TestDocumentGenerator:
             time.sleep(2)  # Longer than timeout
             return DocumentGenerationResult(format_type, "test.xlsx", True)
 
-        with patch.object(generator, "_generate_single_format", side_effect=slow_generation):
+        with patch.object(
+            generator, "_generate_single_format", side_effect=slow_generation
+        ):
             summary = generator.generate_bom_documents(self.mock_bom_data)
 
         # Should handle timeout gracefully
         assert summary.total_formats == 1
-        assert summary.failed_formats >= 0  # May or may not complete depending on timing
+        assert (
+            summary.failed_formats >= 0
+        )  # May or may not complete depending on timing
 
     def test_create_generation_summary(self):
         """Test generation summary creation."""
@@ -344,9 +368,17 @@ class TestDocumentGenerator:
 
     def test_get_builder_for_format(self):
         """Test builder selection for different formats."""
-        assert self.generator._get_builder_for_format("excel") == self.generator.excel_builder
-        assert self.generator._get_builder_for_format("word") == self.generator.word_builder
-        assert self.generator._get_builder_for_format("csv") == self.generator.csv_builder
+        assert (
+            self.generator._get_builder_for_format("excel")
+            == self.generator.excel_builder
+        )
+        assert (
+            self.generator._get_builder_for_format("word")
+            == self.generator.word_builder
+        )
+        assert (
+            self.generator._get_builder_for_format("csv") == self.generator.csv_builder
+        )
 
         # Test unsupported format
         with pytest.raises(ValueError):

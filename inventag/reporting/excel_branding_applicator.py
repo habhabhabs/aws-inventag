@@ -432,7 +432,7 @@ class ExcelBrandingApplicator(BrandingApplicator):
                             cell_length = len(str(cell.value))
                             if cell_length > max_length:
                                 max_length = cell_length
-                        except:
+                        except Exception:
                             pass
 
                 # Set column width with some padding

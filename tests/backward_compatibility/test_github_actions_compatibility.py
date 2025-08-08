@@ -116,7 +116,10 @@ class TestGitHubActionsCompatibility:
 
             # Should use actions/setup-python@v4 or later
             if "setup-python" in content:
-                assert "actions/setup-python@v4" in content or "actions/setup-python@v5" in content
+                assert (
+                    "actions/setup-python@v4" in content
+                    or "actions/setup-python@v5" in content
+                )
 
 
 class TestCIJobCompatibility:
@@ -284,7 +287,10 @@ class TestSecurityScanCompatibility:
         # Safety should run without critical errors
         if result.returncode != 0:
             # Should show it's not installed or produce valid output
-            assert "No module named" in result.stderr or "vulnerabilities" in result.stdout.lower()
+            assert (
+                "No module named" in result.stderr
+                or "vulnerabilities" in result.stdout.lower()
+            )
 
 
 class TestDependencyCompatibility:
@@ -311,11 +317,15 @@ class TestDependencyCompatibility:
             # Basic validation - should not have spaces in package names (except for version specs)
             if "==" in line or ">=" in line or "<=" in line:
                 package_name = line.split("==")[0].split(">=")[0].split("<=")[0]
-                assert " " not in package_name.strip(), f"Invalid package name: {package_name}"
+                assert (
+                    " " not in package_name.strip()
+                ), f"Invalid package name: {package_name}"
 
     def test_dev_requirements_compatibility(self):
         """Test dev requirements compatibility"""
-        dev_requirements_file = Path(__file__).parent.parent.parent / "requirements-dev.txt"
+        dev_requirements_file = (
+            Path(__file__).parent.parent.parent / "requirements-dev.txt"
+        )
 
         if dev_requirements_file.exists():
             with open(dev_requirements_file, "r") as f:
@@ -344,7 +354,10 @@ class TestDependencyCompatibility:
         # Should not have dependency resolution errors
         if result.returncode != 0:
             # Allow for network issues but not dependency conflicts
-            assert "conflict" not in result.stderr.lower() or "network" in result.stderr.lower()
+            assert (
+                "conflict" not in result.stderr.lower()
+                or "network" in result.stderr.lower()
+            )
 
 
 class TestVersionCompatibility:

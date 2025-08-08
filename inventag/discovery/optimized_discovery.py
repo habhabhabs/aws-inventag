@@ -1471,7 +1471,7 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             "cloudfront",
             "iam",
             "route53",
-            "waf",
+            "wa",
             "cloudformation",
             "organizations",
             "support",

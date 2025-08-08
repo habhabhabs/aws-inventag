@@ -88,6 +88,7 @@ class MultiAccountConfig:
     )
     output_directory: str = "bom_output"
     credential_validation_timeout: int = 30
+    hide_fallback_resources: bool = False
 
 
 class CloudBOMGenerator:
@@ -320,7 +321,7 @@ class CloudBOMGenerator:
                                     credentials.account_name = (
                                         f"AWS Account {actual_account_id} ({role_part})"
                                     )
-                                except:
+                                except Exception:
                                     credentials.account_name = (
                                         f"AWS Account {actual_account_id}"
                                     )
@@ -330,7 +331,7 @@ class CloudBOMGenerator:
                                     credentials.account_name = (
                                         f"AWS Account {actual_account_id} ({user_part})"
                                     )
-                                except:
+                                except Exception:
                                     credentials.account_name = (
                                         f"AWS Account {actual_account_id}"
                                     )
@@ -668,6 +669,7 @@ class CloudBOMGenerator:
                 services=context.credentials.services
                 or None,  # None means all services
                 tag_filters=context.credentials.tags,
+                hide_fallback_resources=self.config.hide_fallback_resources,
             )
 
             # Discover resources

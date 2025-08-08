@@ -342,10 +342,10 @@ class WordDocumentBuilder(DocumentBuilder):
         # Overview paragraph
         overview_para = doc.add_paragraph()
         overview_text = (
-            f"This Cloud Bill of Materials (BOM) report provides a comprehensive analysis of "
+            "This Cloud Bill of Materials (BOM) report provides a comprehensive analysis of "
             f"AWS resources across the {self.config.branding.company_name} infrastructure. "
             f"The report covers {bom_data.generation_metadata.get('total_resources', 0)} resources "
-            f"and includes compliance analysis, network security assessment, and operational recommendations."
+            "and includes compliance analysis, network security assessment, and operational recommendations."
         )
         overview_run = overview_para.add_run(overview_text)
         overview_run.font.size = self.styles["body_font_size"]
@@ -568,7 +568,7 @@ class WordDocumentBuilder(DocumentBuilder):
         overview_text = (
             f"The infrastructure spans {network_analysis.get('total_vpcs', 0)} VPCs "
             f"with {network_analysis.get('total_subnets', 0)} subnets. "
-            f"This section provides detailed analysis of network utilization and capacity planning."
+            "This section provides detailed analysis of network utilization and capacity planning."
         )
         overview_run = overview_para.add_run(overview_text)
         overview_run.font.size = self.styles["body_font_size"]
@@ -670,7 +670,7 @@ class WordDocumentBuilder(DocumentBuilder):
         overview_text = (
             f"Security analysis covers {security_analysis.get('total_security_groups', 0)} security groups "
             f"with {security_analysis.get('high_risk_rules', 0)} high-risk rules identified. "
-            f"This section provides detailed risk assessment and remediation recommendations."
+            "This section provides detailed risk assessment and remediation recommendations."
         )
         overview_run = overview_para.add_run(overview_text)
         overview_run.font.size = self.styles["body_font_size"]
@@ -892,9 +892,9 @@ class WordDocumentBuilder(DocumentBuilder):
 
             custom_para = doc.add_paragraph()
             custom_text = (
-                f"The following custom attributes were configured for this report: "
+                "The following custom attributes were configured for this report: "
                 f"{', '.join(bom_data.custom_attributes)}. "
-                f"These attributes provide organization-specific metadata for resources."
+                "These attributes provide organization-specific metadata for resources."
             )
             custom_run = custom_para.add_run(custom_text)
             custom_run.font.size = self.styles["body_font_size"]

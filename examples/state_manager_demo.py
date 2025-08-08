@@ -23,7 +23,9 @@ def main():
     print("=== InvenTag StateManager Demonstration ===\n")
 
     # Initialize StateManager with demo configuration
-    state_manager = StateManager(state_dir="demo_state", retention_days=30, max_snapshots=10)
+    state_manager = StateManager(
+        state_dir="demo_state", retention_days=30, max_snapshots=10
+    )
 
     # Sample resource data for demonstration
     initial_resources = [
@@ -134,7 +136,9 @@ def main():
     print(f"   Added resources: {len(added_arns)}")
     for arn in added_arns:
         resource = state2_resources[arn]
-        print(f"   + {resource['service']}: {resource['id']} ({resource['compliance_status']})")
+        print(
+            f"   + {resource['service']}: {resource['id']} ({resource['compliance_status']})"
+        )
 
     # Find removed resources
     removed_arns = set(state1_resources.keys()) - set(state2_resources.keys())

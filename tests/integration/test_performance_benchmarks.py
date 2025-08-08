@@ -87,8 +87,12 @@ class TestPerformanceBenchmarks:
         memory_usage = end_memory - start_memory
 
         # Performance assertions
-        assert processing_time < 5.0, f"Processing took {processing_time:.2f}s, expected < 5.0s"
-        assert memory_usage < 100, f"Memory usage {memory_usage:.2f}MB, expected < 100MB"
+        assert (
+            processing_time < 5.0
+        ), f"Processing took {processing_time:.2f}s, expected < 5.0s"
+        assert (
+            memory_usage < 100
+        ), f"Memory usage {memory_usage:.2f}MB, expected < 100MB"
         assert len(result.resources) == 1000
 
         print(f"1K resources: {processing_time:.2f}s, {memory_usage:.2f}MB")
@@ -112,8 +116,12 @@ class TestPerformanceBenchmarks:
         memory_usage = end_memory - start_memory
 
         # Performance assertions (more lenient for larger dataset)
-        assert processing_time < 30.0, f"Processing took {processing_time:.2f}s, expected < 30.0s"
-        assert memory_usage < 500, f"Memory usage {memory_usage:.2f}MB, expected < 500MB"
+        assert (
+            processing_time < 30.0
+        ), f"Processing took {processing_time:.2f}s, expected < 30.0s"
+        assert (
+            memory_usage < 500
+        ), f"Memory usage {memory_usage:.2f}MB, expected < 500MB"
         assert len(result.resources) == 10000
 
         print(f"10K resources: {processing_time:.2f}s, {memory_usage:.2f}MB")
@@ -192,7 +200,9 @@ class TestPerformanceBenchmarks:
 
             # This would normally call AWS APIs, but we're testing the analysis logic
             with patch.object(analyzer, "sg_cache", {}):
-                enriched_resources = analyzer.map_resources_to_security_groups(resources)
+                enriched_resources = analyzer.map_resources_to_security_groups(
+                    resources
+                )
 
             end_time = time.time()
             processing_time = end_time - start_time
@@ -247,14 +257,18 @@ class TestPerformanceBenchmarks:
         assert (
             processing_time < 15.0
         ), f"Delta detection took {processing_time:.2f}s, expected < 15.0s"
-        assert memory_usage < 200, f"Memory usage {memory_usage:.2f}MB, expected < 200MB"
+        assert (
+            memory_usage < 200
+        ), f"Memory usage {memory_usage:.2f}MB, expected < 200MB"
 
         # Verify results
         assert delta_report.summary["added_count"] == 200
         assert delta_report.summary["removed_count"] == 100
         assert delta_report.summary["modified_count"] > 0
 
-        print(f"Delta detection (2K resources): {processing_time:.2f}s, {memory_usage:.2f}MB")
+        print(
+            f"Delta detection (2K resources): {processing_time:.2f}s, {memory_usage:.2f}MB"
+        )
 
     @pytest.mark.performance
     def test_concurrent_document_generation(self):
@@ -298,7 +312,9 @@ class TestPerformanceBenchmarks:
         total_processed = sum(len(result.resources) for result in results)
         assert total_processed == len(resources)
 
-        print(f"Concurrent processing (3 threads, 1K resources): {processing_time:.2f}s")
+        print(
+            f"Concurrent processing (3 threads, 1K resources): {processing_time:.2f}s"
+        )
 
     @pytest.mark.performance
     def test_memory_usage_scaling(self):
@@ -360,7 +376,9 @@ class TestPerformanceBenchmarks:
         )
 
         # Mock the actual file writing to focus on data processing
-        with patch("inventag.reporting.csv_builder.CSVBuilder.create_bom_csv") as mock_csv:
+        with patch(
+            "inventag.reporting.csv_builder.CSVBuilder.create_bom_csv"
+        ) as mock_csv:
             mock_csv.return_value = "test.csv"
 
             generator = DocumentGenerator(doc_config)
@@ -402,7 +420,9 @@ class TestPerformanceBenchmarks:
             batch_time = batch_end - batch_start
 
             # Ensure each batch processes within reasonable time
-            assert batch_time < 3.0, f"Batch {iterations} took {batch_time:.2f}s, expected < 3.0s"
+            assert (
+                batch_time < 3.0
+            ), f"Batch {iterations} took {batch_time:.2f}s, expected < 3.0s"
 
             iterations += 1
             total_resources_processed += len(result.resources)
@@ -416,8 +436,12 @@ class TestPerformanceBenchmarks:
         throughput = total_resources_processed / total_time
 
         # Performance assertions
-        assert iterations >= 5, f"Only completed {iterations} iterations in {duration_seconds}s"
-        assert throughput > 100, f"Throughput {throughput:.2f} resources/sec, expected > 100"
+        assert (
+            iterations >= 5
+        ), f"Only completed {iterations} iterations in {duration_seconds}s"
+        assert (
+            throughput > 100
+        ), f"Throughput {throughput:.2f} resources/sec, expected > 100"
 
         print(
             f"Stress test: {iterations} iterations, {total_resources_processed} resources, "

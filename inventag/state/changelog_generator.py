@@ -33,7 +33,7 @@ class ChangelogFormat(Enum):
 
     MARKDOWN = "markdown"
     HTML = "html"
-    PDF = "pdf"
+    PDF = "pd"
     JSON = "json"
     YAML = "yaml"
 
@@ -1200,7 +1200,7 @@ class ChangelogGenerator:
 
         # Title and metadata
         html_parts.append(f"<h1>{changelog.title}</h1>")
-        html_parts.append(f'<div class="metadata">')
+        html_parts.append('<div class="metadata">')
         html_parts.append(
             f"<p><strong>Generated:</strong> {changelog.generation_timestamp}</p>"
         )

@@ -57,7 +57,7 @@ class OptimizedDynamicDiscovery:
             "cloudfront",
             "iam",
             "route53",
-            "waf",
+            "wa",
             "wafv2",
             "shield",
             "globalaccelerator",

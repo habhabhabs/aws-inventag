@@ -222,7 +222,9 @@ def print_delta_report_summary(delta_report):
         print("ADDED RESOURCES")
         print("-" * 40)
         for resource in delta_report.added_resources:
-            print(f"+ {resource.service}/{resource.resource_type}: {resource.resource_id}")
+            print(
+                f"+ {resource.service}/{resource.resource_type}: {resource.resource_id}"
+            )
             print(f"  ARN: {resource.resource_arn}")
             print(f"  Severity: {resource.severity.value}")
             if resource.security_impact:
@@ -236,7 +238,9 @@ def print_delta_report_summary(delta_report):
         print("REMOVED RESOURCES")
         print("-" * 40)
         for resource in delta_report.removed_resources:
-            print(f"- {resource.service}/{resource.resource_type}: {resource.resource_id}")
+            print(
+                f"- {resource.service}/{resource.resource_type}: {resource.resource_id}"
+            )
             print(f"  ARN: {resource.resource_arn}")
             print(f"  Severity: {resource.severity.value}")
             if resource.security_impact:
@@ -250,15 +254,21 @@ def print_delta_report_summary(delta_report):
         print("MODIFIED RESOURCES")
         print("-" * 40)
         for resource in delta_report.modified_resources:
-            print(f"~ {resource.service}/{resource.resource_type}: {resource.resource_id}")
+            print(
+                f"~ {resource.service}/{resource.resource_type}: {resource.resource_id}"
+            )
             print(f"  ARN: {resource.resource_arn}")
             print(f"  Severity: {resource.severity.value}")
             print(f"  Attribute Changes: {len(resource.attribute_changes)}")
 
             # Show detailed attribute changes
             for change in resource.attribute_changes[:5]:  # Show first 5 changes
-                print(f"    * {change.attribute_path}: {change.old_value} -> {change.new_value}")
-                print(f"      Category: {change.category.value}, Severity: {change.severity.value}")
+                print(
+                    f"    * {change.attribute_path}: {change.old_value} -> {change.new_value}"
+                )
+                print(
+                    f"      Category: {change.category.value}, Severity: {change.severity.value}"
+                )
 
             if len(resource.attribute_changes) > 5:
                 print(f"    ... and {len(resource.attribute_changes) - 5} more changes")
