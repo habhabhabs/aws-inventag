@@ -149,51 +149,62 @@ jobs:
           cd ..
           
           # Create version-specific SBOM summary
-          cat > "docs/security/versions/$VERSION/README.md" << EOF
-# SBOM for Version $VERSION
-
-**Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')  
-**Version**: $VERSION  
-**Repository**: ${{ github.repository }}  
-**Git Tag**: $VERSION
-
-## Version-Specific Components
-
-This SBOM was generated at the time of version $VERSION creation and represents the exact components and dependencies included in this release.
-
-### Available SBOM Files
-
-- [sbom-$VERSION.json](sbom-$VERSION.json) - Syft JSON format
-- [sbom-$VERSION-cyclonedx.json](sbom-$VERSION-cyclonedx.json) - CycloneDX format
-$(if [ -f "docs/security/versions/$VERSION/python-sbom-$VERSION.json" ]; then
-  echo "- [python-sbom-$VERSION.json](python-sbom-$VERSION.json) - Python dependencies"
-fi)
-$(if [ -f "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" ]; then
-  echo "- [nodejs-website-sbom-$VERSION.json](nodejs-website-sbom-$VERSION.json) - Node.js website dependencies"
-fi)
-
-## Component Summary
-
-- **Repository Components**: $(jq '.artifacts | length' "docs/security/versions/$VERSION/sbom-$VERSION.json" 2>/dev/null || echo "Unknown")
-$(if [ -f "docs/security/versions/$VERSION/python-sbom-$VERSION.json" ]; then
-  echo "- **Python Components**: $(jq '.components | length' "docs/security/versions/$VERSION/python-sbom-$VERSION.json" 2>/dev/null || echo "Unknown")"
-fi)
-$(if [ -f "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" ]; then
-  echo "- **Node.js Components**: $(jq '.components | length' "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" 2>/dev/null || echo "Unknown")"
-fi)
-
-## Version Tracking
-
-This SBOM enables:
-- Supply chain security tracking for this specific version
-- Vulnerability analysis at the version level
-- License compliance for this release
-- Change tracking between versions
-
----
-
-*This SBOM is part of InvenTag's comprehensive security documentation and was generated during the version creation process.*
-EOF
+          echo "# SBOM for Version $VERSION" > "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "**Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> "docs/security/versions/$VERSION/README.md"
+          echo "**Version**: $VERSION" >> "docs/security/versions/$VERSION/README.md"
+          echo "**Repository**: ${{ github.repository }}" >> "docs/security/versions/$VERSION/README.md"
+          echo "**Git Tag**: $VERSION" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "## Version-Specific Components" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "This SBOM was generated at the time of version $VERSION creation and represents the exact components and dependencies included in this release." >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "### Available SBOM Files" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "- [sbom-$VERSION.json](sbom-$VERSION.json) - Syft JSON format" >> "docs/security/versions/$VERSION/README.md"
+          echo "- [sbom-$VERSION-cyclonedx.json](sbom-$VERSION-cyclonedx.json) - CycloneDX format" >> "docs/security/versions/$VERSION/README.md"
+          
+          # Add Python SBOM if it exists
+          if [ -f "docs/security/versions/$VERSION/python-sbom-$VERSION.json" ]; then
+            echo "- [python-sbom-$VERSION.json](python-sbom-$VERSION.json) - Python dependencies" >> "docs/security/versions/$VERSION/README.md"
+          fi
+          
+          # Add Node.js SBOM if it exists
+          if [ -f "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" ]; then
+            echo "- [nodejs-website-sbom-$VERSION.json](nodejs-website-sbom-$VERSION.json) - Node.js website dependencies" >> "docs/security/versions/$VERSION/README.md"
+          fi
+          
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "## Component Summary" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          
+          # Add component counts
+          REPO_COMPONENTS=$(jq '.artifacts | length' "docs/security/versions/$VERSION/sbom-$VERSION.json" 2>/dev/null || echo "Unknown")
+          echo "- **Repository Components**: $REPO_COMPONENTS" >> "docs/security/versions/$VERSION/README.md"
+          
+          if [ -f "docs/security/versions/$VERSION/python-sbom-$VERSION.json" ]; then
+            PYTHON_COMPONENTS=$(jq '.components | length' "docs/security/versions/$VERSION/python-sbom-$VERSION.json" 2>/dev/null || echo "Unknown")
+            echo "- **Python Components**: $PYTHON_COMPONENTS" >> "docs/security/versions/$VERSION/README.md"
+          fi
+          
+          if [ -f "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" ]; then
+            NODEJS_COMPONENTS=$(jq '.components | length' "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" 2>/dev/null || echo "Unknown")
+            echo "- **Node.js Components**: $NODEJS_COMPONENTS" >> "docs/security/versions/$VERSION/README.md"
+          fi
+          
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "## Version Tracking" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "This SBOM enables:" >> "docs/security/versions/$VERSION/README.md"
+          echo "- Supply chain security tracking for this specific version" >> "docs/security/versions/$VERSION/README.md"
+          echo "- Vulnerability analysis at the version level" >> "docs/security/versions/$VERSION/README.md"
+          echo "- License compliance for this release" >> "docs/security/versions/$VERSION/README.md"
+          echo "- Change tracking between versions" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "---" >> "docs/security/versions/$VERSION/README.md"
+          echo "" >> "docs/security/versions/$VERSION/README.md"
+          echo "*This SBOM is part of InvenTag's comprehensive security documentation and was generated during the version creation process.*" >> "docs/security/versions/$VERSION/README.md"
           
           echo "✅ Version-specific SBOM generated for $VERSION"
 
