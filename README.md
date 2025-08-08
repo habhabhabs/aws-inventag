@@ -61,12 +61,12 @@ pip install -r requirements.txt
 
 | Section | Description | Link |
 |---------|-------------|------|
-| 🚀 **Getting Started** | Installation and quick start guide | **[Start Here →](https://habhabhabs.github.io/inventag-aws/getting-started/quick-start)** |
-| 📖 **User Guides** | Comprehensive CLI reference | **[CLI Guide →](https://habhabhabs.github.io/inventag-aws/user-guides/cli-user-guide)** |
-| 📋 **Configuration** | Working configuration examples | **[Examples →](https://habhabhabs.github.io/inventag-aws/user-guides/configuration-examples)** |
-| 🛡️ **Production Safety** | Security and compliance features | **[Security →](https://habhabhabs.github.io/inventag-aws/user-guides/production-safety)** |
-| 🏗️ **Architecture** | System architecture and design | **[Architecture →](https://habhabhabs.github.io/inventag-aws/architecture/core-module-integration)** |
-| 🔧 **Development** | Contributing and development guide | **[Contribute →](https://habhabhabs.github.io/inventag-aws/development/CONTRIBUTING)** |
+| 🚀 **Getting Started** | Installation and quick start guide | **[Start Here →](https://habhabhabs.github.io/inventag-aws/docs/getting-started/quick-start)** |
+| 📖 **User Guides** | Comprehensive CLI reference | **[CLI Guide →](https://habhabhabs.github.io/inventag-aws/docs/user-guides/cli-user-guide)** |
+| 📋 **Configuration** | Working configuration examples | **[Examples →](https://habhabhabs.github.io/inventag-aws/docs/user-guides/configuration-examples)** |
+| 🛡️ **Production Safety** | Security and compliance features | **[Security →](https://habhabhabs.github.io/inventag-aws/docs/user-guides/production-safety)** |
+| 🏗️ **Architecture** | System architecture and design | **[Architecture →](https://habhabhabs.github.io/inventag-aws/docs/architecture/core-module-integration)** |
+| 🔧 **Development** | Contributing and development guide | **[Contribute →](https://habhabhabs.github.io/inventag-aws/docs/development/CONTRIBUTING)** |
 
 ### Legacy Documentation
 
@@ -134,14 +134,14 @@ InvenTag includes enterprise-grade security features:
 - **Risk Assessment** - Automated security risk evaluation
 - **Production Safety** - Real-time monitoring and validation
 
-See [Production Safety Guide](https://habhabhabs.github.io/inventag-aws/user-guides/production-safety) for complete details.
+See [Production Safety Guide](https://habhabhabs.github.io/inventag-aws/docs/user-guides/production-safety) for complete details.
 
 ## 🔗 Support & Community
 
 - **[📖 Complete Documentation](https://habhabhabs.github.io/inventag-aws/)** - Comprehensive guides and references
 - **[🐛 Issues](https://github.com/habhabhabs/inventag-aws/issues)** - Bug reports and feature requests
 - **[💬 Discussions](https://github.com/habhabhabs/inventag-aws/discussions)** - Community Q&A
-- **[📋 Additional Resources](https://habhabhabs.github.io/inventag-aws/examples/)** - Configuration examples and tutorials
+- **[📋 Additional Resources](https://habhabhabs.github.io/inventag-aws/docs/examples/)** - Configuration examples and tutorials
 
 ## 📄 License
 
