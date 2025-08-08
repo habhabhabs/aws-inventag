@@ -1,11 +1,11 @@
 {
-  "version": "4.1.0",
-  "release_notes": "Release 4.1.0 - 2025-08-08\\✨ New Features:\\  • feat: implement dynamic version badge and enhance feature card spacing\\  • feat: add --hide-fallback-resources flag to disable fallback resource display\\  • feat: comprehensive documentation overhaul and code quality improvements\\🐛 Bug Fixes:\\  • fix: repair feature card links and enhance row separation\\  • fix: resolve YAML syntax error in release workflow and update CLI documentation\\  • fix: update release workflow to use VERSION_BUMP_WORKFLOW PAT token\\💄 Style Changes:\\  • style: finalize feature card row separation with enhanced responsive spacing\\  • style: implement proportional spacing for feature cards without breaking functionality\\  • style: improve viewport spacing and layout for better readability\\  • style: apply Black code formatting across entire codebase\\📊 Summary: 10 commits in this release\\🔀 Triggered by PR #23",
-  "release_date": "2025-08-08T08:59:25.418241",
-  "previous_version": "4.0.0",
+  "version": "4.2.0",
+  "release_notes": "Release 4.2.0 - 2025-08-08\\✨ New Features:\\  • feat: add version.json dependency validation to documentation deployment\\🔧 Maintenance:\\  • chore: update version.json to reflect latest GitHub release v4.1.0\\📊 Summary: 2 commits in this release\\🔀 Triggered by PR #24",
+  "release_date": "2025-08-08T09:13:11.588401",
+  "previous_version": "4.1.0",
   "version_bump_type": "minor",
-  "git_tag": "v4.1.0",
-  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.1.0",
-  "triggered_by_pr": "23",
-  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/23"
+  "git_tag": "v4.2.0",
+  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.0",
+  "triggered_by_pr": "24",
+  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/24"
 }
