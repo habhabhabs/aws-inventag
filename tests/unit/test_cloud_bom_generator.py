@@ -28,9 +28,7 @@ class TestAccountCredentials:
 
     def test_account_credentials_creation(self):
         """Test creating AccountCredentials with minimal data."""
-        creds = AccountCredentials(
-            account_id="123456789012", account_name="Test Account"
-        )
+        creds = AccountCredentials(account_id="123456789012", account_name="Test Account")
 
         assert creds.account_id == "123456789012"
         assert creds.account_name == "Test Account"
@@ -184,9 +182,7 @@ class TestCloudBOMGenerator:
         mock_session.client.return_value = mock_sts
         mock_session_class.return_value = mock_session
 
-        credentials = AccountCredentials(
-            account_id="123456789012", profile_name="test-profile"
-        )
+        credentials = AccountCredentials(account_id="123456789012", profile_name="test-profile")
 
         session = generator._create_account_session(credentials)
 
@@ -196,9 +192,7 @@ class TestCloudBOMGenerator:
         assert session == mock_session
 
     @patch("inventag.core.cloud_bom_generator.boto3.Session")
-    def test_create_account_session_with_access_keys(
-        self, mock_session_class, generator
-    ):
+    def test_create_account_session_with_access_keys(self, mock_session_class, generator):
         """Test creating session with access keys."""
         mock_session = Mock()
         mock_session_class.return_value = mock_session
@@ -220,9 +214,7 @@ class TestCloudBOMGenerator:
         assert session == mock_session
 
     @patch("inventag.core.cloud_bom_generator.boto3.Session")
-    def test_create_account_session_with_role_assumption(
-        self, mock_session_class, generator
-    ):
+    def test_create_account_session_with_role_assumption(self, mock_session_class, generator):
         """Test creating session with role assumption."""
         # Mock default session
         mock_default_session = Mock()
@@ -304,9 +296,7 @@ class TestCloudBOMGenerator:
 
         mock_session.client.side_effect = [mock_ec2_us_east, mock_ec2_us_west]
 
-        accessible = generator._test_accessible_regions(
-            mock_session, ["us-east-1", "us-west-2"]
-        )
+        accessible = generator._test_accessible_regions(mock_session, ["us-east-1", "us-west-2"])
 
         assert accessible == ["us-east-1"]
 
@@ -332,9 +322,7 @@ class TestCloudBOMGenerator:
         mock_inventory_class.return_value = mock_inventory
 
         # Create account context
-        credentials = AccountCredentials(
-            account_id="123456789012", account_name="Test Account"
-        )
+        credentials = AccountCredentials(account_id="123456789012", account_name="Test Account")
         session = Mock()
         context = AccountContext(
             credentials=credentials,
@@ -429,9 +417,7 @@ class TestCloudBOMGenerator:
         result = generator._run_compliance_analysis(resources, policies)
 
         # Verify compliance checker initialization
-        mock_compliance_class.assert_called_once_with(
-            session=session, policies=policies
-        )
+        mock_compliance_class.assert_called_once_with(session=session, policies=policies)
 
         # Verify compliance analysis
         mock_compliance.check_resources_compliance.assert_called_once_with(resources)
@@ -566,9 +552,7 @@ class TestCloudBOMGeneratorIntegration:
                 profile_name="test-profile",
             )
         ]
-        config = MultiAccountConfig(
-            accounts=accounts, parallel_account_processing=False
-        )
+        config = MultiAccountConfig(accounts=accounts, parallel_account_processing=False)
 
         generator = CloudBOMGenerator(config)
 
@@ -614,9 +598,7 @@ class TestCloudBOMGeneratorIntegration:
         # Mock BOM converter
         mock_bom_converter = mock_dependencies["BOMConverter"].return_value
 
-        with patch.object(
-            generator, "_create_account_session", return_value=mock_session
-        ):
+        with patch.object(generator, "_create_account_session", return_value=mock_session):
             result = generator.generate_multi_account_bom(
                 output_formats=["excel"], compliance_policies=None
             )

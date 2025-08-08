@@ -147,12 +147,20 @@ Before submitting your PR, ensure:
 # Run all tests
 pytest tests/
 
+# Quick regression testing (validates core functionality)
+python3 tests/regression/test_quick_regression.py
+
+# Full regression testing (comprehensive end-to-end validation)
+python3 tests/regression/test_full_regression.py
+
 # Run with coverage
 pytest tests/ --cov=scripts --cov-report=html
 
 # Run specific test file
 pytest tests/test_bom_converter.py
 ```
+
+**📖 For comprehensive testing guidance, see [Regression Testing Guide](regression-testing.md)**
 
 ### Writing Tests
 
@@ -288,7 +296,7 @@ npm run docs:pipeline:test
 
 - **Asset Management**: Place images and files in `docs/assets/`:
   ```markdown
-  ![Architecture Diagram](../assets/architecture-overview.png)
+  ![Architecture Diagram](/img/architecture-overview.png)
   ```
 
 #### 4. **Testing Documentation Changes**

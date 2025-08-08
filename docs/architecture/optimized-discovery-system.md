@@ -725,6 +725,6 @@ discovery.field_mapper.optimized_service_patterns['custom_service'] = {
 ```
 
 For more information, see:
-- [Core Module Integration](core-module-integration)
-- [Service Enrichment Framework](service-enrichment)
+- [Core Module Integration](/architecture/core-module-integration)
+- [Service Enrichment Framework](/architecture/service-enrichment)
 - [CLI User Guide](../user-guides/cli-user-guide)

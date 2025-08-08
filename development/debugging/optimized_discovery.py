@@ -112,18 +112,12 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
             )
 
             # Enhanced field extraction
-            resource.resource_name = self._enhanced_extract_resource_name(
-                raw_data, service_name
-            )
+            resource.resource_name = self._enhanced_extract_resource_name(raw_data, service_name)
             resource.resource_arn = self._extract_arn(raw_data)
 
             # Status and lifecycle with fallbacks
-            resource.status = self._extract_status(raw_data) or self._extract_state(
-                raw_data
-            )
-            resource.state = self._extract_state(raw_data) or self._extract_status(
-                raw_data
-            )
+            resource.status = self._extract_status(raw_data) or self._extract_state(raw_data)
+            resource.state = self._extract_state(raw_data) or self._extract_status(raw_data)
             resource.created_date = self._extract_creation_date(raw_data)
             resource.last_modified = self._extract_modification_date(raw_data)
 
@@ -132,9 +126,7 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
             resource.tags = raw_tags
             resource.name_from_tags = raw_tags.get("Name")
             resource.environment = (
-                raw_tags.get("Environment")
-                or raw_tags.get("Env")
-                or raw_tags.get("Stage")
+                raw_tags.get("Environment") or raw_tags.get("Env") or raw_tags.get("Stage")
             )
             resource.project = (
                 raw_tags.get("Project")
@@ -151,9 +143,7 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
             resource.vpc_id = self._extract_vpc_info(raw_data)
             resource.subnet_ids = self._extract_subnet_info(raw_data)
             resource.security_groups = self._extract_security_groups(raw_data)
-            resource.public_access = self._determine_public_access(
-                raw_data, service_name
-            )
+            resource.public_access = self._determine_public_access(raw_data, service_name)
             resource.encrypted = self._determine_encryption_status(raw_data)
 
             # Resource relationships
@@ -161,9 +151,7 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
             resource.parent_resource = self._identify_parent_resource(raw_data)
 
             # Enhanced confidence calculation
-            resource.confidence_score = self._enhanced_calculate_confidence_score(
-                resource
-            )
+            resource.confidence_score = self._enhanced_calculate_confidence_score(resource)
 
             return resource
 
@@ -179,9 +167,7 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                 raw_data=raw_data,
             )
 
-    def _enhanced_extract_resource_id(
-        self, data: Dict[str, Any], service_name: str
-    ) -> str:
+    def _enhanced_extract_resource_id(self, data: Dict[str, Any], service_name: str) -> str:
         """Enhanced resource ID extraction with service-specific logic."""
 
         # Service-specific ID extraction
@@ -263,11 +249,7 @@ class OptimizedFieldMapper(IntelligentFieldMapper):
                     nested_tags = value["Tags"]
                     if isinstance(nested_tags, list):
                         for tag in nested_tags:
-                            if (
-                                isinstance(tag, dict)
-                                and "Key" in tag
-                                and "Value" in tag
-                            ):
+                            if isinstance(tag, dict) and "Key" in tag and "Value" in tag:
                                 tags[tag["Key"]] = tag["Value"]
                     elif isinstance(nested_tags, dict):
                         tags.update(nested_tags)
@@ -354,9 +336,7 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         all_resources = []
 
         # Process priority services in parallel
-        with concurrent.futures.ThreadPoolExecutor(
-            max_workers=self.max_workers
-        ) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit discovery tasks for priority services
             future_to_service = {
                 executor.submit(self._discover_service_safe, service): service
@@ -367,9 +347,7 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             for future in concurrent.futures.as_completed(future_to_service):
                 service = future_to_service[future]
                 try:
-                    resources = future.result(
-                        timeout=30
-                    )  # 30 second timeout per service
+                    resources = future.result(timeout=30)  # 30 second timeout per service
                     all_resources.extend(resources)
                     self.logger.info(
                         f"Parallel discovery: {service} found {len(resources)} resources"
@@ -381,9 +359,7 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         all_resources = self._intelligent_deduplication(all_resources)
         self.discovered_resources.extend(all_resources)
 
-        self.logger.info(
-            f"Optimized parallel discovery complete: {len(all_resources)} resources"
-        )
+        self.logger.info(f"Optimized parallel discovery complete: {len(all_resources)} resources")
         return all_resources
 
     def _discover_services_sequential(self) -> List[StandardResource]:
@@ -405,9 +381,7 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         all_resources = self._intelligent_deduplication(all_resources)
         self.discovered_resources.extend(all_resources)
 
-        self.logger.info(
-            f"Optimized sequential discovery complete: {len(all_resources)} resources"
-        )
+        self.logger.info(f"Optimized sequential discovery complete: {len(all_resources)} resources")
         return all_resources
 
     def _discover_service_safe(self, service_name: str) -> List[StandardResource]:
@@ -434,9 +408,7 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                 client = self.session.client(service_name, region_name=region)
 
                 # Get enhanced operations for this service
-                operations = self._get_enhanced_discovery_operations(
-                    service_name, client
-                )
+                operations = self._get_enhanced_discovery_operations(service_name, client)
 
                 # Try each discovery operation
                 for operation_name in operations:
@@ -457,18 +429,14 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                         continue
 
             except Exception as e:
-                self.logger.warning(
-                    f"Failed to create {service_name} client in {region}: {e}"
-                )
+                self.logger.warning(f"Failed to create {service_name} client in {region}: {e}")
 
         # Enhanced deduplication for this service
         service_resources = self._intelligent_deduplication(service_resources)
 
         return service_resources
 
-    def _get_enhanced_discovery_operations(
-        self, service_name: str, client
-    ) -> List[str]:
+    def _get_enhanced_discovery_operations(self, service_name: str, client) -> List[str]:
         """Get prioritized discovery operations for a service."""
 
         # Get all available operations
@@ -477,9 +445,9 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         # Service-specific operation priorities
         service_lower = service_name.lower()
         if service_lower in self.field_mapper.enhanced_service_patterns:
-            preferred_ops = self.field_mapper.enhanced_service_patterns[
-                service_lower
-            ].get("operations", [])
+            preferred_ops = self.field_mapper.enhanced_service_patterns[service_lower].get(
+                "operations", []
+            )
             # Prioritize preferred operations
             operations = [op for op in preferred_ops if op in all_operations]
             if operations:
@@ -490,10 +458,7 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
             op
             for op in all_operations
             if op.startswith(("List", "Describe", "Get"))
-            and not any(
-                skip in op
-                for skip in ["Policy", "Version", "Status", "Health", "Metrics"]
-            )
+            and not any(skip in op for skip in ["Policy", "Version", "Status", "Health", "Metrics"])
         ]
 
         # Prioritize List operations over Describe operations
@@ -501,9 +466,7 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
         describe_ops = [op for op in discovery_ops if op.startswith("Describe")]
         get_ops = [op for op in discovery_ops if op.startswith("Get")]
 
-        return (
-            list_ops[:2] + describe_ops[:2] + get_ops[:1]
-        )  # Limit to avoid too many calls
+        return list_ops[:2] + describe_ops[:2] + get_ops[:1]  # Limit to avoid too many calls
 
     def _is_global_service(self, service_name: str) -> bool:
         """Check if a service is global (not region-specific)."""
@@ -574,9 +537,7 @@ class OptimizedAWSDiscovery(IntelligentAWSDiscovery):
                 best_resource = max(group, key=lambda r: r.confidence_score)
                 deduplicated.append(best_resource)
 
-        self.logger.info(
-            f"Deduplication: {len(resources)} -> {len(deduplicated)} resources"
-        )
+        self.logger.info(f"Deduplication: {len(resources)} -> {len(deduplicated)} resources")
         return deduplicated
 
 

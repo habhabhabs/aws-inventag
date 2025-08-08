@@ -319,26 +319,62 @@ class TransformationEngine {
 function createTransformations(logger) {
   const transformations = [];
 
-  // 1. Fix relative markdown links for Docusaurus routing
+  // 1. Convert GitHub-style relative links to Docusaurus absolute paths
   transformations.push({
-    name: 'fix-markdown-links',
+    name: 'convert-github-to-docusaurus-links',
     fn: (content, filePath) => {
       let transformed = content;
       let hasChanges = false;
       
-      // Convert [text](../other-file.md) to [text](../other-file)
-      // But preserve external links and anchors
-      const linkRegex = /\[([^\]]+)\]\(([^)]+\.md)(#[^)]+)?\)/g;
+      // Convert GitHub-style relative links to Docusaurus absolute paths
+      // [text](./path/file.md) -> [text](/path/file)
+      // [text](../path/file.md) -> [text](/path/file)
+      // [text](path/file.md) -> [text](/path/file)
+      const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
       
-      transformed = transformed.replace(linkRegex, (match, text, link, anchor) => {
-        // Skip external links
-        if (link.startsWith('http') || link.startsWith('mailto:') || link.startsWith('//')) {
+      transformed = transformed.replace(linkRegex, (match, text, link) => {
+        // Skip external links, anchors, and assets
+        if (link.startsWith('http') || link.startsWith('mailto:') || link.startsWith('//') || 
+            link.startsWith('#') || link.includes('.json') || link.includes('.yaml') || 
+            link.includes('.png') || link.includes('.jpg') || link.includes('.svg')) {
           return match;
         }
         
-        hasChanges = true;
-        const newLink = link.replace(/\.md$/, '');
-        return `[${text}](${newLink}${anchor || ''})`;
+        // Only process .md files or links that look like internal docs
+        if (link.endsWith('.md') || (!link.includes('.') && !link.startsWith('http'))) {
+          hasChanges = true;
+          
+          // Remove .md extension
+          let newLink = link.replace(/\.md$/, '');
+          
+          // Convert relative paths to absolute paths from docs root
+          if (newLink.startsWith('./')) {
+            // ./user-guides/file -> /user-guides/file
+            newLink = newLink.replace(/^\./, '');
+          } else if (newLink.startsWith('../')) {
+            // Get current file directory relative to docs root
+            const currentDir = path.dirname(path.relative(CONFIG.docsDir, filePath));
+            const targetPath = path.resolve('/', currentDir, newLink).replace(/\\/g, '/');
+            newLink = targetPath === '/' ? '/' : targetPath;
+          } else if (!newLink.startsWith('/')) {
+            // Relative path without ./ prefix
+            const currentDir = path.dirname(path.relative(CONFIG.docsDir, filePath));
+            if (currentDir && currentDir !== '.') {
+              newLink = `/${currentDir}/${newLink}`.replace(/\/+/g, '/');
+            } else {
+              newLink = `/${newLink}`;
+            }
+          }
+          
+          // Ensure it starts with / for Docusaurus absolute path
+          if (!newLink.startsWith('/')) {
+            newLink = '/' + newLink;
+          }
+          
+          return `[${text}](${newLink})`;
+        }
+        
+        return match;
       });
       
       return { content: transformed, hasChanges };
@@ -374,34 +410,34 @@ title: ${title}
     priority: 5
   });
 
-  // 3. Fix asset paths for dual compatibility
+  // 3. Convert asset paths for Docusaurus static folder compatibility
   transformations.push({
-    name: 'fix-asset-paths',
+    name: 'convert-asset-paths',
     fn: (content, filePath) => {
       let transformed = content;
       let hasChanges = false;
       
-      // Fix image paths to be relative to docs root
-      const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+      // Convert image and file asset paths for Docusaurus
+      const assetRegex = /(!?\[[^\]]*\])\(([^)]+)\)/g;
       
-      transformed = transformed.replace(imageRegex, (match, alt, src) => {
-        // Skip external images
-        if (src.startsWith('http') || src.startsWith('//')) {
+      transformed = transformed.replace(assetRegex, (match, linkText, src) => {
+        // Skip external links
+        if (src.startsWith('http') || src.startsWith('//') || src.startsWith('#')) {
           return match;
         }
         
-        // Ensure assets are referenced correctly
-        if (src.startsWith('assets/') || src.startsWith('./assets/') || src.startsWith('../assets/')) {
-          // Normalize to relative path from current file to assets
-          const currentDir = path.dirname(filePath);
-          const docsDir = path.resolve(CONFIG.docsDir);
-          const relativePath = path.relative(currentDir, docsDir);
-          const normalizedPath = path.join(relativePath, 'assets', path.basename(src)).replace(/\\/g, '/');
-          
-          if (normalizedPath !== src) {
-            hasChanges = true;
-            return `![${alt}](${normalizedPath})`;
-          }
+        // Handle images (move to /img/ for Docusaurus)
+        if (linkText.startsWith('![') && (src.includes('assets/images/') || src.includes('.svg') || src.includes('.png') || src.includes('.jpg'))) {
+          const fileName = path.basename(src);
+          hasChanges = true;
+          return `${linkText}(/img/${fileName})`;
+        }
+        
+        // Handle downloadable files (move to /files/ for Docusaurus)
+        if (src.includes('assets/files/') || src.includes('.json') || src.includes('.yaml')) {
+          const fileName = path.basename(src);
+          hasChanges = true;
+          return `${linkText}(/files/${fileName})`;
         }
         
         return match;
@@ -445,7 +481,8 @@ async function main() {
   const logger = new Logger(CONFIG.logFile);
   
   try {
-    logger.info('Starting documentation transformation pipeline', CONFIG);
+    logger.info('Starting GitHub → Docusaurus documentation transformation pipeline', CONFIG);
+    logger.info('This will convert GitHub-compatible relative links to Docusaurus absolute paths');
     
     // Initialize transformation engine
     const engine = new TransformationEngine(logger);

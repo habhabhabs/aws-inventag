@@ -299,7 +299,7 @@ python -m inventag.cli.main --validate-config \
   --service-descriptions config/service_descriptions_example.yaml
 ```
 
-> 📚 **For complete CLI documentation with all options and examples, see [CLI_USAGE_ENHANCED.md](CLI_USAGE_ENHANCED)**
+> 📚 **For complete CLI documentation with all options and examples, see [CLI_USAGE_ENHANCED.md](/development/CLI_USAGE_ENHANCED)**
 
 **Legacy script usage (deprecated):**
 ```bash
@@ -644,24 +644,24 @@ jobs:
 - Semantic versioning (MAJOR.MINOR.PATCH)
 
 **Release Documentation:**
-- 📖 See [`RELEASE.md`](RELEASE) for complete release management guide
+- 📖 See [`RELEASE.md`](/development/RELEASE) for complete release management guide
 - 🔗 [Latest Release](https://github.com/habhabhabs/inventag-aws/releases/latest)
 - 📊 [All Releases](https://github.com/habhabhabs/inventag-aws/releases)
 
 **Core Module Integration Documentation:**
-- 🏗️ See [`docs/CORE_MODULE_INTEGRATION.md`](docs/CORE_MODULE_INTEGRATION) for unified core module usage
+- 🏗️ See [`docs/CORE_MODULE_INTEGRATION.md`](/development/docs/CORE_MODULE_INTEGRATION) for unified core module usage
 - 🔄 Includes state management integration, change detection, and changelog generation
 - 🚀 Enterprise CI/CD patterns with comprehensive state tracking
 - 📊 Advanced credential management and multi-account orchestration
 
 **CI/CD Integration Documentation:**
-- 🚀 See [`docs/CICD_INTEGRATION.md`](docs/CICD_INTEGRATION) for comprehensive CI/CD integration guide
+- 🚀 See [`docs/CICD_INTEGRATION.md`](/development/docs/CICD_INTEGRATION) for comprehensive CI/CD integration guide
 - 📊 Includes S3 upload configuration, compliance gates, notifications, and monitoring
 - 🔧 GitHub Actions and AWS CodeBuild integration examples
 - 📈 Prometheus metrics and Grafana dashboard configurations
 
 **Production Safety Documentation:**
-- 🛡️ See [`docs/PRODUCTION_SAFETY.md`](docs/PRODUCTION_SAFETY) for comprehensive production safety guide
+- 🛡️ See [`docs/PRODUCTION_SAFETY.md`](/development/docs/PRODUCTION_SAFETY) for comprehensive production safety guide
 - 🔐 Includes security validation, error handling, and compliance reporting
 - 📋 SOC2, ISO27001 compliance framework support
 - 🚨 Real-time monitoring, audit logging, and performance tracking
@@ -2326,7 +2326,7 @@ required_tags:
 **✅ MINIMAL PERMISSIONS**: Only requires read access to AWS services  
 **✅ PRODUCTION SAFE**: Designed for safe execution in production environments
 
-See [`docs/SECURITY.md`](docs/SECURITY) for detailed security information.
+See [`docs/SECURITY.md`](/development/docs/SECURITY) for detailed security information.
 
 ## 🌍 Region Handling
 
@@ -2436,17 +2436,17 @@ All files include timestamps for easy tracking:
 
 ## 📚 Documentation
 
-- **[Release Management Guide](RELEASE)** - Complete CI/CD and versioning documentation
-- **[Security Guide](docs/SECURITY)** - Detailed permissions and security info
-- **[Tag Compliance Guide](docs/TAG_COMPLIANCE)** - Comprehensive tag compliance checking with integrated BOM generation
-- **[Network Analysis Guide](docs/NETWORK_ANALYSIS)** - Comprehensive VPC/subnet analysis and capacity planning
-- **[Service Enrichment Guide](docs/SERVICE_ENRICHMENT)** - Deep service attribute extraction and custom handlers
-- **[CLI User Guide](docs/CLI_USER_GUIDE)** - Comprehensive CLI interface documentation
-- **[State Management Guide](docs/STATE_MANAGEMENT)** - Comprehensive state tracking and change detection
-- **[Configuration Guide](config/README)** - Tag policies and IAM setup
-- **[Script Documentation](scripts/README)** - Legacy script usage (deprecated)
-- **[Examples](examples/README)** - Usage patterns and outputs
-- **[Testing Guide](tests/README)** - Comprehensive test suite documentation
+- **[Release Management Guide](/development/RELEASE)** - Complete CI/CD and versioning documentation
+- **[Security Guide](/development/docs/SECURITY)** - Detailed permissions and security info
+- **[Tag Compliance Guide](/development/docs/TAG_COMPLIANCE)** - Comprehensive tag compliance checking with integrated BOM generation
+- **[Network Analysis Guide](/development/docs/NETWORK_ANALYSIS)** - Comprehensive VPC/subnet analysis and capacity planning
+- **[Service Enrichment Guide](/development/docs/SERVICE_ENRICHMENT)** - Deep service attribute extraction and custom handlers
+- **[CLI User Guide](/development/docs/CLI_USER_GUIDE)** - Comprehensive CLI interface documentation
+- **[State Management Guide](/development/docs/STATE_MANAGEMENT)** - Comprehensive state tracking and change detection
+- **[Configuration Guide](/development/config/README)** - Tag policies and IAM setup
+- **[Script Documentation](/development/scripts/README)** - Legacy script usage (deprecated)
+- **[Examples](/development/examples/README)** - Usage patterns and outputs
+- **[Testing Guide](/development/tests/README)** - Comprehensive test suite documentation
 
 ## 🚀 DevOps & Production Integration
 

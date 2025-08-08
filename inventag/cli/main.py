@@ -192,9 +192,22 @@ Examples:
         help="Enable cost analysis and optimization recommendations",
     )
     analysis_group.add_argument(
+        "--fallback-display",
+        choices=["auto", "always", "never"],
+        default="auto",
+        help=(
+            "Control fallback resource display: 'auto' shows fallback only when "
+            "no primary resources found for a service (recommended), 'always' shows "
+            "all fallback resources for maximum visibility, 'never' hides all fallback"
+        ),
+    )
+    analysis_group.add_argument(
         "--hide-fallback-resources",
         action="store_true",
-        help="Hide fallback resources discovered via ResourceGroupsTagging API (default: show all resources)",
+        help=(
+            "Legacy option: equivalent to --fallback-display=never "
+            "(deprecated, use --fallback-display instead)"
+        ),
     )
 
     # S3 upload options for CI/CD
@@ -698,7 +711,9 @@ def create_multi_account_config(args) -> MultiAccountConfig:
         bom_processing_config=bom_config,
         output_directory=output_dir,
         credential_validation_timeout=args.credential_timeout,
-        hide_fallback_resources=args.hide_fallback_resources,
+        fallback_display_mode=(
+            args.fallback_display if not args.hide_fallback_resources else "never"
+        ),
     )
 
     return config

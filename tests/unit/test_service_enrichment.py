@@ -119,9 +119,7 @@ class TestServiceHandler:
 
         mock_client = Mock()
         mock_operation = Mock(
-            side_effect=ClientError(
-                {"Error": {"Code": "AccessDenied"}}, "describe_test"
-            )
+            side_effect=ClientError({"Error": {"Code": "AccessDenied"}}, "describe_test")
         )
         mock_client.describe_test = mock_operation
 
@@ -292,24 +290,18 @@ class TestDynamicServiceHandler:
         resource_id = "test-id"
         result = {"test": "data"}
 
-        cached = self.handler._get_cached_pattern_result(
-            service, resource_type, resource_id
-        )
+        cached = self.handler._get_cached_pattern_result(service, resource_type, resource_id)
         assert cached is None
 
         self.handler._cache_pattern_result(service, resource_type, resource_id, result)
-        cached = self.handler._get_cached_pattern_result(
-            service, resource_type, resource_id
-        )
+        cached = self.handler._get_cached_pattern_result(service, resource_type, resource_id)
         assert cached == result
 
     def test_cache_size_limit(self):
         """Test that cache size is limited to prevent memory issues."""
         # Fill cache beyond limit
         for i in range(1100):
-            self.handler._cache_pattern_result(
-                f"service{i}", "Type", f"id{i}", {"data": i}
-            )
+            self.handler._cache_pattern_result(f"service{i}", "Type", f"id{i}", {"data": i})
 
         # Cache should be limited
         assert len(self.handler._pattern_cache) <= 1000
@@ -355,14 +347,8 @@ class TestDynamicServiceHandler:
         assert attributes["attribute1"] == "value1"
         assert attributes["attribute2"] == "value2"
         assert "discovery_metadata" in attributes
-        assert (
-            attributes["discovery_metadata"]["successful_pattern"]
-            == "describe_testresource"
-        )
-        assert (
-            attributes["discovery_metadata"]["discovery_method"]
-            == "dynamic_pattern_matching"
-        )
+        assert attributes["discovery_metadata"]["successful_pattern"] == "describe_testresource"
+        assert attributes["discovery_metadata"]["discovery_method"] == "dynamic_pattern_matching"
 
         # Verify original resource data is preserved
         assert result["service"] == "TestService"
@@ -438,8 +424,7 @@ class TestDynamicServiceHandler:
         assert "service_attributes" in result
         assert "discovery_error" in result["service_attributes"]
         assert (
-            "No read-only operations available"
-            in result["service_attributes"]["discovery_error"]
+            "No read-only operations available" in result["service_attributes"]["discovery_error"]
         )
 
     def test_enrich_resource_fallback_patterns(self):
@@ -493,10 +478,7 @@ class TestDynamicServiceHandler:
 
         assert "service_attributes" in result
         assert "discovery_error" in result["service_attributes"]
-        assert (
-            "No suitable API patterns found"
-            in result["service_attributes"]["discovery_error"]
-        )
+        assert "No suitable API patterns found" in result["service_attributes"]["discovery_error"]
 
     def test_get_cache_statistics(self):
         """Test cache statistics reporting."""
@@ -598,9 +580,7 @@ class TestDynamicServiceHandler:
                 }
             return None
 
-        with patch.object(
-            self.handler, "_safe_api_call", side_effect=mock_safe_call_side_effect
-        ):
+        with patch.object(self.handler, "_safe_api_call", side_effect=mock_safe_call_side_effect):
             result = self.handler.enrich_resource(resource)
 
         assert result["service_attributes"]["found"] == "success"
@@ -629,9 +609,7 @@ class TestDynamicServiceHandler:
                 }
             return None
 
-        with patch.object(
-            self.handler, "_safe_api_call", side_effect=mock_safe_call_side_effect
-        ):
+        with patch.object(self.handler, "_safe_api_call", side_effect=mock_safe_call_side_effect):
             result = self.handler.enrich_resource(resource)
 
         assert result["service_attributes"]["parameter_pattern"] == "Name"
@@ -796,9 +774,7 @@ class TestServiceAttributeEnricher:
         mock_handler.get_read_only_operations.return_value = ["get_bucket_encryption"]
         mock_handler.__class__.__name__ = "S3Handler"
 
-        with patch.object(
-            self.enricher.handler_factory, "get_handler", return_value=mock_handler
-        ):
+        with patch.object(self.enricher.handler_factory, "get_handler", return_value=mock_handler):
             result = self.enricher.enrich_single_resource(resource)
 
         assert "service_attributes" in result
@@ -825,9 +801,7 @@ class TestServiceAttributeEnricher:
         mock_handler.enrich_resource.side_effect = Exception("Handler failed")
         mock_handler.__class__.__name__ = "S3Handler"
 
-        with patch.object(
-            self.enricher.handler_factory, "get_handler", return_value=mock_handler
-        ):
+        with patch.object(self.enricher.handler_factory, "get_handler", return_value=mock_handler):
             result = self.enricher.enrich_single_resource(resource)
 
         # Should return original resource
@@ -853,9 +827,7 @@ class TestServiceAttributeEnricher:
                 },
             }
 
-        with patch.object(
-            self.enricher, "enrich_single_resource", side_effect=mock_enrich_single
-        ):
+        with patch.object(self.enricher, "enrich_single_resource", side_effect=mock_enrich_single):
             result = self.enricher.enrich_resources_with_attributes(resources)
 
         assert len(result) == 3
@@ -876,9 +848,7 @@ class TestServiceAttributeEnricher:
             else:
                 raise Exception("Enrichment failed")
 
-        with patch.object(
-            self.enricher, "enrich_single_resource", side_effect=mock_enrich_single
-        ):
+        with patch.object(self.enricher, "enrich_single_resource", side_effect=mock_enrich_single):
             result = self.enricher.enrich_resources_with_attributes(resources)
 
         assert len(result) == 2
@@ -900,9 +870,7 @@ class TestServiceAttributeEnricher:
             "service_attributes": {"discovered": True},
         }
 
-        with patch.object(
-            self.enricher.handler_factory, "get_handler", return_value=mock_handler
-        ):
+        with patch.object(self.enricher.handler_factory, "get_handler", return_value=mock_handler):
             result = self.enricher.handle_unknown_service("UnknownService", resource)
 
         assert result["service_attributes"]["discovered"] is True
@@ -917,9 +885,7 @@ class TestServiceAttributeEnricher:
             "service_attributes": {"encryption": "AES256", "versioning": "Enabled"},
         }
 
-        with patch.object(
-            self.enricher.handler_factory, "get_handler", return_value=mock_handler
-        ):
+        with patch.object(self.enricher.handler_factory, "get_handler", return_value=mock_handler):
             attributes = self.enricher.get_service_specific_attributes("S3", resource)
 
         assert attributes == {"encryption": "AES256", "versioning": "Enabled"}

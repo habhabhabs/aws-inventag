@@ -137,6 +137,38 @@ Comprehensive unit testing for all extracted `inventag` modules with mock AWS re
   - Multi-format data compatibility
 - **Requirements**: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6
 
+### Regression Tests (`regression/`)
+
+Comprehensive regression test suites to validate full InvenTag functionality and prevent regressions.
+
+#### `test_quick_regression.py`
+- **Purpose**: Rapid validation of core functionality without AWS credentials
+- **Coverage**:
+  - CLI help and validation systems
+  - Fallback display options (auto/always/never)
+  - Configuration file validation
+  - Core module imports and initialization
+  - Intelligent fallback logic implementation
+  - AWS Prescriptive Guidance templates
+  - Documentation completeness
+- **Execution Time**: < 30 seconds
+- **Requirements**: No AWS credentials required
+
+#### `test_full_regression.py`
+- **Purpose**: Comprehensive end-to-end functionality validation
+- **Coverage**:
+  - Complete BOM generation workflows (Excel, Word, combined)
+  - Fallback display mode testing (auto/always/never)
+  - AWS Prescriptive Guidance template integration
+  - Analysis features (network, security, cost)
+  - Production safety features and security validation
+  - State management and change detection
+  - Service-specific and multi-region discovery
+  - Error handling and edge cases
+  - Output file verification
+- **Execution Time**: 30-45 minutes
+- **Requirements**: Valid AWS credentials for full testing
+
 ### Integration Tests (`integration/`)
 
 End-to-end integration testing for complete workflows and CI/CD pipeline integration.
@@ -169,6 +201,12 @@ python -m pytest tests/unit/ -v
 
 # Integration tests
 python -m pytest tests/integration/ -v
+
+# Regression tests (quick validation)
+python3 tests/regression/test_quick_regression.py
+
+# Regression tests (comprehensive with AWS)
+python3 tests/regression/test_full_regression.py
 
 # Dynamic service handler tests
 python -m pytest tests/unit/test_dynamic_service_handler.py -v
