@@ -85,76 +85,65 @@ jobs:
         VERSION="${{ env.VERSION }}"
         
         echo "📚 Managing documentation versions with N-1 strategy"
-        echo "Current version will be: $VERSION"
+        echo "New release version will be: $VERSION"
         
-        # Read current version from ../version.json to determine previous version
+        # Read current version from ../version.json to determine what should become N-1
         if [ -f "../version.json" ]; then
           CURRENT_VERSION=$(jq -r '.version' ../version.json)
-          PREVIOUS_VERSION_TAG="v$CURRENT_VERSION"
-          echo "Previous version to archive: $PREVIOUS_VERSION_TAG"
+          ARCHIVE_VERSION="v$CURRENT_VERSION"
+          echo "Current version to archive as N-1: $ARCHIVE_VERSION"
         else
-          echo "⚠️ No version.json found, cannot determine previous version"
-          PREVIOUS_VERSION_TAG=""
+          echo "⚠️ No version.json found, cannot determine current version to archive"
+          ARCHIVE_VERSION=""
         fi
         
-        # Clean up old versioned documentation (keep only N-1)
-        echo "🧹 Cleaning up old versioned documentation..."
+        # Clean up ALL existing versioned documentation first
+        echo "🧹 Cleaning up all existing versioned documentation..."
         if [ -d "versioned_docs" ]; then
-          # Count existing versions
           VERSION_COUNT=$(find versioned_docs -name "version-*" -type d | wc -l)
-          echo "Found $VERSION_COUNT existing versioned directories"
+          echo "Found $VERSION_COUNT existing versioned directories - removing all"
           
-          # If we have versions and a previous version to keep
-          if [ "$VERSION_COUNT" -gt 0 ] && [ ! -z "$PREVIOUS_VERSION_TAG" ]; then
-            # Remove all versions except the one we want to keep (previous)
-            find versioned_docs -name "version-*" -type d | while read version_dir; do
-              version_name=$(basename "$version_dir")
-              extracted_version=$(echo "$version_name" | sed 's/version-//')
-              
-              if [ "$extracted_version" != "$PREVIOUS_VERSION_TAG" ]; then
-                echo "🗑️ Removing old version: $extracted_version"
-                rm -rf "$version_dir"
-                # Also remove corresponding sidebar
-                sidebar_file="versioned_sidebars/${version_name}-sidebars.json"
-                if [ -f "$sidebar_file" ]; then
-                  rm -f "$sidebar_file"
-                fi
-              else
-                echo "📌 Keeping previous version: $extracted_version"
-              fi
-            done
-          else
-            echo "ℹ️ No cleanup needed - no previous version defined or no existing versions"
-          fi
+          # Remove all existing versioned docs and sidebars
+          rm -rf versioned_docs/version-*
+          rm -rf versioned_sidebars/version-*
+          echo "✅ Cleaned up all existing versioned documentation"
         fi
         
-        # Create new version only for the previous release (N-1)
-        if [ ! -z "$PREVIOUS_VERSION_TAG" ]; then
-          echo "📚 Creating documentation version for previous release: $PREVIOUS_VERSION_TAG"
+        # Create N-1 version from current docs (if we have a version to archive)
+        if [ ! -z "$ARCHIVE_VERSION" ] && [ "$ARCHIVE_VERSION" != "$VERSION" ]; then
+          echo "📚 Creating N-1 documentation version: $ARCHIVE_VERSION"
           
-          # Create the version using Docusaurus CLI
-          npm run docusaurus -- docs:version "$PREVIOUS_VERSION_TAG"
+          # Create the version using Docusaurus CLI (this snapshots current docs/)
+          npm run docusaurus -- docs:version "$ARCHIVE_VERSION"
           
           # Verify the version was created
-          if [ ! -d "versioned_docs/version-$PREVIOUS_VERSION_TAG" ]; then
+          if [ ! -d "versioned_docs/version-$ARCHIVE_VERSION" ]; then
             echo "❌ Error: Version directory was not created"
             exit 1
           fi
           
-          if [ ! -f "versioned_sidebars/version-$PREVIOUS_VERSION_TAG-sidebars.json" ]; then
+          if [ ! -f "versioned_sidebars/version-$ARCHIVE_VERSION-sidebars.json" ]; then
             echo "❌ Error: Version sidebar was not created"  
             exit 1
           fi
           
-          echo "✅ Documentation version $PREVIOUS_VERSION_TAG created successfully"
+          echo "✅ Documentation version $ARCHIVE_VERSION created successfully as N-1"
           
-          # Update versions.json to only include the previous version
-          echo "[$PREVIOUS_VERSION_TAG]" | jq '.' > versions.json
-          echo "✅ Updated versions.json with only previous version: $PREVIOUS_VERSION_TAG"
+          # Update versions.json to only include the N-1 version
+          echo "[\"$ARCHIVE_VERSION\"]" | jq '.' > versions.json
+          echo "✅ Updated versions.json with N-1 version: $ARCHIVE_VERSION"
         else
-          echo "ℹ️ No previous version to archive, this might be the first release"
+          echo "ℹ️ No version to archive (first release or same version), creating empty versions.json"
           # Create empty versions.json
           echo "[]" > versions.json
+        fi
+        
+        echo "📋 Final versioning state:"
+        echo "- Current version: $VERSION (from docs/ folder)"
+        if [ ! -z "$ARCHIVE_VERSION" ] && [ "$ARCHIVE_VERSION" != "$VERSION" ]; then
+          echo "- N-1 version: $ARCHIVE_VERSION (in versioned_docs/)"
+        else
+          echo "- N-1 version: None"
         fi
 
     - name: Test the build with new version
