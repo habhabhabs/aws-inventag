@@ -279,28 +279,55 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         
-        # Add version-related files
-        git add website/versioned_docs/version-$VERSION/
-        git add website/versioned_sidebars/version-$VERSION-sidebars.json
+        # Determine N-1 version for git operations
+        if [ -f "version.json" ]; then
+          CURRENT_VERSION=$(jq -r '.version' version.json)
+          N1_VERSION="v$CURRENT_VERSION"
+          echo "Adding N-1 version files: $N1_VERSION"
+        else
+          N1_VERSION=""
+          echo "⚠️ No version.json found - no N-1 version to add"
+        fi
+        
+        # Add N-1 version-related files (not new version files)
+        if [ ! -z "$N1_VERSION" ] && [ -d "website/versioned_docs/version-$N1_VERSION" ]; then
+          git add website/versioned_docs/version-$N1_VERSION/
+          git add website/versioned_sidebars/version-$N1_VERSION-sidebars.json
+          echo "✅ Added N-1 version files for $N1_VERSION"
+        else
+          echo "ℹ️ No N-1 version directory to add"
+        fi
+        
+        # Always add versions.json
         git add website/versions.json
         
         # Check if we have changes to commit
         if git diff --staged --quiet; then
-          echo "ℹ️ No changes to commit"
+          echo "ℹ️ No changes to commit for release $VERSION"
         else
-          # Create commit
-          git commit -m "docs: auto-create documentation version $VERSION
+          # Count documentation files in N-1 version
+          if [ ! -z "$N1_VERSION" ] && [ -d "website/versioned_docs/version-$N1_VERSION" ]; then
+            DOC_COUNT=$(find website/versioned_docs/version-$N1_VERSION -name "*.md" | wc -l)
+            VERSION_MESSAGE="N-1 version $N1_VERSION"
+          else
+            DOC_COUNT=0
+            VERSION_MESSAGE="no versioned docs (first release)"
+          fi
+          
+          # Create commit with N-1 strategy context
+          git commit -m "docs: archive documentation for release $VERSION (N-1 strategy)
 
-          - Add versioned documentation for $VERSION
+          - Archive previous version as N-1: $VERSION_MESSAGE
           - Generated from release ${{ github.event.release.tag_name || 'manual trigger' }}
-          - Documentation files: $(find website/versioned_docs/version-$VERSION -name "*.md" | wc -l)
+          - Documentation files archived: $DOC_COUNT
           - Total versions: $(jq length website/versions.json)
+          - Strategy: Current ($VERSION in docs/) + N-1 ($N1_VERSION in versioned_docs/)
           
           🤖 Generated with [Claude Code](https://claude.ai/code)
           
           Co-Authored-By: Claude <noreply@anthropic.com>"
           
-          echo "✅ Changes committed"
+          echo "✅ Changes committed for release $VERSION with N-1 strategy"
           
           # Push to main
           git push origin main
