@@ -221,34 +221,32 @@ jobs:
           
           if [ "$SCAN_LEVEL" = "deep" ] || [ "$SCAN_LEVEL" = "comprehensive" ]; then
             echo "🛡️ Running ESLint security analysis..."
-            # Create security-focused ESLint config
-            cat > .eslintrc.security.json << 'EOF'
-{
-  "env": {
-    "node": true,
-    "browser": true,
-    "es2022": true
-  },
-  "parserOptions": {
-    "ecmaVersion": 2022,
-    "sourceType": "module"
-  },
-  "plugins": ["security"],
-  "extends": ["eslint:recommended", "plugin:security/recommended"],
-  "rules": {
-    "security/detect-object-injection": "error",
-    "security/detect-non-literal-regexp": "error",
-    "security/detect-unsafe-regex": "error",
-    "security/detect-buffer-noassert": "error",
-    "security/detect-child-process": "error",
-    "security/detect-eval-with-expression": "error",
-    "security/detect-non-literal-fs-filename": "error",
-    "security/detect-non-literal-require": "error",
-    "security/detect-possible-timing-attacks": "error",
-    "security/detect-pseudoRandomBytes": "error"
-  }
-}
-EOF
+            # Create security-focused ESLint config using echo statements
+            echo '{' > .eslintrc.security.json
+            echo '  "env": {' >> .eslintrc.security.json
+            echo '    "node": true,' >> .eslintrc.security.json
+            echo '    "browser": true,' >> .eslintrc.security.json
+            echo '    "es2022": true' >> .eslintrc.security.json
+            echo '  },' >> .eslintrc.security.json
+            echo '  "parserOptions": {' >> .eslintrc.security.json
+            echo '    "ecmaVersion": 2022,' >> .eslintrc.security.json
+            echo '    "sourceType": "module"' >> .eslintrc.security.json
+            echo '  },' >> .eslintrc.security.json
+            echo '  "plugins": ["security"],' >> .eslintrc.security.json
+            echo '  "extends": ["eslint:recommended", "plugin:security/recommended"],' >> .eslintrc.security.json
+            echo '  "rules": {' >> .eslintrc.security.json
+            echo '    "security/detect-object-injection": "error",' >> .eslintrc.security.json
+            echo '    "security/detect-non-literal-regexp": "error",' >> .eslintrc.security.json
+            echo '    "security/detect-unsafe-regex": "error",' >> .eslintrc.security.json
+            echo '    "security/detect-buffer-noassert": "error",' >> .eslintrc.security.json
+            echo '    "security/detect-child-process": "error",' >> .eslintrc.security.json
+            echo '    "security/detect-eval-with-expression": "error",' >> .eslintrc.security.json
+            echo '    "security/detect-non-literal-fs-filename": "error",' >> .eslintrc.security.json
+            echo '    "security/detect-non-literal-require": "error",' >> .eslintrc.security.json
+            echo '    "security/detect-possible-timing-attacks": "error",' >> .eslintrc.security.json
+            echo '    "security/detect-pseudoRandomBytes": "error"' >> .eslintrc.security.json
+            echo '  }' >> .eslintrc.security.json
+            echo '}' >> .eslintrc.security.json
             
             # Run ESLint security scan
             eslint --config .eslintrc.security.json \

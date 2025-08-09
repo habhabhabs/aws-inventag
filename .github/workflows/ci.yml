@@ -432,24 +432,22 @@ EOF
         echo "- Shell scripts: $(find . -name "*.sh" -o -name "*.bash" | wc -l)" >> security-report.md
         echo "- GitHub Actions workflows: $(find .github/workflows -name "*.yml" | wc -l)" >> security-report.md
         
-        cat >> security-report.md << 'EOF'
-        
-### Tools Used
-- **Bandit**: Python security scanner
-- **Safety**: Python dependency vulnerability checker  
-- **pip-audit**: Advanced Python dependency auditing
-- **npm audit**: Node.js dependency vulnerability scanner
-- **Retire.js**: JavaScript library vulnerability scanner
-- **ESLint**: JavaScript code security analysis
-- **detect-secrets**: Secrets detection across all files
-- **Semgrep**: Multi-language static analysis
-        
-### Summary
-All major security scanning tools have been executed across the repository. 
-Review individual scan outputs above for detailed findings.
-        
-Generated: $(date)
-EOF
+        echo "" >> security-report.md
+        echo "### Tools Used" >> security-report.md
+        echo "- **Bandit**: Python security scanner" >> security-report.md
+        echo "- **Safety**: Python dependency vulnerability checker" >> security-report.md  
+        echo "- **pip-audit**: Advanced Python dependency auditing" >> security-report.md
+        echo "- **npm audit**: Node.js dependency vulnerability scanner" >> security-report.md
+        echo "- **Retire.js**: JavaScript library vulnerability scanner" >> security-report.md
+        echo "- **ESLint**: JavaScript code security analysis" >> security-report.md
+        echo "- **detect-secrets**: Secrets detection across all files" >> security-report.md
+        echo "- **Semgrep**: Multi-language static analysis" >> security-report.md
+        echo "" >> security-report.md
+        echo "### Summary" >> security-report.md
+        echo "All major security scanning tools have been executed across the repository." >> security-report.md 
+        echo "Review individual scan outputs above for detailed findings." >> security-report.md
+        echo "" >> security-report.md
+        echo "Generated: $(date)" >> security-report.md
         
         echo "📄 Security report generated: security-report.md"
         echo ""
