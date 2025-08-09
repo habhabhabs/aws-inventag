@@ -83,13 +83,12 @@ const config = {
             '**/template-system-summary.md',
             '**/complete-readme-backup.md',
           ],
-          // Documentation versioning configuration
+          // Documentation versioning configuration  
           includeCurrentVersion: true,
           lastVersion: 'current',
-          // Custom version labels for better UX
-          onlyIncludeVersions: ['current', 'v4.2.5', 'v4.2.1'],
-          // Versions are automatically managed via versions.json
-          // No hardcoded version configuration needed - Docusaurus reads from versions.json
+          // N-1 versioning strategy: only keep previous version in versioned docs
+          // Current version is always shown with actual version number
+          // Previous version (N-1) is automatically managed via versions.json
           versions: {
             current: {
               label: `${currentVersion} (Current)`,
