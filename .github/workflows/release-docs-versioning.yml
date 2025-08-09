@@ -25,7 +25,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.VERSION_BUMP_WORKFLOW }}
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -333,7 +333,8 @@ jobs:
           
           echo "✅ Changes committed for release $VERSION with N-1 strategy"
           
-          # Push to main
+          # Push to main using the workflow token
+          git remote set-url origin https://x-access-token:${{ secrets.VERSION_BUMP_WORKFLOW }}@github.com/habhabhabs/inventag-aws.git
           git push origin main
           echo "✅ Changes pushed to main"
         fi
