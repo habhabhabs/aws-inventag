@@ -89,9 +89,7 @@ const config = {
           // Version-specific edit URLs
           editLocalizedFiles: false,
           // Version dropdown configuration
-          disableVersioning: false,
-          // Show version banner for non-current versions
-          banner: 'unmaintained'
+          disableVersioning: false
         },
         blog: false, // Disable blog functionality for this documentation site
         theme: {
