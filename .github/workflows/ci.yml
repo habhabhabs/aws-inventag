@@ -408,22 +408,20 @@ jobs:
         echo "📋 Generating Comprehensive Security Report"
         echo "=========================================="
         
-        cat > security-report.md << 'EOF'
-# Security Scan Report
-        
-## Executive Summary
-        
-This report contains the results of comprehensive security scanning across the entire repository, including:
-- Python security analysis (Bandit, Safety, pip-audit)
-- JavaScript/Node.js security analysis (npm audit, Retire.js, ESLint security)
-- Secrets and configuration scanning (detect-secrets)
-- Infrastructure as Code security (GitHub Actions, Docker)
-- Multi-language analysis (Semgrep)
-        
-## Scan Coverage
-        
-### File Types Scanned
-EOF
+        echo '# Security Scan Report' > security-report.md
+        echo '' >> security-report.md
+        echo '## Executive Summary' >> security-report.md
+        echo '' >> security-report.md
+        echo 'This report contains the results of comprehensive security scanning across the entire repository, including:' >> security-report.md
+        echo '- Python security analysis (Bandit, Safety, pip-audit)' >> security-report.md
+        echo '- JavaScript/Node.js security analysis (npm audit, Retire.js, ESLint security)' >> security-report.md
+        echo '- Secrets and configuration scanning (detect-secrets)' >> security-report.md
+        echo '- Infrastructure as Code security (GitHub Actions, Docker)' >> security-report.md
+        echo '- Multi-language analysis (Semgrep)' >> security-report.md
+        echo '' >> security-report.md
+        echo '## Scan Coverage' >> security-report.md
+        echo '' >> security-report.md
+        echo '### File Types Scanned' >> security-report.md
         
         # Add file counts to report
         echo "- Python files: $(find . -name "*.py" | wc -l)" >> security-report.md

@@ -456,58 +456,56 @@ jobs:
         echo "📋 Generating Comprehensive Security Report"
         echo "=========================================="
         
-        cat > .security-scan/reports/security-summary.md << EOF
-# Comprehensive Security Scan Report
-        
-**Repository**: ${{ github.repository }}  
-**Branch**: ${{ github.ref_name }}  
-**Commit**: ${{ github.sha }}  
-**Scan Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')  
-**Scan Level**: ${{ env.SCAN_LEVEL }}
-        
-## Executive Summary
-        
-This report provides comprehensive security analysis results for the entire repository, covering:
-        
-- **Python Security**: Static analysis, dependency vulnerabilities, code quality
-- **JavaScript/Node.js Security**: Dependency auditing, library vulnerabilities, code analysis  
-- **Secrets Detection**: Credential scanning, sensitive file detection
-- **Infrastructure Security**: GitHub Actions, container configurations
-- **Multi-language Analysis**: Cross-language security patterns
-- **Vulnerability Assessment**: Known CVE scanning, security advisories
-        
-## Repository Metrics
-        
-- **Total Files Analyzed**: ${{ env.TOTAL_FILES }}
-- **Python Files**: ${{ env.PYTHON_COUNT }}
-- **JavaScript/TypeScript Files**: ${{ env.JS_COUNT }}
-- **Security Tools Executed**: 8+
-- **Semgrep Findings**: ${{ env.SEMGREP_FINDINGS }}
-        
-## Security Tools Used
-        
-### Python Ecosystem
-- **Bandit**: Python code security analysis
-- **Safety**: Python dependency vulnerability checking
-- **pip-audit**: Advanced dependency auditing
-- **CycloneDX**: Software Bill of Materials generation
-        
-### JavaScript/Node.js Ecosystem  
-- **npm audit**: Node.js dependency vulnerability scanner
-- **Retire.js**: JavaScript library vulnerability detection
-- **ESLint Security**: JavaScript code security analysis
-        
-### Multi-Language & Infrastructure
-- **Semgrep**: Multi-language static analysis security scanner
-- **Trivy**: Comprehensive vulnerability scanner
-- **detect-secrets**: Repository-wide secrets detection
-- **Custom Scripts**: Infrastructure as Code analysis
-        
-## Risk Assessment
-        
-Based on the analysis performed:
-        
-EOF
+        echo '# Comprehensive Security Scan Report' > .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo "**Repository**: ${{ github.repository }}" >> .security-scan/reports/security-summary.md
+        echo "**Branch**: ${{ github.ref_name }}" >> .security-scan/reports/security-summary.md
+        echo "**Commit**: ${{ github.sha }}" >> .security-scan/reports/security-summary.md
+        echo "**Scan Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> .security-scan/reports/security-summary.md
+        echo "**Scan Level**: ${{ env.SCAN_LEVEL }}" >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '## Executive Summary' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo 'This report provides comprehensive security analysis results for the entire repository, covering:' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '- **Python Security**: Static analysis, dependency vulnerabilities, code quality' >> .security-scan/reports/security-summary.md
+        echo '- **JavaScript/Node.js Security**: Dependency auditing, library vulnerabilities, code analysis' >> .security-scan/reports/security-summary.md
+        echo '- **Secrets Detection**: Credential scanning, sensitive file detection' >> .security-scan/reports/security-summary.md
+        echo '- **Infrastructure Security**: GitHub Actions, container configurations' >> .security-scan/reports/security-summary.md
+        echo '- **Multi-language Analysis**: Cross-language security patterns' >> .security-scan/reports/security-summary.md
+        echo '- **Vulnerability Assessment**: Known CVE scanning, security advisories' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '## Repository Metrics' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo "- **Total Files Analyzed**: ${{ env.TOTAL_FILES }}" >> .security-scan/reports/security-summary.md
+        echo "- **Python Files**: ${{ env.PYTHON_COUNT }}" >> .security-scan/reports/security-summary.md
+        echo "- **JavaScript/TypeScript Files**: ${{ env.JS_COUNT }}" >> .security-scan/reports/security-summary.md
+        echo '- **Security Tools Executed**: 8+' >> .security-scan/reports/security-summary.md
+        echo "- **Semgrep Findings**: ${{ env.SEMGREP_FINDINGS }}" >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '## Security Tools Used' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '### Python Ecosystem' >> .security-scan/reports/security-summary.md
+        echo '- **Bandit**: Python code security analysis' >> .security-scan/reports/security-summary.md
+        echo '- **Safety**: Python dependency vulnerability checking' >> .security-scan/reports/security-summary.md
+        echo '- **pip-audit**: Advanced dependency auditing' >> .security-scan/reports/security-summary.md
+        echo '- **CycloneDX**: Software Bill of Materials generation' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '### JavaScript/Node.js Ecosystem' >> .security-scan/reports/security-summary.md
+        echo '- **npm audit**: Node.js dependency vulnerability scanner' >> .security-scan/reports/security-summary.md
+        echo '- **Retire.js**: JavaScript library vulnerability detection' >> .security-scan/reports/security-summary.md
+        echo '- **ESLint Security**: JavaScript code security analysis' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '### Multi-Language & Infrastructure' >> .security-scan/reports/security-summary.md
+        echo '- **Semgrep**: Multi-language static analysis security scanner' >> .security-scan/reports/security-summary.md
+        echo '- **Trivy**: Comprehensive vulnerability scanner' >> .security-scan/reports/security-summary.md
+        echo '- **detect-secrets**: Repository-wide secrets detection' >> .security-scan/reports/security-summary.md
+        echo '- **Custom Scripts**: Infrastructure as Code analysis' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '## Risk Assessment' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo 'Based on the analysis performed:' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
         
         # Add risk assessment based on findings
         if [ "${SEMGREP_FINDINGS:-0}" -gt 20 ]; then
@@ -518,38 +516,36 @@ EOF
           echo "**Risk Level**: LOW - Minimal security findings detected" >> .security-scan/reports/security-summary.md
         fi
         
-        cat >> .security-scan/reports/security-summary.md << EOF
-        
-## Detailed Findings
-        
-Detailed security findings are available in the following report files:
-        
-- \`python/bandit-full.json\` - Python security analysis results
-- \`python/safety-report.json\` - Python dependency vulnerabilities
-- \`javascript/npm-audit-*.json\` - Node.js dependency audits
-- \`secrets/secrets.baseline\` - Detected secrets baseline
-- \`semgrep/semgrep-*.json\` - Multi-language security findings
-- \`trivy/filesystem-scan.json\` - Vulnerability scan results
-        
-## Recommendations
-        
-1. **Review all HIGH severity findings** from static analysis tools
-2. **Update vulnerable dependencies** identified by dependency scanners
-3. **Implement secrets management** for any detected credentials
-4. **Review Infrastructure as Code** configurations for security best practices
-5. **Establish regular security scanning** as part of CI/CD pipeline
-        
-## Next Steps
-        
-- Download security scan artifacts for detailed analysis
-- Address critical and high-severity findings
-- Integrate security scanning into development workflow
-- Consider implementing security gates for CI/CD pipeline
-        
----
-        
-*This report was generated automatically by the Comprehensive Security Scan workflow.*
-EOF
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '## Detailed Findings' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo 'Detailed security findings are available in the following report files:' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '- `python/bandit-full.json` - Python security analysis results' >> .security-scan/reports/security-summary.md
+        echo '- `python/safety-report.json` - Python dependency vulnerabilities' >> .security-scan/reports/security-summary.md
+        echo '- `javascript/npm-audit-*.json` - Node.js dependency audits' >> .security-scan/reports/security-summary.md
+        echo '- `secrets/secrets.baseline` - Detected secrets baseline' >> .security-scan/reports/security-summary.md
+        echo '- `semgrep/semgrep-*.json` - Multi-language security findings' >> .security-scan/reports/security-summary.md
+        echo '- `trivy/filesystem-scan.json` - Vulnerability scan results' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '## Recommendations' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '1. **Review all HIGH severity findings** from static analysis tools' >> .security-scan/reports/security-summary.md
+        echo '2. **Update vulnerable dependencies** identified by dependency scanners' >> .security-scan/reports/security-summary.md
+        echo '3. **Implement secrets management** for any detected credentials' >> .security-scan/reports/security-summary.md
+        echo '4. **Review Infrastructure as Code** configurations for security best practices' >> .security-scan/reports/security-summary.md
+        echo '5. **Establish regular security scanning** as part of CI/CD pipeline' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '## Next Steps' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '- Download security scan artifacts for detailed analysis' >> .security-scan/reports/security-summary.md
+        echo '- Address critical and high-severity findings' >> .security-scan/reports/security-summary.md
+        echo '- Integrate security scanning into development workflow' >> .security-scan/reports/security-summary.md
+        echo '- Consider implementing security gates for CI/CD pipeline' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '---' >> .security-scan/reports/security-summary.md
+        echo '' >> .security-scan/reports/security-summary.md
+        echo '*This report was generated automatically by the Comprehensive Security Scan workflow.*' >> .security-scan/reports/security-summary.md
         
         echo "📄 Security summary report generated"
         
