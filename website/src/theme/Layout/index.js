@@ -11,7 +11,21 @@ export default function LayoutWrapper(props) {
         const data = await response.json();
         return `v${data.version}`;
       } catch (error) {
-        return 'v4.2.6'; // fallback
+        // Try relative path as fallback
+        try {
+          const fallbackResponse = await fetch('../version.json');
+          const fallbackData = await fallbackResponse.json();
+          return `v${fallbackData.version}`;
+        } catch (fallbackError) {
+          // Try alternative paths
+          try {
+            const altResponse = await fetch('./version.json');
+            const altData = await altResponse.json();
+            return `v${altData.version}`;
+          } catch (altError) {
+            return 'Current'; // generic fallback if all paths fail
+          }
+        }
       }
     };
 
