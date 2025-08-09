@@ -1,11 +1,11 @@
 {
-  "version": "4.2.5",
-  "release_notes": "Release 4.2.5 - 2025-08-09\\✨ New Features:\\  • feat: add automatic documentation versioning on releases\\🐛 Bug Fixes:\\  • fix: correct cyclonedx-py command syntax in docs workflow\\  • fix: remove invalid banner configuration from Docusaurus\\📊 Summary: 3 commits in this release\\🔀 Triggered by PR #28",
-  "release_date": "2025-08-09T14:00:40.689203",
-  "previous_version": "4.2.4",
+  "version": "4.2.6",
+  "release_notes": "Release 4.2.6 - 2025-08-09\\✨ New Features:\\  • feat: implement N-1 versioning strategy for documentation\\  • feat: enhance version display and SBOM presentation v4.2.6\\🐛 Bug Fixes:\\  • fix: revert premature version bump - version changes only on main branch merge\\📝 Other Changes:\\  • hotfix: create v4.2.5 documentation version\\📊 Summary: 4 commits in this release\\🔀 Triggered by PR #29",
+  "release_date": "2025-08-09T14:27:36.918734",
+  "previous_version": "4.2.5",
   "version_bump_type": "patch",
-  "git_tag": "v4.2.5",
-  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.5",
-  "triggered_by_pr": "28",
-  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/28"
+  "git_tag": "v4.2.6",
+  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.6",
+  "triggered_by_pr": "29",
+  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/29"
 }
