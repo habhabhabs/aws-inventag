@@ -122,75 +122,228 @@ jobs:
           fi
           cd ..
           
-          # Create SBOM summary for documentation
-          echo "# Current SBOM Summary" > docs/security/current/sbom-summary.md
+          # Create enhanced SBOM summary with tables
+          echo "---" > docs/security/current/sbom-summary.md
+          echo "title: Software Bill of Materials (SBOM)" >> docs/security/current/sbom-summary.md
+          echo "description: Current software dependencies, vulnerabilities, and security analysis" >> docs/security/current/sbom-summary.md
+          echo "sidebar_position: 1" >> docs/security/current/sbom-summary.md
+          echo "---" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
-          echo "**Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> docs/security/current/sbom-summary.md
-          echo "**Repository**: ${{ github.repository }}" >> docs/security/current/sbom-summary.md
-          echo "**Branch**: ${{ github.ref_name }}" >> docs/security/current/sbom-summary.md
-          echo "**Commit**: ${{ github.sha }}" >> docs/security/current/sbom-summary.md
+          echo "# Software Bill of Materials (SBOM)" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
-          echo "## Components Overview" >> docs/security/current/sbom-summary.md
-          echo "" >> docs/security/current/sbom-summary.md
-          echo "### Repository-wide SBOM" >> docs/security/current/sbom-summary.md
-          echo "- **File**: [current-sbom.json](../sbom/current-sbom.json)" >> docs/security/current/sbom-summary.md
-          echo "- **Format**: Syft JSON" >> docs/security/current/sbom-summary.md
-          
-          # Add component count
-          COMPONENTS=$(jq '.artifacts | length' docs/security/sbom/current-sbom.json 2>/dev/null || echo "Unknown")
-          echo "- **Components**: $COMPONENTS" >> docs/security/current/sbom-summary.md
+          echo ":::info Build Information" >> docs/security/current/sbom-summary.md
+          echo "- **Generated**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> docs/security/current/sbom-summary.md
+          echo "- **Repository**: ${{ github.repository }}" >> docs/security/current/sbom-summary.md
+          echo "- **Branch**: ${{ github.ref_name }}" >> docs/security/current/sbom-summary.md
+          echo "- **Commit**: [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> docs/security/current/sbom-summary.md
+          echo ":::" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
           
-          echo "### Python Dependencies" >> docs/security/current/sbom-summary.md
+          # Copy SBOM files to website static directory for direct access
+          mkdir -p website/static/sbom
+          if [ -f "docs/security/sbom/current-sbom.json" ]; then
+            cp docs/security/sbom/current-sbom.json website/static/sbom/
+            jq '.' docs/security/sbom/current-sbom.json > website/static/sbom/current-sbom-formatted.json
+          fi
           if [ -f "docs/security/sbom/python-sbom.json" ]; then
-            echo "- **File**: [python-sbom.json](../sbom/python-sbom.json)" >> docs/security/current/sbom-summary.md
-            PYTHON_COMPONENTS=$(jq '.components | length' docs/security/sbom/python-sbom.json 2>/dev/null || echo "Unknown")
-            echo "- **Components**: $PYTHON_COMPONENTS" >> docs/security/current/sbom-summary.md
-          else
-            echo "- **Status**: No requirements.txt found" >> docs/security/current/sbom-summary.md
+            cp docs/security/sbom/python-sbom.json website/static/sbom/
+            jq '.' docs/security/sbom/python-sbom.json > website/static/sbom/python-sbom-formatted.json
           fi
-          echo "" >> docs/security/current/sbom-summary.md
-          
-          echo "### Node.js Dependencies (Website)" >> docs/security/current/sbom-summary.md
           if [ -f "docs/security/sbom/nodejs-website-sbom.json" ]; then
-            echo "- **File**: [nodejs-website-sbom.json](../sbom/nodejs-website-sbom.json)" >> docs/security/current/sbom-summary.md
-            NODEJS_COMPONENTS=$(jq '.components | length' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null || echo "Unknown")
-            echo "- **Components**: $NODEJS_COMPONENTS" >> docs/security/current/sbom-summary.md
+            cp docs/security/sbom/nodejs-website-sbom.json website/static/sbom/
+            jq '.' docs/security/sbom/nodejs-website-sbom.json > website/static/sbom/nodejs-website-sbom-formatted.json
+          fi
+          
+          echo "## 📋 Components Overview" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          
+          # Create repository-wide components table
+          echo "### Repository Components" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          if [ -f "docs/security/sbom/current-sbom.json" ]; then
+            COMPONENTS=$(jq '.artifacts | length' docs/security/sbom/current-sbom.json 2>/dev/null || echo "0")
+            echo "**Total Components**: $COMPONENTS" >> docs/security/current/sbom-summary.md
+            echo "" >> docs/security/current/sbom-summary.md
+            echo "| Component | Version | Type | License |" >> docs/security/current/sbom-summary.md
+            echo "|-----------|---------|------|---------|" >> docs/security/current/sbom-summary.md
+            jq -r '.artifacts[] | "| \(.name // "Unknown") | \(.version // "N/A") | \(.type // "Unknown") | \(.licenses[0].value // "Unknown") |"' docs/security/sbom/current-sbom.json 2>/dev/null | head -20 >> docs/security/current/sbom-summary.md || echo "| No components found | - | - | - |" >> docs/security/current/sbom-summary.md
+            echo "" >> docs/security/current/sbom-summary.md
+            if [ "$COMPONENTS" -gt 20 ]; then
+              echo ":::note" >> docs/security/current/sbom-summary.md
+              echo "Showing first 20 components. Download the full SBOM JSON file below for complete details." >> docs/security/current/sbom-summary.md
+              echo ":::" >> docs/security/current/sbom-summary.md
+              echo "" >> docs/security/current/sbom-summary.md
+            fi
           else
-            echo "- **Status**: No Node.js dependencies detected" >> docs/security/current/sbom-summary.md
+            echo "| Component | Version | Type | License |" >> docs/security/current/sbom-summary.md
+            echo "|-----------|---------|------|---------|" >> docs/security/current/sbom-summary.md
+            echo "| No components found | - | - | - |" >> docs/security/current/sbom-summary.md
+            echo "" >> docs/security/current/sbom-summary.md
+          fi
+          
+          # Create Python dependencies table
+          echo "### Python Dependencies" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          if [ -f "docs/security/sbom/python-sbom.json" ]; then
+            PYTHON_COMPONENTS=$(jq '.components | length' docs/security/sbom/python-sbom.json 2>/dev/null || echo "0")
+            echo "**Python Packages**: $PYTHON_COMPONENTS" >> docs/security/current/sbom-summary.md
+            echo "" >> docs/security/current/sbom-summary.md
+            echo "| Package | Version | License | Scope |" >> docs/security/current/sbom-summary.md
+            echo "|---------|---------|---------|-------|" >> docs/security/current/sbom-summary.md
+            jq -r '.components[] | "| \(.name // "Unknown") | \(.version // "N/A") | \(.licenses[0].license.name // "Unknown") | \(.scope // "required") |"' docs/security/sbom/python-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Python packages found | - | - | - |" >> docs/security/current/sbom-summary.md
+            echo "" >> docs/security/current/sbom-summary.md
+          else
+            echo "| Package | Version | License | Scope |" >> docs/security/current/sbom-summary.md
+            echo "|---------|---------|---------|-------|" >> docs/security/current/sbom-summary.md
+            echo "| No requirements.txt found | - | - | - |" >> docs/security/current/sbom-summary.md
+            echo "" >> docs/security/current/sbom-summary.md
+          fi
+          
+          # Create Node.js dependencies table  
+          echo "### Node.js Dependencies (Website)" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          if [ -f "docs/security/sbom/nodejs-website-sbom.json" ]; then
+            NODEJS_COMPONENTS=$(jq '.components | length' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null || echo "0")
+            echo "**Node.js Packages**: $NODEJS_COMPONENTS" >> docs/security/current/sbom-summary.md
+            echo "" >> docs/security/current/sbom-summary.md
+            echo "| Package | Version | License | Type |" >> docs/security/current/sbom-summary.md
+            echo "|---------|---------|---------|------|" >> docs/security/current/sbom-summary.md
+            jq -r '.components[] | "| \(.name // "Unknown") | \(.version // "N/A") | \(.licenses[0].license.name // "Unknown") | \(.scope // "required") |"' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Node.js packages found | - | - | - |" >> docs/security/current/sbom-summary.md
+            echo "" >> docs/security/current/sbom-summary.md
+          else
+            echo "| Package | Version | License | Type |" >> docs/security/current/sbom-summary.md
+            echo "|---------|---------|---------|------|" >> docs/security/current/sbom-summary.md
+            echo "| No Node.js dependencies detected | - | - | - |" >> docs/security/current/sbom-summary.md
+            echo "" >> docs/security/current/sbom-summary.md
+          fi
+          
+          # Add security vulnerability scanning with Grype
+          echo "## 🔍 Security Analysis" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          
+          # Install Grype for vulnerability scanning
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          
+          echo "### Known Vulnerabilities" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          
+          # Scan for vulnerabilities using Grype
+          if [ -f "docs/security/sbom/current-sbom.json" ]; then
+            echo "Running vulnerability scan..." 
+            grype sbom:docs/security/sbom/current-sbom.json -o json > docs/security/sbom/vulnerabilities.json 2>/dev/null || true
+            
+            if [ -f "docs/security/sbom/vulnerabilities.json" ] && [ -s "docs/security/sbom/vulnerabilities.json" ]; then
+              # Copy vulnerability report to static directory
+              cp docs/security/sbom/vulnerabilities.json website/static/sbom/
+              jq '.' docs/security/sbom/vulnerabilities.json > website/static/sbom/vulnerabilities-formatted.json
+              
+              # Count vulnerabilities by severity
+              CRITICAL=$(jq '[.matches[] | select(.vulnerability.severity=="Critical")] | length' docs/security/sbom/vulnerabilities.json 2>/dev/null || echo "0")
+              HIGH=$(jq '[.matches[] | select(.vulnerability.severity=="High")] | length' docs/security/sbom/vulnerabilities.json 2>/dev/null || echo "0")
+              MEDIUM=$(jq '[.matches[] | select(.vulnerability.severity=="Medium")] | length' docs/security/sbom/vulnerabilities.json 2>/dev/null || echo "0")
+              LOW=$(jq '[.matches[] | select(.vulnerability.severity=="Low")] | length' docs/security/sbom/vulnerabilities.json 2>/dev/null || echo "0")
+              
+              echo "| Severity | Count | Action Required |" >> docs/security/current/sbom-summary.md
+              echo "|----------|-------|-----------------|" >> docs/security/current/sbom-summary.md
+              echo "| 🔴 Critical | $CRITICAL | Immediate fix required |" >> docs/security/current/sbom-summary.md
+              echo "| 🟠 High | $HIGH | Fix within 7 days |" >> docs/security/current/sbom-summary.md
+              echo "| 🟡 Medium | $MEDIUM | Fix within 30 days |" >> docs/security/current/sbom-summary.md
+              echo "| 🟢 Low | $LOW | Monitor and plan |" >> docs/security/current/sbom-summary.md
+              echo "" >> docs/security/current/sbom-summary.md
+              
+              # Show top vulnerabilities if any exist
+              TOTAL_VULNS=$(jq '.matches | length' docs/security/sbom/vulnerabilities.json 2>/dev/null || echo "0")
+              if [ "$TOTAL_VULNS" -gt 0 ]; then
+                echo "#### Top Vulnerabilities" >> docs/security/current/sbom-summary.md
+                echo "" >> docs/security/current/sbom-summary.md
+                echo "| CVE ID | Severity | Package | Version | Description |" >> docs/security/current/sbom-summary.md
+                echo "|--------|----------|---------|---------|-------------|" >> docs/security/current/sbom-summary.md
+                jq -r '.matches[] | select(.vulnerability.severity=="Critical" or .vulnerability.severity=="High") | "| \(.vulnerability.id // "Unknown") | \(.vulnerability.severity // "Unknown") | \(.artifact.name // "Unknown") | \(.artifact.version // "N/A") | \(.vulnerability.description // "No description")[0:100]... |"' docs/security/sbom/vulnerabilities.json 2>/dev/null | head -10 >> docs/security/current/sbom-summary.md || echo "| No critical/high vulnerabilities found | - | - | - | - |" >> docs/security/current/sbom-summary.md
+                echo "" >> docs/security/current/sbom-summary.md
+                
+                if [ "$TOTAL_VULNS" -gt 10 ]; then
+                  echo ":::note" >> docs/security/current/sbom-summary.md
+                  echo "Showing top 10 critical/high vulnerabilities. Download the full vulnerability report below for complete details." >> docs/security/current/sbom-summary.md
+                  echo ":::" >> docs/security/current/sbom-summary.md
+                  echo "" >> docs/security/current/sbom-summary.md
+                fi
+              else
+                echo "| CVE ID | Severity | Package | Version | Description |" >> docs/security/current/sbom-summary.md
+                echo "|--------|----------|---------|---------|-------------|" >> docs/security/current/sbom-summary.md
+                echo "| ✅ No vulnerabilities detected | - | - | - | All dependencies are secure |" >> docs/security/current/sbom-summary.md
+                echo "" >> docs/security/current/sbom-summary.md
+              fi
+            else
+              echo "| Severity | Count | Status |" >> docs/security/current/sbom-summary.md
+              echo "|----------|-------|---------|" >> docs/security/current/sbom-summary.md
+              echo "| - | - | Vulnerability scanning unavailable |" >> docs/security/current/sbom-summary.md
+              echo "" >> docs/security/current/sbom-summary.md
+            fi
+          else
+            echo "| Severity | Count | Status |" >> docs/security/current/sbom-summary.md
+            echo "|----------|-------|---------|" >> docs/security/current/sbom-summary.md
+            echo "| - | - | No SBOM available for scanning |" >> docs/security/current/sbom-summary.md
+            echo "" >> docs/security/current/sbom-summary.md
+          fi
+          
+          echo "## 📥 Download SBOM Files" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "### Raw SBOM Files" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "| Format | File | Description |" >> docs/security/current/sbom-summary.md
+          echo "|--------|------|-------------|" >> docs/security/current/sbom-summary.md
+          echo "| JSON (Syft) | [current-sbom.json](/inventag-aws/sbom/current-sbom.json) | Complete repository component analysis |" >> docs/security/current/sbom-summary.md
+          echo "| CycloneDX | [current-sbom-cyclonedx.json](../sbom/current-sbom-cyclonedx.json) | Industry-standard SBOM format |" >> docs/security/current/sbom-summary.md
+          echo "| SPDX | [current-sbom-spdx.json](../sbom/current-sbom-spdx.json) | Software Package Data Exchange format |" >> docs/security/current/sbom-summary.md
+          if [ -f "docs/security/sbom/python-sbom.json" ]; then
+            echo "| Python (CycloneDX) | [python-sbom.json](/inventag-aws/sbom/python-sbom.json) | Python dependencies only |" >> docs/security/current/sbom-summary.md
+          fi
+          if [ -f "docs/security/sbom/nodejs-website-sbom.json" ]; then
+            echo "| Node.js (CycloneDX) | [nodejs-website-sbom.json](/inventag-aws/sbom/nodejs-website-sbom.json) | Website dependencies |" >> docs/security/current/sbom-summary.md
           fi
           echo "" >> docs/security/current/sbom-summary.md
           
-          echo "## SBOM Formats Available" >> docs/security/current/sbom-summary.md
+          echo "### Formatted Files (Human-Readable)" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
-          echo "- **JSON (Syft)**: Machine-readable format for automated analysis" >> docs/security/current/sbom-summary.md
-          echo "- **CycloneDX**: Industry-standard SBOM format for supply chain security" >> docs/security/current/sbom-summary.md
-          echo "- **SPDX**: Software Package Data Exchange format for compliance" >> docs/security/current/sbom-summary.md
-          echo "- **XML**: Human and machine-readable structured format" >> docs/security/current/sbom-summary.md
-          echo "" >> docs/security/current/sbom-summary.md
-          
-          echo "## Integration Status" >> docs/security/current/sbom-summary.md
-          echo "" >> docs/security/current/sbom-summary.md
-          echo "This SBOM is automatically generated and integrated into the documentation build process, ensuring:" >> docs/security/current/sbom-summary.md
-          echo "- Up-to-date dependency tracking" >> docs/security/current/sbom-summary.md
-          echo "- Security transparency" >> docs/security/current/sbom-summary.md
-          echo "- Compliance documentation" >> docs/security/current/sbom-summary.md
-          echo "- Version-specific component tracking" >> docs/security/current/sbom-summary.md
-          echo "- Supply chain security monitoring" >> docs/security/current/sbom-summary.md
+          echo "| Format | File | Description |" >> docs/security/current/sbom-summary.md
+          echo "|--------|------|-------------|" >> docs/security/current/sbom-summary.md
+          echo "| JSON (Formatted) | [current-sbom-formatted.json](/inventag-aws/sbom/current-sbom-formatted.json) | Pretty-printed JSON for manual review |" >> docs/security/current/sbom-summary.md
+          if [ -f "docs/security/sbom/python-sbom.json" ]; then
+            echo "| Python (Formatted) | [python-sbom-formatted.json](/inventag-aws/sbom/python-sbom-formatted.json) | Formatted Python dependencies |" >> docs/security/current/sbom-summary.md
+          fi
+          if [ -f "docs/security/sbom/nodejs-website-sbom.json" ]; then
+            echo "| Node.js (Formatted) | [nodejs-website-sbom-formatted.json](/inventag-aws/sbom/nodejs-website-sbom-formatted.json) | Formatted website dependencies |" >> docs/security/current/sbom-summary.md
+          fi
+          if [ -f "docs/security/sbom/vulnerabilities.json" ]; then
+            echo "| Vulnerabilities | [vulnerabilities-formatted.json](/inventag-aws/sbom/vulnerabilities-formatted.json) | Security vulnerability report |" >> docs/security/current/sbom-summary.md
+          fi
           echo "" >> docs/security/current/sbom-summary.md
           
-          echo "## Usage" >> docs/security/current/sbom-summary.md
+          echo "## 🔧 Usage & Integration" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
-          echo "Download the SBOM files to:" >> docs/security/current/sbom-summary.md
-          echo "- Analyze dependencies and licenses" >> docs/security/current/sbom-summary.md
-          echo "- Track security vulnerabilities" >> docs/security/current/sbom-summary.md
-          echo "- Ensure compliance requirements" >> docs/security/current/sbom-summary.md
-          echo "- Monitor supply chain security" >> docs/security/current/sbom-summary.md
-          echo "- Compare component changes between versions" >> docs/security/current/sbom-summary.md
+          echo ":::tip Integration Benefits" >> docs/security/current/sbom-summary.md
+          echo "This SBOM is automatically generated and integrated into the documentation build process, providing:" >> docs/security/current/sbom-summary.md
+          echo "- **Real-time dependency tracking** - Updated with every build" >> docs/security/current/sbom-summary.md
+          echo "- **Vulnerability monitoring** - Automatic security scanning with Grype" >> docs/security/current/sbom-summary.md
+          echo "- **Compliance documentation** - Standard SBOM formats (CycloneDX, SPDX)" >> docs/security/current/sbom-summary.md
+          echo "- **Version-specific tracking** - Historical dependency changes" >> docs/security/current/sbom-summary.md
+          echo "- **Supply chain transparency** - Complete visibility into dependencies" >> docs/security/current/sbom-summary.md
+          echo ":::" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          
+          echo "### Use Cases" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "Download and analyze the SBOM files to:" >> docs/security/current/sbom-summary.md
+          echo "" >> docs/security/current/sbom-summary.md
+          echo "- **Security Teams**: Identify vulnerabilities and plan remediation" >> docs/security/current/sbom-summary.md
+          echo "- **Compliance Teams**: Generate compliance reports and audits" >> docs/security/current/sbom-summary.md
+          echo "- **Development Teams**: Track dependency changes and licenses" >> docs/security/current/sbom-summary.md
+          echo "- **DevOps Teams**: Integrate into CI/CD pipelines for automated scanning" >> docs/security/current/sbom-summary.md
+          echo "- **Legal Teams**: Analyze licensing compliance and obligations" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
           echo "---" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
-          echo "*This SBOM summary is automatically updated during documentation builds.*" >> docs/security/current/sbom-summary.md
+          echo "*This SBOM summary is automatically updated with every documentation build.*" >> docs/security/current/sbom-summary.md
           
           # Create security index page (if it doesn't exist)
           if [ ! -f "docs/security/index.md" ]; then

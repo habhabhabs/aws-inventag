@@ -8,6 +8,14 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
+// Import current version from version.json
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
+// Read current version from version.json
+const versionData = JSON.parse(readFileSync(resolve('../version.json'), 'utf8'));
+const currentVersion = `v${versionData.version}`;
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'InvenTag Documentation',
@@ -78,12 +86,15 @@ const config = {
           // Documentation versioning configuration
           includeCurrentVersion: true,
           lastVersion: 'current',
+          // Custom version labels for better UX
+          onlyIncludeVersions: ['current', 'v4.2.5', 'v4.2.1'],
           // Versions are automatically managed via versions.json
           // No hardcoded version configuration needed - Docusaurus reads from versions.json
           versions: {
             current: {
-              label: 'Latest (Development)',
+              label: `${currentVersion} (Current)`,
               badge: true,
+              path: '/docs',
             },
           },
           // Version-specific edit URLs
