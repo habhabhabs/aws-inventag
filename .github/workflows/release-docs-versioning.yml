@@ -171,50 +171,100 @@ jobs:
         
         echo "📊 Build size: $(du -sh build | cut -f1)"
 
-    - name: Update version configuration
+    - name: Validate version configuration
       if: env.skip_creation == 'false'
       working-directory: ./website
       run: |
         VERSION="${{ env.VERSION }}"
-        echo "🔄 Updating configuration for version $VERSION..."
+        echo "🔄 Validating N-1 versioning configuration for $VERSION..."
         
-        # Verify versions.json was updated
-        if ! jq -e --arg v "$VERSION" 'index($v) != null' versions.json > /dev/null; then
-          echo "❌ Error: Version was not added to versions.json"
-          exit 1
+        # Read current version from ../version.json to determine what should be in versions.json
+        if [ -f "../version.json" ]; then
+          CURRENT_VERSION=$(jq -r '.version' ../version.json)
+          EXPECTED_N1_VERSION="v$CURRENT_VERSION"
+          echo "Expected N-1 version in versions.json: $EXPECTED_N1_VERSION"
+          
+          # Verify the correct N-1 version is in versions.json (not the new version)
+          if [ "$EXPECTED_N1_VERSION" != "$VERSION" ]; then
+            if ! jq -e --arg v "$EXPECTED_N1_VERSION" 'index($v) != null' versions.json > /dev/null; then
+              echo "❌ Error: Expected N-1 version ($EXPECTED_N1_VERSION) was not found in versions.json"
+              echo "Current versions.json content:"
+              jq '.' versions.json
+              exit 1
+            fi
+            echo "✅ Correct N-1 version ($EXPECTED_N1_VERSION) found in versions.json"
+          else
+            echo "ℹ️ First release or same version - no N-1 version expected"
+          fi
+        else
+          echo "⚠️ No version.json found for validation"
         fi
         
         # Show available versions
         echo "📋 Available documentation versions:"
-        jq -r '.[]' versions.json | while read version; do
-          echo "  - $version"
-        done
+        if [ -s versions.json ]; then
+          jq -r '.[]' versions.json | while read version; do
+            echo "  - $version (versioned docs)"
+          done
+        else
+          echo "  - No versioned documentation (empty versions.json)"
+        fi
+        echo "  - $VERSION (current - from docs/ folder)"
         
-        echo "✅ Configuration updated successfully"
+        echo "✅ N-1 versioning configuration validated successfully"
 
     - name: Generate summary
       if: env.skip_creation == 'false'
       run: |
         VERSION="${{ env.VERSION }}"
         
-        # Count documentation files
-        VERSION_DOCS=$(find website/versioned_docs/version-$VERSION -name "*.md" -type f | wc -l)
-        TOTAL_VERSIONS=$(jq length website/versions.json)
+        # Determine N-1 version for file counting
+        if [ -f "version.json" ]; then
+          CURRENT_VERSION=$(jq -r '.version' version.json)
+          N1_VERSION="v$CURRENT_VERSION"
+        else
+          N1_VERSION=""
+        fi
         
-        echo "## 📚 Documentation Version $VERSION Created" > version-summary.md
+        # Count documentation files in N-1 version (not new version)
+        if [ ! -z "$N1_VERSION" ] && [ -d "website/versioned_docs/version-$N1_VERSION" ]; then
+          VERSION_DOCS=$(find website/versioned_docs/version-$N1_VERSION -name "*.md" -type f | wc -l)
+          CREATED_VERSION=$N1_VERSION
+        else
+          VERSION_DOCS=0
+          CREATED_VERSION="None"
+        fi
+        
+        TOTAL_VERSIONS=$(jq length website/versions.json)
+        CURRENT_DOCS=$(find docs -name "*.md" -type f | wc -l)
+        
+        echo "## 📚 Documentation Versioning for Release $VERSION" > version-summary.md
         echo "" >> version-summary.md
-        echo "### Summary" >> version-summary.md
-        echo "- **Version**: $VERSION" >> version-summary.md
-        echo "- **Documentation files**: $VERSION_DOCS" >> version-summary.md
-        echo "- **Total versions**: $TOTAL_VERSIONS" >> version-summary.md
+        echo "### N-1 Versioning Summary" >> version-summary.md
+        echo "- **New Release**: $VERSION (current - in docs/ folder)" >> version-summary.md
+        echo "- **N-1 Version Created**: $CREATED_VERSION" >> version-summary.md
+        echo "- **N-1 Documentation files**: $VERSION_DOCS" >> version-summary.md
+        echo "- **Current Documentation files**: $CURRENT_DOCS" >> version-summary.md
+        echo "- **Total versioned releases**: $TOTAL_VERSIONS" >> version-summary.md
         echo "- **Trigger**: ${{ github.event_name }}" >> version-summary.md
         echo "" >> version-summary.md
-        echo "### Files Created" >> version-summary.md
-        echo "- \`website/versioned_docs/version-$VERSION/\`" >> version-summary.md
-        echo "- \`website/versioned_sidebars/version-$VERSION-sidebars.json\`" >> version-summary.md
+        echo "### Files Created/Updated" >> version-summary.md
+        if [ "$CREATED_VERSION" != "None" ]; then
+          echo "- \`website/versioned_docs/version-$CREATED_VERSION/\`" >> version-summary.md
+          echo "- \`website/versioned_sidebars/version-$CREATED_VERSION-sidebars.json\`" >> version-summary.md
+        else
+          echo "- No versioned documentation created (first release)" >> version-summary.md
+        fi
+        echo "- \`website/versions.json\` (updated)" >> version-summary.md
         echo "" >> version-summary.md
-        echo "### Updated Files" >> version-summary.md
-        echo "- \`website/versions.json\`" >> version-summary.md
+        echo "### Version Strategy" >> version-summary.md
+        echo "Using N-1 versioning strategy:" >> version-summary.md
+        echo "- **Current**: $VERSION (latest development, from docs/)" >> version-summary.md
+        if [ "$CREATED_VERSION" != "None" ]; then
+          echo "- **N-1**: $CREATED_VERSION (previous release, archived)" >> version-summary.md
+        else
+          echo "- **N-1**: None (first release)" >> version-summary.md
+        fi
         echo "" >> version-summary.md
         echo "Generated: $(date)" >> version-summary.md
         
