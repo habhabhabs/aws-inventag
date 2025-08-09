@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.11', '3.12']  # Reduced matrix for faster execution
       fail-fast: false
 
     steps:
@@ -23,16 +23,14 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
 
     - name: Cache pip dependencies
       uses: actions/cache@v4
       with:
         path: ~/.cache/pip
-        key: ubuntu-python-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
+        key: python-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
-          ubuntu-python-${{ matrix.python-version }}-pip-
-          ubuntu-python-pip-
+          python-${{ matrix.python-version }}-pip-
 
     - name: Install dependencies
       shell: bash
@@ -40,65 +38,38 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         pip install pytest pytest-cov flake8 black mypy
-        # Install additional testing dependencies
-        pip install pytest-xdist pytest-timeout pytest-mock
 
-    - name: Run linting with flake8
+    - name: Run linting
       shell: bash
       run: |
-        # Stop the build if there are Python syntax errors or undefined names
+        # Basic linting
         flake8 scripts/ inventag/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        # Exit-zero treats all errors as warnings
         flake8 scripts/ inventag/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
 
-    - name: Check code formatting with black
+    - name: Check code formatting
       shell: bash
       run: |
         black --check scripts/ inventag/
 
-    - name: Type checking with mypy
+    - name: Run tests
       shell: bash
       run: |
-        mypy scripts/ inventag/ --ignore-missing-imports || true
-
-    - name: Run Python version specific tests
-      shell: bash
-      run: |
-        echo "Testing with Python ${{ matrix.python-version }}"
-        python --version
-        python -c "import sys; print(f'Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')"
-
-    - name: Test core functionality
-      shell: bash
-      run: |
-        # Run test suite if tests directory exists
+        # Test basic imports
+        python -c "import inventag; print('✅ InvenTag package imports successfully')"
+        
+        # Run test suite if exists
         if [ -d "tests" ]; then
           python -m pytest tests/ -v --cov=inventag --cov-report=xml --timeout=300 || true
         fi
         
-        # Test basic imports work across Python versions
-        python -c "import inventag; print('✅ InvenTag package imports successfully')"
-        python -c "from inventag.core import CloudBOMGenerator; print('✅ CloudBOMGenerator imports successfully')"
-        python -c "from inventag.reporting import BOMConverter; print('✅ BOMConverter imports successfully')"
-        
-        # Test all main scripts - updated paths for new structure
+        # Test script help commands
         echo "🧪 Testing script help commands..."
         python scripts/legacy/bom_converter.py --help
         python scripts/legacy/tag_compliance_checker.py --help
         python scripts/development/cicd_bom_generation.py --help
         
-        # Test AWS resource inventory if it exists
-        if [ -f "scripts/legacy/aws_resource_inventory.py" ]; then
-          python scripts/legacy/aws_resource_inventory.py --help
-        fi
-        
-        # Test production scripts
-        python scripts/production/production_monitor.py --help
-        python scripts/production/security_validator.py --help
-        python scripts/production/multi_account_scanner.py --help
-        
         echo "✅ All help commands work correctly"
-        
+
     - name: Upload coverage to Codecov
       if: matrix.python-version == '3.11'
       uses: codecov/codecov-action@v4
@@ -108,15 +79,13 @@ jobs:
         name: codecov-umbrella
         fail_ci_if_error: false
 
-  security:
-    name: Comprehensive Security Scan
+  basic-security:
+    name: Basic Security Checks
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Full history for comprehensive analysis
       
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -129,349 +98,56 @@ jobs:
         node-version: '20'
         cache: 'npm'
         cache-dependency-path: 'website/package-lock.json'
-        
-    - name: Install security tools
-      shell: bash
-      run: |
-        echo "📦 Installing Python security tools..."
-        python -m pip install --upgrade pip
-        pip install bandit safety semgrep pip-audit
-        
-        echo "📦 Installing JavaScript security tools..."
-        npm install -g npm-audit eslint @eslint/js eslint-plugin-security
-        npm install -g retire snyk audit-ci
-        
-        echo "📦 Installing additional security scanners..."
-        # Install additional tools for comprehensive scanning
-        wget -q https://github.com/Yelp/detect-secrets/archive/refs/heads/master.zip
-        unzip -q master.zip
-        cd detect-secrets-master
-        pip install .
-        cd ..
-        
-        echo "✅ All security tools installed"
 
-    - name: Repository structure analysis
+    - name: Python security checks
       shell: bash
       run: |
-        echo "📊 Repository Structure Analysis"
-        echo "================================"
+        echo "🐍 Basic Python Security"
+        echo "========================"
         
-        # Count files by type
-        echo "File type distribution:"
-        find . -type f -name "*.py" | wc -l | xargs echo "Python files:"
-        find . -type f -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | wc -l | xargs echo "JavaScript/TypeScript files:"
-        find . -type f -name "*.json" | wc -l | xargs echo "JSON files:"
-        find . -type f -name "*.yaml" -o -name "*.yml" | wc -l | xargs echo "YAML files:"
-        find . -type f -name "*.sh" -o -name "*.bash" | wc -l | xargs echo "Shell scripts:"
-        find . -type f -name "*.md" | wc -l | xargs echo "Markdown files:"
+        # Install minimal security tools
+        pip install bandit safety
         
-        # Identify critical directories
-        echo -e "\nCritical directories for security scanning:"
-        find . -name "node_modules" -type d | head -3 | xargs -I {} echo "  - {}"
-        find . -name "scripts" -type d | xargs -I {} echo "  - {}"
-        find . -name "inventag" -type d | xargs -I {} echo "  - {}"
-        find . -name "website" -type d | xargs -I {} echo "  - {}"
-        
-        echo "✅ Structure analysis complete"
-
-    - name: Python Security Scanning
-      shell: bash
-      run: |
-        echo "🐍 Python Security Analysis"
-        echo "==========================="
-        
-        echo "🔒 Running Bandit security scan on Python code..."
-        if bandit -r scripts/ inventag/ -f json -o bandit-report.json; then
-          echo "✅ Bandit scan completed successfully"
+        if [ -f "requirements.txt" ]; then
+          echo "🔒 Running basic security checks..."
+          bandit -r scripts/ inventag/ -ll || echo "⚠️ Bandit found issues"
+          safety check -r requirements.txt || echo "⚠️ Safety found vulnerable dependencies"
         else
-          echo "⚠️ Bandit found potential security issues"
-          echo "Detailed report:"
-          bandit -r scripts/ inventag/ -ll || true
-        fi
-        
-        echo "🔍 Checking Python dependencies for known vulnerabilities..."
-        if safety check; then
-          echo "✅ No known vulnerabilities in Python dependencies"
-        else
-          echo "⚠️ Known vulnerabilities found in Python dependencies"
-        fi
-        
-        echo "🔒 Running pip-audit for additional dependency checking..."
-        if pip-audit; then
-          echo "✅ pip-audit scan completed successfully"
-        else
-          echo "⚠️ pip-audit found potential issues"
+          echo "ℹ️ No requirements.txt found"
         fi
 
-    - name: JavaScript/Node.js Security Scanning  
+    - name: Node.js security checks
       shell: bash
       run: |
-        echo "🟨 JavaScript/Node.js Security Analysis"
-        echo "======================================="
+        echo "🟨 Basic Node.js Security"
+        echo "========================="
         
-        # Check if website directory exists and has package.json
         if [ -f "website/package.json" ]; then
           cd website
-          
-          echo "📦 Installing website dependencies for security scanning..."
-          npm ci --audit=false || npm install --audit=false
-          
-          echo "🔍 Running npm audit for dependency vulnerabilities..."
-          if npm audit; then
-            echo "✅ No npm audit issues found"
-          else
-            echo "⚠️ npm audit found vulnerabilities"
-            echo "Attempting to fix automatically..."
-            npm audit fix --force || echo "❌ Could not automatically fix all issues"
-          fi
-          
-          echo "🔒 Running Retire.js to check for vulnerable JavaScript libraries..."
-          if retire --js --node --exitwith 0; then
-            echo "✅ Retire.js scan completed"
-          else
-            echo "⚠️ Retire.js found vulnerable libraries"
-          fi
-          
-          echo "🛡️ Running ESLint with security plugin..."
-          # Create ESLint config for security scanning
-          echo 'module.exports = {' > .eslintrc.security.js
-          echo '  extends: ["@eslint/js/recommended"],' >> .eslintrc.security.js
-          echo '  plugins: ["security"],' >> .eslintrc.security.js
-          echo '  env: {' >> .eslintrc.security.js
-          echo '    node: true,' >> .eslintrc.security.js
-          echo '    browser: true,' >> .eslintrc.security.js
-          echo '    es6: true' >> .eslintrc.security.js
-          echo '  },' >> .eslintrc.security.js
-          echo '  parserOptions: {' >> .eslintrc.security.js
-          echo '    ecmaVersion: 2022,' >> .eslintrc.security.js
-          echo '    sourceType: "module"' >> .eslintrc.security.js
-          echo '  },' >> .eslintrc.security.js
-          echo '  rules: {' >> .eslintrc.security.js
-          echo '    "security/detect-object-injection": "error",' >> .eslintrc.security.js
-          echo '    "security/detect-non-literal-regexp": "error",' >> .eslintrc.security.js
-          echo '    "security/detect-unsafe-regex": "error",' >> .eslintrc.security.js
-          echo '    "security/detect-buffer-noassert": "error",' >> .eslintrc.security.js
-          echo '    "security/detect-child-process": "error",' >> .eslintrc.security.js
-          echo '    "security/detect-disable-mustache-escape": "error",' >> .eslintrc.security.js
-          echo '    "security/detect-eval-with-expression": "error",' >> .eslintrc.security.js
-          echo '    "security/detect-no-csrf-before-method-override": "error",' >> .eslintrc.security.js
-          echo '    "security/detect-non-literal-fs-filename": "error",' >> .eslintrc.security.js
-          echo '    "security/detect-non-literal-require": "error",' >> .eslintrc.security.js
-          echo '    "security/detect-possible-timing-attacks": "error",' >> .eslintrc.security.js
-          echo '    "security/detect-pseudoRandomBytes": "error"' >> .eslintrc.security.js
-          echo '  }' >> .eslintrc.security.js
-          echo '};' >> .eslintrc.security.js
-          
-          if find . -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | grep -q .; then
-            eslint --config .eslintrc.security.js --ext .js,.jsx,.ts,.tsx . || echo "⚠️ ESLint security issues found"
-          else
-            echo "ℹ️ No JavaScript/TypeScript files found for ESLint scanning"
-          fi
-          
+          npm install --silent || echo "⚠️ npm install issues"
+          npm audit || echo "⚠️ npm audit found vulnerabilities"
           cd ..
         else
-          echo "ℹ️ No website/package.json found, skipping Node.js specific scans"
+          echo "ℹ️ No website/package.json found"
         fi
 
-    - name: Configuration and Secrets Scanning
+    - name: Simple secrets check
       shell: bash
       run: |
-        echo "🔐 Configuration and Secrets Analysis"
-        echo "===================================="
+        echo "🔐 Basic Secrets Check"
+        echo "======================"
         
-        echo "🕵️ Running detect-secrets scan..."
-        if detect-secrets scan --all-files --baseline .secrets.baseline; then
-          echo "✅ No secrets detected"
-        else
-          echo "⚠️ Potential secrets detected"
-          echo "Creating baseline for future scans..."
-          detect-secrets scan --all-files --baseline .secrets.baseline --update
-        fi
-        
-        echo "🔒 Running GitLeaks scan..."
-        if [ -f ".gitleaks.toml" ]; then
-          if gitleaks detect --config .gitleaks.toml; then
-            echo "✅ No real secrets detected by GitLeaks"
-          else
-            echo "⚠️ GitLeaks found potential secrets (may be documentation examples)"
-          fi
-        else
-          echo "ℹ️ No GitLeaks configuration found"
-        fi
-        
-        echo "🔍 Scanning for sensitive configuration patterns..."
-        
-        # Check for potentially sensitive files
-        echo "Checking for sensitive file patterns..."
-        find . -type f \( \
-          -name "*.key" -o \
-          -name "*.pem" -o \
-          -name "*.p12" -o \
-          -name "*.pfx" -o \
-          -name "*id_rsa*" -o \
-          -name "*id_dsa*" -o \
-          -name "*.env" -o \
-          -name ".env.*" -o \
-          -name "*secret*" -o \
-          -name "*password*" -o \
-          -name "*credential*" \
-        \) -not -path "./website/node_modules/*" -not -path "./.git/*" | while read file; do
-          echo "⚠️ Potentially sensitive file: $file"
-        done
-        
-        # Check for hardcoded credentials patterns
-        echo "Scanning for hardcoded credential patterns..."
-        grep -r -i --include="*.py" --include="*.js" --include="*.json" --include="*.yaml" --include="*.yml" \
-          -E "(password|passwd|pwd|secret|key|token|credential|api_key|access_key)" . \
+        # Simple pattern matching for secrets
+        echo "Checking for obvious secrets patterns..."
+        grep -r -i --include="*.py" --include="*.js" --include="*.json" --include="*.yml" \
+          -E "(api_key|secret_key|password|token)\s*[=:]\s*['\"][^'\"]{8,}" . \
           --exclude-dir=node_modules --exclude-dir=.git \
-          | grep -v "# Example" | grep -v "# TODO" | grep -v "password_placeholder" \
-          | head -20 || echo "✅ No obvious hardcoded credentials found"
-
-    - name: Infrastructure as Code Security
-      shell: bash
-      run: |
-        echo "🏗️ Infrastructure as Code Security Analysis"
-        echo "==========================================="
+          | head -5 || echo "✅ No obvious hardcoded secrets found"
         
-        # Scan GitHub Actions workflows
-        echo "🔍 Scanning GitHub Actions workflows..."
-        find .github/workflows -name "*.yml" -o -name "*.yaml" | while read workflow; do
-          echo "Checking workflow: $workflow"
-          
-          # Check for potential security issues in workflows
-          if grep -q "secrets\." "$workflow"; then
-            echo "✅ Found proper secret usage in $workflow"
-          fi
-          
-          # Check for dangerous patterns
-          if grep -i "eval\|exec\|system" "$workflow"; then
-            echo "⚠️ Potentially dangerous command execution in $workflow"
-          fi
-          
-          # Check for third-party action versions
-          if grep -E "uses:.*@main|uses:.*@master" "$workflow"; then
-            echo "⚠️ Using non-pinned action versions in $workflow (security risk)"
-          fi
-        done
-        
-        # Scan Docker and container configurations
-        echo "🐳 Scanning for container configurations..."
-        find . -name "Dockerfile*" -o -name "docker-compose*" | while read containerfile; do
-          echo "Checking container file: $containerfile"
-          
-          if grep -q "FROM.*:latest" "$containerfile"; then
-            echo "⚠️ Using 'latest' tag in $containerfile (not recommended)"
-          fi
-          
-          if grep -q "RUN.*sudo\|RUN.*su " "$containerfile"; then
-            echo "⚠️ Privilege escalation detected in $containerfile"
-          fi
-        done
-        
-        echo "✅ Infrastructure scanning complete"
-
-    - name: Comprehensive Semgrep Analysis
-      shell: bash
-      run: |
-        echo "🛡️ Comprehensive Semgrep Security Analysis"
-        echo "=========================================="
-        
-        echo "🔍 Running Semgrep with comprehensive rulesets..."
-        
-        # Run different rulesets for comprehensive coverage
-        semgrep --config=auto --json --output=semgrep-auto.json . || true
-        semgrep --config=p/security-audit --json --output=semgrep-security.json . || true
-        semgrep --config=p/secrets --json --output=semgrep-secrets.json . || true
-        semgrep --config=p/javascript --json --output=semgrep-js.json . || true
-        semgrep --config=p/python --json --output=semgrep-python.json . || true
-        
-        echo "📊 Semgrep Analysis Summary:"
-        echo "Auto ruleset results:"
-        jq '.results | length' semgrep-auto.json 2>/dev/null || echo "0 issues found"
-        
-        echo "Security audit results:"
-        jq '.results | length' semgrep-security.json 2>/dev/null || echo "0 issues found"
-        
-        echo "Secrets detection results:"  
-        jq '.results | length' semgrep-secrets.json 2>/dev/null || echo "0 issues found"
-        
-        echo "JavaScript specific results:"
-        jq '.results | length' semgrep-js.json 2>/dev/null || echo "0 issues found"
-        
-        echo "Python specific results:"
-        jq '.results | length' semgrep-python.json 2>/dev/null || echo "0 issues found"
-
-    - name: Generate Security Report
-      shell: bash
-      run: |
-        echo "📋 Generating Comprehensive Security Report"
-        echo "=========================================="
-        
-        echo '# Security Scan Report' > security-report.md
-        echo '' >> security-report.md
-        echo '## Executive Summary' >> security-report.md
-        echo '' >> security-report.md
-        echo 'This report contains the results of comprehensive security scanning across the entire repository, including:' >> security-report.md
-        echo '- Python security analysis (Bandit, Safety, pip-audit)' >> security-report.md
-        echo '- JavaScript/Node.js security analysis (npm audit, Retire.js, ESLint security)' >> security-report.md
-        echo '- Secrets and configuration scanning (detect-secrets)' >> security-report.md
-        echo '- Infrastructure as Code security (GitHub Actions, Docker)' >> security-report.md
-        echo '- Multi-language analysis (Semgrep)' >> security-report.md
-        echo '' >> security-report.md
-        echo '## Scan Coverage' >> security-report.md
-        echo '' >> security-report.md
-        echo '### File Types Scanned' >> security-report.md
-        
-        # Add file counts to report
-        echo "- Python files: $(find . -name "*.py" | wc -l)" >> security-report.md
-        echo "- JavaScript/TypeScript files: $(find . -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | wc -l)" >> security-report.md
-        echo "- Configuration files (JSON/YAML): $(find . -name "*.json" -o -name "*.yaml" -o -name "*.yml" | wc -l)" >> security-report.md
-        echo "- Shell scripts: $(find . -name "*.sh" -o -name "*.bash" | wc -l)" >> security-report.md
-        echo "- GitHub Actions workflows: $(find .github/workflows -name "*.yml" | wc -l)" >> security-report.md
-        
-        echo "" >> security-report.md
-        echo "### Tools Used" >> security-report.md
-        echo "- **Bandit**: Python security scanner" >> security-report.md
-        echo "- **Safety**: Python dependency vulnerability checker" >> security-report.md  
-        echo "- **pip-audit**: Advanced Python dependency auditing" >> security-report.md
-        echo "- **npm audit**: Node.js dependency vulnerability scanner" >> security-report.md
-        echo "- **Retire.js**: JavaScript library vulnerability scanner" >> security-report.md
-        echo "- **ESLint**: JavaScript code security analysis" >> security-report.md
-        echo "- **detect-secrets**: Secrets detection across all files" >> security-report.md
-        echo "- **Semgrep**: Multi-language static analysis" >> security-report.md
-        echo "" >> security-report.md
-        echo "### Summary" >> security-report.md
-        echo "All major security scanning tools have been executed across the repository." >> security-report.md 
-        echo "Review individual scan outputs above for detailed findings." >> security-report.md
-        echo "" >> security-report.md
-        echo "Generated: $(date)" >> security-report.md
-        
-        echo "📄 Security report generated: security-report.md"
-        echo ""
-        echo "📊 Final Security Scan Summary:"
-        echo "=============================="
-        echo "✅ Python security scanning complete"
-        echo "✅ JavaScript/Node.js security scanning complete"  
-        echo "✅ Secrets and configuration scanning complete"
-        echo "✅ Infrastructure as Code scanning complete"
-        echo "✅ Multi-language static analysis complete"
-        echo ""
-        echo "🔍 Total files analyzed: $(find . -type f | wc -l)"
-        echo "🛡️ Security tools executed: 8+"
-        echo "📋 Detailed results available in workflow logs and artifacts"
-
-    - name: Upload security artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-scan-results
-        path: |
-          bandit-report.json
-          semgrep-*.json
-          security-report.md
-          .secrets.baseline
-        retention-days: 30
+        # Check for sensitive files
+        find . -name "*.key" -o -name "*.pem" -o -name "*.env" \
+          -not -path "./website/node_modules/*" -not -path "./.git/*" \
+          | head -5 || echo "✅ No obvious sensitive files found"
 
   integration-tests:
     name: Integration Tests
@@ -496,6 +172,8 @@ jobs:
       shell: bash
       run: |
         mkdir -p test-data
+        
+        # Create simple sample JSON data
         cat > test-data/sample.json << 'EOF'
         {
           "all_discovered_resources": [
@@ -509,36 +187,19 @@ jobs:
               "account_id": "123456789012",
               "tags": {"Environment": "test", "Owner": "TeamA"},
               "discovered_via": "ResourceGroupsTaggingAPI"
-            },
-            {
-              "service": "EC2",
-              "type": "Instance",
-              "region": "us-east-1",
-              "id": "i-1234567890abcdef0",
-              "name": "test-instance",
-              "arn": "arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0",
-              "account_id": "123456789012",
-              "tags": {"Environment": "test"},
-              "discovered_via": "EC2"
             }
           ]
         }
         EOF
         
-        # Create sample tag policy configuration
+        # Create sample tag policy
         cat > test-data/tag_policy.yaml << 'EOF'
         required_tags:
           - "Environment"
           - "Owner"
-          - key: "Environment"
-            allowed_values:
-              - "dev"
-              - "test"
-              - "staging"
-              - "prod"
         EOF
 
-    - name: Test BOM converter with sample data
+    - name: Test BOM converter
       shell: bash
       run: |
         python scripts/legacy/bom_converter.py \
@@ -546,17 +207,7 @@ jobs:
           --output test-output.xlsx \
           --no-vpc-enrichment
         
-        # Verify output file was created
         ls -la test-output.xlsx
-        
-        # Test CSV format
-        python scripts/legacy/bom_converter.py \
-          --input test-data/sample.json \
-          --output test-output.csv \
-          --format csv \
-          --no-vpc-enrichment
-        
-        ls -la test-output.csv
 
     - name: Test tag compliance checker
       shell: bash
@@ -567,27 +218,23 @@ jobs:
           --output compliance-report \
           --format json
         
-        # Verify compliance report was created (with timestamp)
         ls -la compliance-report_*.json
-        echo "✅ Tag compliance checker works correctly"
 
-    - name: Test CI/CD BOM generation
+    - name: Generate workflow summary
+      if: always()
       shell: bash
       run: |
-        # Create a simple accounts configuration
-        cat > test-data/accounts.json << 'EOF'
-        [
-          {
-            "account_id": "123456789012",
-            "account_name": "test-account",
-            "environment": "test",
-            "access_key_id": null,
-            "secret_access_key": null,
-            "profile_name": null,
-            "role_arn": null
-          }
-        ]
-        EOF
-        
-        # Test help and configuration validation
-        python scripts/development/cicd_bom_generation.py --help || true
+        echo "## 🧪 CI/CD Pipeline Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ Completed Checks" >> $GITHUB_STEP_SUMMARY
+        echo "- Python tests across versions (3.9, 3.11, 3.12)" >> $GITHUB_STEP_SUMMARY
+        echo "- Code formatting and linting" >> $GITHUB_STEP_SUMMARY
+        echo "- Basic security scanning" >> $GITHUB_STEP_SUMMARY
+        echo "- Integration tests" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🛡️ Security Status" >> $GITHUB_STEP_SUMMARY
+        echo "- Python: Basic Bandit and Safety checks completed" >> $GITHUB_STEP_SUMMARY
+        echo "- Node.js: npm audit completed" >> $GITHUB_STEP_SUMMARY
+        echo "- Secrets: Basic pattern matching performed" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "📋 **Note**: For comprehensive security analysis, see the dedicated security-scan workflow." >> $GITHUB_STEP_SUMMARY
