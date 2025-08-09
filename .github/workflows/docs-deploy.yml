@@ -109,8 +109,8 @@ jobs:
           
           # Generate Python-specific SBOM
           if [ -f "requirements.txt" ]; then
-            cyclonedx-py -r requirements.txt -o docs/security/sbom/python-sbom.json --format json
-            cyclonedx-py -r requirements.txt -o docs/security/sbom/python-sbom.xml --format xml
+            cyclonedx-py requirements --output-format json --output-file docs/security/sbom/python-sbom.json requirements.txt
+            cyclonedx-py requirements --output-format xml --output-file docs/security/sbom/python-sbom.xml requirements.txt
           fi
           
           # Generate Node.js SBOM for website
