@@ -279,6 +279,10 @@ jobs:
         git config user.name "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
         
+        # Ensure we're on main branch (not detached HEAD)
+        git checkout main
+        echo "✅ Switched to main branch"
+        
         # Determine N-1 version for git operations
         if [ -f "version.json" ]; then
           CURRENT_VERSION=$(jq -r '.version' version.json)
