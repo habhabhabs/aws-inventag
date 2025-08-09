@@ -192,7 +192,6 @@ jobs:
             NODEJS_COMPONENTS=$(jq '.components | length' "docs/security/versions/$VERSION/nodejs-website-sbom-$VERSION.json" 2>/dev/null || echo "Unknown")
             echo "- **Node.js Components**: $NODEJS_COMPONENTS" >> "docs/security/versions/$VERSION/README.md"
           fi
-          
           echo "" >> "docs/security/versions/$VERSION/README.md"
           echo "## Version Tracking" >> "docs/security/versions/$VERSION/README.md"
           echo "" >> "docs/security/versions/$VERSION/README.md"
