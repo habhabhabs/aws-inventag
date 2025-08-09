@@ -123,7 +123,7 @@ jobs:
           echo "======================================"
           
           # Install SBOM generation tools
-          pip install cyclonedx-bom syft-py cyclonedx-python-lib
+          pip install cyclonedx-bom cyclonedx-python-lib
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
           
           # Create version-specific security directory
