@@ -235,35 +235,33 @@ jobs:
           
           echo "🛡️ Running ESLint with security plugin..."
           # Create ESLint config for security scanning
-          cat > .eslintrc.security.js << 'EOF'
-module.exports = {
-  extends: ['@eslint/js/recommended'],
-  plugins: ['security'],
-  env: {
-    node: true,
-    browser: true,
-    es6: true
-  },
-  parserOptions: {
-    ecmaVersion: 2022,
-    sourceType: 'module'
-  },
-  rules: {
-    'security/detect-object-injection': 'error',
-    'security/detect-non-literal-regexp': 'error',
-    'security/detect-unsafe-regex': 'error',
-    'security/detect-buffer-noassert': 'error',
-    'security/detect-child-process': 'error',
-    'security/detect-disable-mustache-escape': 'error',
-    'security/detect-eval-with-expression': 'error',
-    'security/detect-no-csrf-before-method-override': 'error',
-    'security/detect-non-literal-fs-filename': 'error',
-    'security/detect-non-literal-require': 'error',
-    'security/detect-possible-timing-attacks': 'error',
-    'security/detect-pseudoRandomBytes': 'error'
-  }
-};
-EOF
+          echo 'module.exports = {' > .eslintrc.security.js
+          echo '  extends: ["@eslint/js/recommended"],' >> .eslintrc.security.js
+          echo '  plugins: ["security"],' >> .eslintrc.security.js
+          echo '  env: {' >> .eslintrc.security.js
+          echo '    node: true,' >> .eslintrc.security.js
+          echo '    browser: true,' >> .eslintrc.security.js
+          echo '    es6: true' >> .eslintrc.security.js
+          echo '  },' >> .eslintrc.security.js
+          echo '  parserOptions: {' >> .eslintrc.security.js
+          echo '    ecmaVersion: 2022,' >> .eslintrc.security.js
+          echo '    sourceType: "module"' >> .eslintrc.security.js
+          echo '  },' >> .eslintrc.security.js
+          echo '  rules: {' >> .eslintrc.security.js
+          echo '    "security/detect-object-injection": "error",' >> .eslintrc.security.js
+          echo '    "security/detect-non-literal-regexp": "error",' >> .eslintrc.security.js
+          echo '    "security/detect-unsafe-regex": "error",' >> .eslintrc.security.js
+          echo '    "security/detect-buffer-noassert": "error",' >> .eslintrc.security.js
+          echo '    "security/detect-child-process": "error",' >> .eslintrc.security.js
+          echo '    "security/detect-disable-mustache-escape": "error",' >> .eslintrc.security.js
+          echo '    "security/detect-eval-with-expression": "error",' >> .eslintrc.security.js
+          echo '    "security/detect-no-csrf-before-method-override": "error",' >> .eslintrc.security.js
+          echo '    "security/detect-non-literal-fs-filename": "error",' >> .eslintrc.security.js
+          echo '    "security/detect-non-literal-require": "error",' >> .eslintrc.security.js
+          echo '    "security/detect-possible-timing-attacks": "error",' >> .eslintrc.security.js
+          echo '    "security/detect-pseudoRandomBytes": "error"' >> .eslintrc.security.js
+          echo '  }' >> .eslintrc.security.js
+          echo '};' >> .eslintrc.security.js
           
           if find . -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" | grep -q .; then
             eslint --config .eslintrc.security.js --ext .js,.jsx,.ts,.tsx . || echo "⚠️ ESLint security issues found"
