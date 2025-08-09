@@ -1,11 +1,11 @@
 {
-  "version": "4.2.2",
-  "release_notes": "Release 4.2.2 - 2025-08-08\\✨ New Features:\\  • feat: integrate comprehensive SBOM generation with documentation build process\\  • feat: implement comprehensive documentation versioning system\\🐛 Bug Fixes:\\  • fix: resolve GitLeaks false positives with proper configuration\\📊 Summary: 3 commits in this release\\🔀 Triggered by PR #26",
-  "release_date": "2025-08-08T19:52:47.268247",
-  "previous_version": "4.2.1",
+  "version": "4.2.3",
+  "release_notes": "Release 4.2.3 - 2025-08-09\\✨ New Features:\\  • feat: simplify SBOM workflow to resolve YAML validation issues\\  • feat: implement enterprise security integration with permanent fixes\\🐛 Bug Fixes:\\  • fix: create clean SBOM workflow removing complex embedded code\\  • fix: resolve YAML syntax errors and cyclonedx-py arguments in SBOM workflow\\  • fix: update cyclonedx-py commands to use correct parameter syntax\\  • fix: resolve YAML validation errors in SBOM workflow\\  • fix: resolve YAML syntax issues in SBOM workflow\\  • fix: correct cyclonedx-py command syntax and improve YAML heredoc handling\\  • fix: correct cyclonedx-py command syntax for SBOM generation\\  • fix: update SBOM workflow with corrected JSON generation\\  • fix: remove non-existent syft-py dependency from all workflows\\  • fix: resolve YAML syntax error in docs-deploy.yml workflow\\  • fix: resolve YAML syntax errors in create-docs-version workflow\\  • fix: temporarily disable security sidebar to resolve Docusaurus loading error\\📝 Other Changes:\\  • hotfix: final YAML syntax fixes - remove orphaned text blocks\\  • hotfix: resolve critical YAML syntax errors in GitHub Actions workflows\\📊 Summary: 16 commits in this release\\🔀 Triggered by PR #27",
+  "release_date": "2025-08-09T08:01:27.113551",
+  "previous_version": "4.2.2",
   "version_bump_type": "patch",
-  "git_tag": "v4.2.2",
-  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.2",
-  "triggered_by_pr": "26",
-  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/26"
+  "git_tag": "v4.2.3",
+  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.3",
+  "triggered_by_pr": "27",
+  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/27"
 }
