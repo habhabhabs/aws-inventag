@@ -1,0 +1,252 @@
+name: Auto-create Documentation Version on Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to create (e.g., v4.3.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-docs-version:
+    name: Create Documentation Version
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: 'website/package-lock.json'
+
+    - name: Determine version
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "release" ]; then
+          VERSION="${{ github.event.release.tag_name }}"
+          echo "Using release tag: $VERSION"
+        else
+          VERSION="${{ github.event.inputs.version }}"
+          echo "Using manual input: $VERSION"
+        fi
+        
+        # Validate version format
+        if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "❌ Error: Version must follow format vX.Y.Z (e.g., v4.3.0)"
+          exit 1
+        fi
+        
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Check if version already exists
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        
+        if [ -f "website/versions.json" ]; then
+          if jq -e --arg v "$VERSION" 'index($v) != null' website/versions.json > /dev/null; then
+            echo "ℹ️ Version $VERSION already exists in documentation, skipping creation"
+            echo "skip_creation=true" >> $GITHUB_ENV
+          else
+            echo "✅ Version $VERSION is new, will create documentation version"
+            echo "skip_creation=false" >> $GITHUB_ENV
+          fi
+        else
+          echo "✅ No versions.json found, this will be the first version"
+          echo "skip_creation=false" >> $GITHUB_ENV
+        fi
+
+    - name: Install dependencies
+      if: env.skip_creation == 'false'
+      working-directory: ./website
+      run: |
+        echo "📦 Installing website dependencies..."
+        npm ci --prefer-offline --no-audit
+
+    - name: Create documentation version
+      if: env.skip_creation == 'false'
+      working-directory: ./website
+      run: |
+        VERSION="${{ env.VERSION }}"
+        
+        echo "📚 Creating Docusaurus documentation version: $VERSION"
+        
+        # Create the version using Docusaurus CLI
+        npm run docusaurus -- docs:version "$VERSION"
+        
+        # Verify the version was created
+        if [ ! -d "versioned_docs/version-$VERSION" ]; then
+          echo "❌ Error: Version directory was not created"
+          exit 1
+        fi
+        
+        if [ ! -f "versioned_sidebars/version-$VERSION-sidebars.json" ]; then
+          echo "❌ Error: Version sidebar was not created"  
+          exit 1
+        fi
+        
+        echo "✅ Documentation version $VERSION created successfully"
+
+    - name: Test the build with new version
+      if: env.skip_creation == 'false'
+      working-directory: ./website
+      run: |
+        echo "🧪 Testing documentation build with new version..."
+        
+        # Set production environment
+        export NODE_ENV=production
+        
+        # Test the build
+        if npm run build; then
+          echo "✅ Build successful with version ${{ env.VERSION }}"
+        else
+          echo "❌ Build failed with new version"
+          exit 1
+        fi
+        
+        # Verify build output
+        if [ ! -d "build" ]; then
+          echo "❌ Error: Build directory not found"
+          exit 1
+        fi
+        
+        echo "📊 Build size: $(du -sh build | cut -f1)"
+
+    - name: Update version configuration
+      if: env.skip_creation == 'false'
+      working-directory: ./website
+      run: |
+        VERSION="${{ env.VERSION }}"
+        echo "🔄 Updating configuration for version $VERSION..."
+        
+        # Verify versions.json was updated
+        if ! jq -e --arg v "$VERSION" 'index($v) != null' versions.json > /dev/null; then
+          echo "❌ Error: Version was not added to versions.json"
+          exit 1
+        fi
+        
+        # Show available versions
+        echo "📋 Available documentation versions:"
+        jq -r '.[]' versions.json | while read version; do
+          echo "  - $version"
+        done
+        
+        echo "✅ Configuration updated successfully"
+
+    - name: Generate summary
+      if: env.skip_creation == 'false'
+      run: |
+        VERSION="${{ env.VERSION }}"
+        
+        # Count documentation files
+        VERSION_DOCS=$(find website/versioned_docs/version-$VERSION -name "*.md" -type f | wc -l)
+        TOTAL_VERSIONS=$(jq length website/versions.json)
+        
+        echo "## 📚 Documentation Version $VERSION Created" > version-summary.md
+        echo "" >> version-summary.md
+        echo "### Summary" >> version-summary.md
+        echo "- **Version**: $VERSION" >> version-summary.md
+        echo "- **Documentation files**: $VERSION_DOCS" >> version-summary.md
+        echo "- **Total versions**: $TOTAL_VERSIONS" >> version-summary.md
+        echo "- **Trigger**: ${{ github.event_name }}" >> version-summary.md
+        echo "" >> version-summary.md
+        echo "### Files Created" >> version-summary.md
+        echo "- \`website/versioned_docs/version-$VERSION/\`" >> version-summary.md
+        echo "- \`website/versioned_sidebars/version-$VERSION-sidebars.json\`" >> version-summary.md
+        echo "" >> version-summary.md
+        echo "### Updated Files" >> version-summary.md
+        echo "- \`website/versions.json\`" >> version-summary.md
+        echo "" >> version-summary.md
+        echo "Generated: $(date)" >> version-summary.md
+        
+        echo "✅ Summary created"
+        cat version-summary.md
+
+    - name: Commit and push changes
+      if: env.skip_creation == 'false'
+      run: |
+        VERSION="${{ env.VERSION }}"
+        
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        
+        # Add version-related files
+        git add website/versioned_docs/version-$VERSION/
+        git add website/versioned_sidebars/version-$VERSION-sidebars.json
+        git add website/versions.json
+        
+        # Check if we have changes to commit
+        if git diff --staged --quiet; then
+          echo "ℹ️ No changes to commit"
+        else
+          # Create commit
+          git commit -m "docs: auto-create documentation version $VERSION
+
+          - Add versioned documentation for $VERSION
+          - Generated from release ${{ github.event.release.tag_name || 'manual trigger' }}
+          - Documentation files: $(find website/versioned_docs/version-$VERSION -name "*.md" | wc -l)
+          - Total versions: $(jq length website/versions.json)
+          
+          🤖 Generated with [Claude Code](https://claude.ai/code)
+          
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+          
+          echo "✅ Changes committed"
+          
+          # Push to main
+          git push origin main
+          echo "✅ Changes pushed to main"
+        fi
+
+    - name: Generate workflow summary
+      if: always()
+      run: |
+        VERSION="${{ env.VERSION }}"
+        
+        echo "## 🎯 Auto Documentation Versioning Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ env.skip_creation }}" = "true" ]; then
+          echo "### ℹ️ Version Already Exists" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: Already documented, no action taken" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ✅ Version Created Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "- **Release**: [${{ github.event.release.name }}](${{ github.event.release.html_url }})" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- **Documentation Files**: $(find website/versioned_docs/version-$VERSION -name "*.md" | wc -l 2>/dev/null || echo 'N/A')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Versions**: $(jq length website/versions.json 2>/dev/null || echo 'N/A')" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔗 Next Steps" >> $GITHUB_STEP_SUMMARY
+        echo "- Documentation will be deployed via the docs-deploy workflow" >> $GITHUB_STEP_SUMMARY
+        echo "- Version selector will be available in the documentation site" >> $GITHUB_STEP_SUMMARY
+        echo "- Changes committed to main branch" >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: version-creation-summary
+        path: |
+          version-summary.md
+          website/versions.json
+        retention-days: 30
