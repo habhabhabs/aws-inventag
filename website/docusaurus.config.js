@@ -91,7 +91,7 @@ const config = {
           // Previous version (N-1) is automatically managed via versions.json
           versions: {
             current: {
-              label: `${currentVersion} (Current)`,
+              label: `Current (${currentVersion})`,
               badge: true,
               path: '/docs',
             },
