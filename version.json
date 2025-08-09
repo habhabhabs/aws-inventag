@@ -1,11 +1,11 @@
 {
-  "version": "4.2.10",
-  "release_notes": "Release 4.2.10 - 2025-08-09\\🐛 Bug Fixes:\\  • fix: ensure workflow runs on main branch to avoid detached HEAD issues\\📊 Summary: 1 commits in this release",
-  "release_date": "2025-08-09T21:14:51.316754",
-  "previous_version": "4.2.9",
+  "version": "4.2.11",
+  "release_notes": "Release 4.2.11 - 2025-08-09\\🐛 Bug Fixes:\\  • fix: use VERSION_BUMP_WORKFLOW secret to bypass branch protection\\📊 Summary: 1 commits in this release",
+  "release_date": "2025-08-09T21:19:21.231114",
+  "previous_version": "4.2.10",
   "version_bump_type": "patch",
-  "git_tag": "v4.2.10",
-  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.10",
+  "git_tag": "v4.2.11",
+  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.11",
   "triggered_by_pr": "31",
   "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/31"
 }
