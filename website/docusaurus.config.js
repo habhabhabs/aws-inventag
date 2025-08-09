@@ -78,14 +78,12 @@ const config = {
           // Documentation versioning configuration
           includeCurrentVersion: true,
           lastVersion: 'current',
+          // Versions are automatically managed via versions.json
+          // No hardcoded version configuration needed - Docusaurus reads from versions.json
           versions: {
             current: {
-              label: 'v5.0.0-dev (Current)',
+              label: 'Latest (Development)',
               badge: true,
-            },
-            'v4.2.1': {
-              label: 'v4.2.1',
-              badge: false,
             },
           },
           // Version-specific edit URLs
