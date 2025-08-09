@@ -86,8 +86,8 @@ const config = {
           // Documentation versioning configuration  
           includeCurrentVersion: true,
           lastVersion: 'current',
-          // N-1 versioning strategy: only keep previous version in versioned docs
-          // Current version is always shown with actual version number
+          // N-1 versioning strategy: only keep previous version in versioned docs  
+          // Current version shows actual version number in sidebar and dropdown
           // Previous version (N-1) is automatically managed via versions.json
           versions: {
             current: {
@@ -96,6 +96,8 @@ const config = {
               path: '/docs',
             },
           },
+          // Force sidebar to show version labels instead of keys
+          sidebarCollapsed: false,
           // Version-specific edit URLs
           editLocalizedFiles: false,
           // Version dropdown configuration
