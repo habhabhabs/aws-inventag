@@ -1,11 +1,11 @@
 {
-  "version": "4.2.14",
-  "release_notes": "Release 4.2.14 - 2025-08-10\\✨ New Features:\\  • feat: include Medium severity vulnerabilities in SBOM security reports\\🐛 Bug Fixes:\\  • fix: resolve YAML syntax issues in docs-deploy workflow\\  • fix: correct YAML indentation for GitHub Actions workflow validation\\  • fix: remove \"Action Required\" column from vulnerability summary table\\  • fix: extract actual CVE numbers instead of GHSA identifiers in vulnerability reports\\📚 Documentation:\\  • docs: add documentation badge to showcase versioned docs\\  • docs: create versioned documentation for v4.2.12\\  • docs: archive documentation for release v4.2.13 (N-1 strategy)\\📊 Summary: 8 commits in this release\\🔀 Triggered by PR #33",
-  "release_date": "2025-08-10T17:09:37.397196",
-  "previous_version": "4.2.13",
+  "version": "4.2.15",
+  "release_notes": "Release 4.2.15 - 2025-08-10\\✨ New Features:\\  • feat: implement complete versioned documentation system\\🐛 Bug Fixes:\\  • fix: resolve versions.json being reset to empty array in versioning workflow\\📚 Documentation:\\  • docs: archive documentation for release v4.2.14 (N-1 strategy)\\📊 Summary: 3 commits in this release\\🔀 Triggered by PR #34",
+  "release_date": "2025-08-10T17:25:15.536990",
+  "previous_version": "4.2.14",
   "version_bump_type": "patch",
-  "git_tag": "v4.2.14",
-  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.14",
-  "triggered_by_pr": "33",
-  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/33"
+  "git_tag": "v4.2.15",
+  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.15",
+  "triggered_by_pr": "34",
+  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/34"
 }
