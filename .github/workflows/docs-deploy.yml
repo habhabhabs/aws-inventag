@@ -258,7 +258,7 @@ jobs:
                 echo "" >> docs/security/current/sbom-summary.md
                 echo "| CVE ID | Severity | Package | Version | Description |" >> docs/security/current/sbom-summary.md
                 echo "|--------|----------|---------|---------|-------------|" >> docs/security/current/sbom-summary.md
-# Create enhanced vulnerability table with proper CVE extraction
+                # Create enhanced vulnerability table with proper CVE extraction
                 cat > /tmp/extract_cve.jq << 'EOF'
 .matches[] | 
 select(.vulnerability.severity=="Critical" or .vulnerability.severity=="High" or .vulnerability.severity=="Medium") | 
