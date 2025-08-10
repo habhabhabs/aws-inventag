@@ -243,12 +243,12 @@ jobs:
               MEDIUM=$(jq '[.matches[] | select(.vulnerability.severity=="Medium")] | length' docs/security/sbom/vulnerabilities.json 2>/dev/null || echo "0")
               LOW=$(jq '[.matches[] | select(.vulnerability.severity=="Low")] | length' docs/security/sbom/vulnerabilities.json 2>/dev/null || echo "0")
               
-              echo "| Severity | Count | Action Required |" >> docs/security/current/sbom-summary.md
-              echo "|----------|-------|-----------------|" >> docs/security/current/sbom-summary.md
-              echo "| 🔴 Critical | $CRITICAL | Immediate fix required |" >> docs/security/current/sbom-summary.md
-              echo "| 🟠 High | $HIGH | Fix within 7 days |" >> docs/security/current/sbom-summary.md
-              echo "| 🟡 Medium | $MEDIUM | Fix within 30 days |" >> docs/security/current/sbom-summary.md
-              echo "| 🟢 Low | $LOW | Monitor and plan |" >> docs/security/current/sbom-summary.md
+              echo "| Severity | Count |" >> docs/security/current/sbom-summary.md
+              echo "|----------|-------|" >> docs/security/current/sbom-summary.md
+              echo "| 🔴 Critical | $CRITICAL |" >> docs/security/current/sbom-summary.md
+              echo "| 🟠 High | $HIGH |" >> docs/security/current/sbom-summary.md
+              echo "| 🟡 Medium | $MEDIUM |" >> docs/security/current/sbom-summary.md
+              echo "| 🟢 Low | $LOW |" >> docs/security/current/sbom-summary.md
               echo "" >> docs/security/current/sbom-summary.md
               
               # Show top vulnerabilities if any exist
@@ -258,12 +258,20 @@ jobs:
                 echo "" >> docs/security/current/sbom-summary.md
                 echo "| CVE ID | Severity | Package | Version | Description |" >> docs/security/current/sbom-summary.md
                 echo "|--------|----------|---------|---------|-------------|" >> docs/security/current/sbom-summary.md
-                jq -r '.matches[] | select(.vulnerability.severity=="Critical" or .vulnerability.severity=="High") | "| \(.vulnerability.id // "Unknown") | \(.vulnerability.severity // "Unknown") | \(.artifact.name // "Unknown") | \(.artifact.version // "N/A") | \(.vulnerability.description // "No description")[0:100]... |"' docs/security/sbom/vulnerabilities.json 2>/dev/null | head -10 >> docs/security/current/sbom-summary.md || echo "| No critical/high vulnerabilities found | - | - | - | - |" >> docs/security/current/sbom-summary.md
+                # Create enhanced vulnerability table with proper CVE extraction
+                jq -r '.matches[] | 
+                  select(.vulnerability.severity=="Critical" or .vulnerability.severity=="High" or .vulnerability.severity=="Medium") | 
+                  (if .vulnerability.relatedVulnerabilities then 
+                    (.vulnerability.relatedVulnerabilities[] | select(startswith("CVE-")) | split(",")[0]) // .vulnerability.id 
+                   else 
+                    .vulnerability.id 
+                   end) as $cve_id | 
+                  "| \($cve_id) | \(.vulnerability.severity // "Unknown") | \(.artifact.name // "Unknown") | \(.artifact.version // "N/A") | \(.vulnerability.description // "No description")[0:100]... |"' docs/security/sbom/vulnerabilities.json 2>/dev/null | head -10 >> docs/security/current/sbom-summary.md || echo "| No critical/high/medium vulnerabilities found | - | - | - | - |" >> docs/security/current/sbom-summary.md
                 echo "" >> docs/security/current/sbom-summary.md
                 
                 if [ "$TOTAL_VULNS" -gt 10 ]; then
                   echo ":::note" >> docs/security/current/sbom-summary.md
-                  echo "Showing top 10 critical/high vulnerabilities. Download the full vulnerability report below for complete details." >> docs/security/current/sbom-summary.md
+                  echo "Showing top 10 critical/high/medium vulnerabilities. Download the full vulnerability report below for complete details." >> docs/security/current/sbom-summary.md
                   echo ":::" >> docs/security/current/sbom-summary.md
                   echo "" >> docs/security/current/sbom-summary.md
                 fi
@@ -293,8 +301,8 @@ jobs:
           echo "| Format | File | Description |" >> docs/security/current/sbom-summary.md
           echo "|--------|------|-------------|" >> docs/security/current/sbom-summary.md
           echo "| JSON (Syft) | [current-sbom.json](/inventag-aws/sbom/current-sbom.json) | Complete repository component analysis |" >> docs/security/current/sbom-summary.md
-          echo "| CycloneDX | [current-sbom-cyclonedx.json](../sbom/current-sbom-cyclonedx.json) | Industry-standard SBOM format |" >> docs/security/current/sbom-summary.md
-          echo "| SPDX | [current-sbom-spdx.json](../sbom/current-sbom-spdx.json) | Software Package Data Exchange format |" >> docs/security/current/sbom-summary.md
+          echo "| CycloneDX | [current-sbom-cyclonedx.json](/inventag-aws/sbom/current-sbom-cyclonedx.json) | Industry-standard SBOM format |" >> docs/security/current/sbom-summary.md
+          echo "| SPDX | [current-sbom-spdx.json](/inventag-aws/sbom/current-sbom-spdx.json) | Software Package Data Exchange format |" >> docs/security/current/sbom-summary.md
           if [ -f "docs/security/sbom/python-sbom.json" ]; then
             echo "| Python (CycloneDX) | [python-sbom.json](/inventag-aws/sbom/python-sbom.json) | Python dependencies only |" >> docs/security/current/sbom-summary.md
           fi
