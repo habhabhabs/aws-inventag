@@ -1,11 +1,11 @@
 {
-  "version": "4.2.12",
-  "release_notes": "Release 4.2.12 - 2025-08-09\\🐛 Bug Fixes:\\  • fix: completely rewrite SBOM workflow to resolve YAML syntax errors\\  • fix: make sidebar version display truly dynamic without hardcoded versions\\📚 Documentation:\\  • docs: archive documentation for release v4.2.11 (N-1 strategy)\\📊 Summary: 3 commits in this release",
-  "release_date": "2025-08-09T21:28:40.207766",
-  "previous_version": "4.2.11",
+  "version": "4.2.13",
+  "release_notes": "Release 4.2.13 - 2025-08-10\\🐛 Bug Fixes:\\  • fix: replace broken SBOM workflow with clean disabled placeholder\\  • fix: disable redundant SBOM workflow to prevent documentation conflicts\\  • fix: restore v4.2.1 to versions.json to enable version selector\\📊 Summary: 3 commits in this release\\🔀 Triggered by PR #32",
+  "release_date": "2025-08-10T16:47:21.096590",
+  "previous_version": "4.2.12",
   "version_bump_type": "patch",
-  "git_tag": "v4.2.12",
-  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.12",
-  "triggered_by_pr": "31",
-  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/31"
+  "git_tag": "v4.2.13",
+  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.13",
+  "triggered_by_pr": "32",
+  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/32"
 }
