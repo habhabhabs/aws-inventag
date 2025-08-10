@@ -97,48 +97,61 @@ jobs:
           ARCHIVE_VERSION=""
         fi
         
-        # Clean up ALL existing versioned documentation first
-        echo "🧹 Cleaning up all existing versioned documentation..."
+        # IMPORTANT: Do NOT clean up existing versioned documentation!
+        # The N-1 strategy should preserve existing versions and only add the current version as N-1
+        
+        echo "📋 Checking existing versioned documentation..."
         if [ -d "versioned_docs" ]; then
-          VERSION_COUNT=$(find versioned_docs -name "version-*" -type d | wc -l)
-          echo "Found $VERSION_COUNT existing versioned directories - removing all"
-          
-          # Remove all existing versioned docs and sidebars
-          rm -rf versioned_docs/version-*
-          rm -rf versioned_sidebars/version-*
-          echo "✅ Cleaned up all existing versioned documentation"
+          EXISTING_COUNT=$(find versioned_docs -name "version-*" -type d | wc -l)
+          echo "Found $EXISTING_COUNT existing versioned directories - preserving them"
+          ls -la versioned_docs/ | grep "version-" || echo "No versioned directories found"
+        else
+          echo "No versioned_docs directory exists yet"
+          mkdir -p versioned_docs versioned_sidebars
         fi
         
         # Create N-1 version from current docs (if we have a version to archive)
         if [ ! -z "$ARCHIVE_VERSION" ] && [ "$ARCHIVE_VERSION" != "$VERSION" ]; then
-          echo "📚 Creating N-1 documentation version: $ARCHIVE_VERSION"
+          echo "📚 Archiving CURRENT version as N-1: $ARCHIVE_VERSION"
+          echo "🆕 NEW version $VERSION will be served from docs/ folder (not versioned)"
           
-          # Create the version using Docusaurus CLI (this snapshots current docs/)
-          npm run docusaurus -- docs:version "$ARCHIVE_VERSION"
-          
-          # Verify the version was created
-          if [ ! -d "versioned_docs/version-$ARCHIVE_VERSION" ]; then
-            echo "❌ Error: Version directory was not created"
-            exit 1
+          # Check if this version already exists to avoid duplicates
+          if [ -d "versioned_docs/version-$ARCHIVE_VERSION" ]; then
+            echo "⚠️ Version $ARCHIVE_VERSION already exists, skipping creation"
+          else
+            # Create the version using Docusaurus CLI (this snapshots current docs/)
+            npm run docusaurus -- docs:version "$ARCHIVE_VERSION"
+            
+            # Verify the version was created
+            if [ ! -d "versioned_docs/version-$ARCHIVE_VERSION" ]; then
+              echo "❌ Error: Version directory was not created"
+              exit 1
+            fi
+            
+            if [ ! -f "versioned_sidebars/version-$ARCHIVE_VERSION-sidebars.json" ]; then
+              echo "❌ Error: Version sidebar was not created"  
+              exit 1
+            fi
+            
+            echo "✅ Documentation version $ARCHIVE_VERSION created successfully as N-1"
           fi
           
-          if [ ! -f "versioned_sidebars/version-$ARCHIVE_VERSION-sidebars.json" ]; then
-            echo "❌ Error: Version sidebar was not created"  
-            exit 1
-          fi
-          
-          echo "✅ Documentation version $ARCHIVE_VERSION created successfully as N-1"
-          
-          # Update versions.json to include the N-1 version and preserve any existing older versions
+          # Update versions.json to include the N-1 version and preserve existing versions (max 4 total)
           if [ -f "versions.json" ]; then
-            # Keep existing versions and add the new N-1 version at the top
-            EXISTING_VERSIONS=$(jq -r '.[]' versions.json | grep -v "^$ARCHIVE_VERSION$" | head -3 | jq -R . | jq -s .)
-            echo "[$ARCHIVE_VERSION]" | jq -c --argjson existing "$EXISTING_VERSIONS" '. + $existing' > versions.json
+            # Remove the version if it already exists, then add it at the top
+            EXISTING_VERSIONS=$(jq -r '.[]' versions.json | grep -v "^$ARCHIVE_VERSION$" | head -3)
+            if [ ! -z "$EXISTING_VERSIONS" ]; then
+              # Combine new version with existing (limit to 4 total)
+              (echo "$ARCHIVE_VERSION"; echo "$EXISTING_VERSIONS") | head -4 | jq -R . | jq -s . > versions.json
+            else
+              # Only the new version
+              echo "[\"$ARCHIVE_VERSION\"]" | jq '.' > versions.json
+            fi
           else
             # Create new versions.json with just the N-1 version
             echo "[\"$ARCHIVE_VERSION\"]" | jq '.' > versions.json
           fi
-          echo "✅ Updated versions.json with N-1 version: $ARCHIVE_VERSION"
+          echo "✅ Updated versions.json with N-1 version: $ARCHIVE_VERSION at top"
         else
           echo "ℹ️ No version to archive (first release or same version)"
           # Preserve existing versions.json or create empty one if none exists
