@@ -258,7 +258,21 @@ jobs:
                 echo "" >> docs/security/current/sbom-summary.md
                 echo "| CVE ID | Severity | Package | Version | Description |" >> docs/security/current/sbom-summary.md
                 echo "|--------|----------|---------|---------|-------------|" >> docs/security/current/sbom-summary.md
-                jq -r '.matches[] | select(.vulnerability.severity=="Critical" or .vulnerability.severity=="High") | "| \(.vulnerability.id // "Unknown") | \(.vulnerability.severity // "Unknown") | \(.artifact.name // "Unknown") | \(.artifact.version // "N/A") | \(.vulnerability.description // "No description")[0:100]... |"' docs/security/sbom/vulnerabilities.json 2>/dev/null | head -10 >> docs/security/current/sbom-summary.md || echo "| No critical/high vulnerabilities found | - | - | - | - |" >> docs/security/current/sbom-summary.md
+# Create enhanced vulnerability table with proper CVE extraction
+                cat > /tmp/extract_cve.jq << 'EOF'
+.matches[] | 
+select(.vulnerability.severity=="Critical" or .vulnerability.severity=="High") | 
+# Extract CVE from relatedVulnerabilities array or use GHSA if no CVE found
+(
+  if .vulnerability.relatedVulnerabilities then
+    (.vulnerability.relatedVulnerabilities[] | select(startswith("CVE-")) | split(",")[0]) // .vulnerability.id
+  else
+    .vulnerability.id
+  end
+) as $cve_id |
+"| \($cve_id) | \(.vulnerability.severity // "Unknown") | \(.artifact.name // "Unknown") | \(.artifact.version // "N/A") | \(.vulnerability.description // "No description")[0:100]... |"
+EOF
+                jq -r -f /tmp/extract_cve.jq docs/security/sbom/vulnerabilities.json 2>/dev/null | head -10 >> docs/security/current/sbom-summary.md || echo "| No critical/high vulnerabilities found | - | - | - | - |" >> docs/security/current/sbom-summary.md
                 echo "" >> docs/security/current/sbom-summary.md
                 
                 if [ "$TOTAL_VULNS" -gt 10 ]; then
