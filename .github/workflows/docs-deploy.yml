@@ -243,12 +243,12 @@ jobs:
               MEDIUM=$(jq '[.matches[] | select(.vulnerability.severity=="Medium")] | length' docs/security/sbom/vulnerabilities.json 2>/dev/null || echo "0")
               LOW=$(jq '[.matches[] | select(.vulnerability.severity=="Low")] | length' docs/security/sbom/vulnerabilities.json 2>/dev/null || echo "0")
               
-              echo "| Severity | Count | Action Required |" >> docs/security/current/sbom-summary.md
-              echo "|----------|-------|-----------------|" >> docs/security/current/sbom-summary.md
-              echo "| 🔴 Critical | $CRITICAL | Immediate fix required |" >> docs/security/current/sbom-summary.md
-              echo "| 🟠 High | $HIGH | Fix within 7 days |" >> docs/security/current/sbom-summary.md
-              echo "| 🟡 Medium | $MEDIUM | Fix within 30 days |" >> docs/security/current/sbom-summary.md
-              echo "| 🟢 Low | $LOW | Monitor and plan |" >> docs/security/current/sbom-summary.md
+              echo "| Severity | Count |" >> docs/security/current/sbom-summary.md
+              echo "|----------|-------|" >> docs/security/current/sbom-summary.md
+              echo "| 🔴 Critical | $CRITICAL |" >> docs/security/current/sbom-summary.md
+              echo "| 🟠 High | $HIGH |" >> docs/security/current/sbom-summary.md
+              echo "| 🟡 Medium | $MEDIUM |" >> docs/security/current/sbom-summary.md
+              echo "| 🟢 Low | $LOW |" >> docs/security/current/sbom-summary.md
               echo "" >> docs/security/current/sbom-summary.md
               
               # Show top vulnerabilities if any exist
