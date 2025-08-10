@@ -261,7 +261,7 @@ jobs:
 # Create enhanced vulnerability table with proper CVE extraction
                 cat > /tmp/extract_cve.jq << 'EOF'
 .matches[] | 
-select(.vulnerability.severity=="Critical" or .vulnerability.severity=="High") | 
+select(.vulnerability.severity=="Critical" or .vulnerability.severity=="High" or .vulnerability.severity=="Medium") | 
 # Extract CVE from relatedVulnerabilities array or use GHSA if no CVE found
 (
   if .vulnerability.relatedVulnerabilities then
@@ -272,12 +272,12 @@ select(.vulnerability.severity=="Critical" or .vulnerability.severity=="High") |
 ) as $cve_id |
 "| \($cve_id) | \(.vulnerability.severity // "Unknown") | \(.artifact.name // "Unknown") | \(.artifact.version // "N/A") | \(.vulnerability.description // "No description")[0:100]... |"
 EOF
-                jq -r -f /tmp/extract_cve.jq docs/security/sbom/vulnerabilities.json 2>/dev/null | head -10 >> docs/security/current/sbom-summary.md || echo "| No critical/high vulnerabilities found | - | - | - | - |" >> docs/security/current/sbom-summary.md
+                jq -r -f /tmp/extract_cve.jq docs/security/sbom/vulnerabilities.json 2>/dev/null | head -10 >> docs/security/current/sbom-summary.md || echo "| No critical/high/medium vulnerabilities found | - | - | - | - |" >> docs/security/current/sbom-summary.md
                 echo "" >> docs/security/current/sbom-summary.md
                 
                 if [ "$TOTAL_VULNS" -gt 10 ]; then
                   echo ":::note" >> docs/security/current/sbom-summary.md
-                  echo "Showing top 10 critical/high vulnerabilities. Download the full vulnerability report below for complete details." >> docs/security/current/sbom-summary.md
+                  echo "Showing top 10 critical/high/medium vulnerabilities. Download the full vulnerability report below for complete details." >> docs/security/current/sbom-summary.md
                   echo ":::" >> docs/security/current/sbom-summary.md
                   echo "" >> docs/security/current/sbom-summary.md
                 fi
