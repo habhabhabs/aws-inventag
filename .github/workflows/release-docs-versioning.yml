@@ -129,13 +129,25 @@ jobs:
           
           echo "✅ Documentation version $ARCHIVE_VERSION created successfully as N-1"
           
-          # Update versions.json to only include the N-1 version
-          echo "[\"$ARCHIVE_VERSION\"]" | jq '.' > versions.json
+          # Update versions.json to include the N-1 version and preserve any existing older versions
+          if [ -f "versions.json" ]; then
+            # Keep existing versions and add the new N-1 version at the top
+            EXISTING_VERSIONS=$(jq -r '.[]' versions.json | grep -v "^$ARCHIVE_VERSION$" | head -3 | jq -R . | jq -s .)
+            echo "[$ARCHIVE_VERSION]" | jq -c --argjson existing "$EXISTING_VERSIONS" '. + $existing' > versions.json
+          else
+            # Create new versions.json with just the N-1 version
+            echo "[\"$ARCHIVE_VERSION\"]" | jq '.' > versions.json
+          fi
           echo "✅ Updated versions.json with N-1 version: $ARCHIVE_VERSION"
         else
-          echo "ℹ️ No version to archive (first release or same version), creating empty versions.json"
-          # Create empty versions.json
-          echo "[]" > versions.json
+          echo "ℹ️ No version to archive (first release or same version)"
+          # Preserve existing versions.json or create empty one if none exists
+          if [ ! -f "versions.json" ]; then
+            echo "[]" > versions.json
+            echo "✅ Created empty versions.json for first release"
+          else
+            echo "✅ Preserved existing versions.json (no changes needed)"
+          fi
         fi
         
         echo "📋 Final versioning state:"

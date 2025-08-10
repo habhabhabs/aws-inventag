@@ -9,7 +9,7 @@ sidebar_position: 1
 > **Professional AWS™ Cloud Governance Platform - Comprehensive resource inventory, compliance checking, and BOM generation**
 
 [![Automated Release](https://github.com/habhabhabs/inventag-aws/workflows/Automated%20Release/badge.svg)](https://github.com/habhabhabs/inventag-aws/actions)
-[![Documentation](https://img.shields.io/badge/docs-comprehensive-brightgreen.svg)](https://habhabhabs.github.io/inventag-aws/)
+[![Documentation](https://img.shields.io/badge/docs-versioned-brightgreen.svg)](https://habhabhabs.github.io/inventag-aws/)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
