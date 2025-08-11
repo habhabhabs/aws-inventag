@@ -76,17 +76,17 @@ function HomepageHero() {
             <div className={styles.buttons}>
               <Link
                 className="button button--secondary button--lg"
-                to="/docs/getting-started/quick-start">
+                to="/getting-started/quick-start">
                 🚀 Get Started Now
               </Link>
               <Link
                 className="button button--outline button--secondary button--lg"
-                to="/docs">
+                to="/">
                 📖 Documentation
               </Link>
               <Link
                 className="button button--outline button--secondary button--lg"
-                to="/docs/examples/advanced-usage">
+                to="/examples/advanced-usage">
                 📋 See Examples
               </Link>
               <Link
