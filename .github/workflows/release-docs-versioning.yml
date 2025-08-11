@@ -87,13 +87,22 @@ jobs:
         echo "📚 Managing documentation versions with N-1 strategy"
         echo "New release version will be: $VERSION"
         
-        # Read current version from ../version.json to determine what should become N-1
-        if [ -f "../version.json" ]; then
-          CURRENT_VERSION=$(jq -r '.version' ../version.json)
-          ARCHIVE_VERSION="v$CURRENT_VERSION"
-          echo "Current version to archive as N-1: $ARCHIVE_VERSION"
+        # Get the PREVIOUS version to archive as N-1 (not the current/new version)
+        # The new version is the one being released ($VERSION)
+        # We need to find the previous release tag to archive as N-1
+        echo "Finding previous version to archive as N-1..."
+        
+        # Get the second-to-last release (the one before the current release)
+        # First ensure we have all tags
+        git fetch --tags
+        PREVIOUS_RELEASE=$(git tag --sort=-version:refname | grep "^v[0-9]" | head -2 | tail -1)
+        
+        if [ ! -z "$PREVIOUS_RELEASE" ] && [ "$PREVIOUS_RELEASE" != "$VERSION" ]; then
+          ARCHIVE_VERSION="$PREVIOUS_RELEASE"
+          echo "Previous version to archive as N-1: $ARCHIVE_VERSION"
+          echo "Current/new version will be: $VERSION (served from docs/ folder)"
         else
-          echo "⚠️ No version.json found, cannot determine current version to archive"
+          echo "⚠️ No previous version found or previous version same as current"
           ARCHIVE_VERSION=""
         fi
         
@@ -203,26 +212,27 @@ jobs:
         VERSION="${{ env.VERSION }}"
         echo "🔄 Validating N-1 versioning configuration for $VERSION..."
         
-        # Read current version from ../version.json to determine what should be in versions.json
-        if [ -f "../version.json" ]; then
-          CURRENT_VERSION=$(jq -r '.version' ../version.json)
-          EXPECTED_N1_VERSION="v$CURRENT_VERSION"
+        # Get the PREVIOUS version that should be in versions.json as N-1
+        echo "Determining expected N-1 version for validation..."
+        
+        # Get the second-to-last release (same logic as creation step)
+        git fetch --tags
+        PREVIOUS_RELEASE=$(git tag --sort=-version:refname | grep "^v[0-9]" | head -2 | tail -1)
+        
+        if [ ! -z "$PREVIOUS_RELEASE" ] && [ "$PREVIOUS_RELEASE" != "$VERSION" ]; then
+          EXPECTED_N1_VERSION="$PREVIOUS_RELEASE"
           echo "Expected N-1 version in versions.json: $EXPECTED_N1_VERSION"
           
           # Verify the correct N-1 version is in versions.json (not the new version)
-          if [ "$EXPECTED_N1_VERSION" != "$VERSION" ]; then
-            if ! jq -e --arg v "$EXPECTED_N1_VERSION" 'index($v) != null' versions.json > /dev/null; then
-              echo "❌ Error: Expected N-1 version ($EXPECTED_N1_VERSION) was not found in versions.json"
-              echo "Current versions.json content:"
-              jq '.' versions.json
-              exit 1
-            fi
-            echo "✅ Correct N-1 version ($EXPECTED_N1_VERSION) found in versions.json"
-          else
-            echo "ℹ️ First release or same version - no N-1 version expected"
+          if ! jq -e --arg v "$EXPECTED_N1_VERSION" 'index($v) != null' versions.json > /dev/null; then
+            echo "❌ Error: Expected N-1 version ($EXPECTED_N1_VERSION) was not found in versions.json"
+            echo "Current versions.json content:"
+            jq '.' versions.json
+            exit 1
           fi
+          echo "✅ Correct N-1 version ($EXPECTED_N1_VERSION) found in versions.json"
         else
-          echo "⚠️ No version.json found for validation"
+          echo "ℹ️ No previous release found - no N-1 version expected"
         fi
         
         # Show available versions
@@ -243,10 +253,12 @@ jobs:
       run: |
         VERSION="${{ env.VERSION }}"
         
-        # Determine N-1 version for file counting
-        if [ -f "version.json" ]; then
-          CURRENT_VERSION=$(jq -r '.version' version.json)
-          N1_VERSION="v$CURRENT_VERSION"
+        # Determine N-1 version for file counting using same logic as creation
+        git fetch --tags
+        PREVIOUS_RELEASE=$(git tag --sort=-version:refname | grep "^v[0-9]" | head -2 | tail -1)
+        
+        if [ ! -z "$PREVIOUS_RELEASE" ] && [ "$PREVIOUS_RELEASE" != "$VERSION" ]; then
+          N1_VERSION="$PREVIOUS_RELEASE"
         else
           N1_VERSION=""
         fi
@@ -308,14 +320,16 @@ jobs:
         git checkout main
         echo "✅ Switched to main branch"
         
-        # Determine N-1 version for git operations
-        if [ -f "version.json" ]; then
-          CURRENT_VERSION=$(jq -r '.version' version.json)
-          N1_VERSION="v$CURRENT_VERSION"
+        # Determine N-1 version for git operations using same logic as creation
+        git fetch --tags
+        PREVIOUS_RELEASE=$(git tag --sort=-version:refname | grep "^v[0-9]" | head -2 | tail -1)
+        
+        if [ ! -z "$PREVIOUS_RELEASE" ] && [ "$PREVIOUS_RELEASE" != "$VERSION" ]; then
+          N1_VERSION="$PREVIOUS_RELEASE"
           echo "Adding N-1 version files: $N1_VERSION"
         else
           N1_VERSION=""
-          echo "⚠️ No version.json found - no N-1 version to add"
+          echo "⚠️ No previous release found - no N-1 version to add"
         fi
         
         # Add N-1 version-related files (not new version files)
