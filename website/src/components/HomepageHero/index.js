@@ -81,7 +81,7 @@ function HomepageHero() {
               </Link>
               <Link
                 className="button button--outline button--secondary button--lg"
-                to="/index">
+                to="/getting-started/introduction">
                 📖 Documentation
               </Link>
               <Link

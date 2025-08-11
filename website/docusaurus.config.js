@@ -168,7 +168,7 @@ const config = {
         },
         items: [
           {
-            to: '/index',
+            to: '/getting-started/introduction',
             position: 'left',
             label: 'Documentation',
           },
