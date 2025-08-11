@@ -59,7 +59,7 @@ const config = {
       ({
         docs: {
           path: '../docs', // Single source of truth - read from root-level docs directory
-          routeBasePath: '/docs', // Serve docs at /docs path to avoid homepage conflict
+          routeBasePath: '/', // Serve current docs at root path to match versioned URL pattern
           sidebarPath: './sidebars.js',
           // Ensure consistent sidebar across all pages
           sidebarCollapsible: true,
@@ -93,7 +93,7 @@ const config = {
             current: {
               label: `${currentVersion} (Current)`,
               badge: true,
-              path: '/docs',
+              path: '/',
             },
           },
           // Force sidebar to show version labels instead of keys
@@ -142,7 +142,7 @@ const config = {
         // Remove default stopwords for better AWS/technical term search
         removeDefaultStopWordFilter: true,
         // Set docs route base path
-        docsRouteBasePath: '/docs',
+        docsRouteBasePath: '/',
         // Include more context in search results
         explicitSearchResultPath: true,
       }),
@@ -200,19 +200,19 @@ const config = {
             items: [
               {
                 label: 'Getting Started',
-                to: '/docs',
+                to: '/',
               },
               {
                 label: 'User Guides',
-                to: '/docs/user-guides/cli-user-guide',
+                to: '/user-guides/cli-user-guide',
               },
               {
                 label: 'Architecture',
-                to: '/docs/architecture/core-module-integration',
+                to: '/architecture/core-module-integration',
               },
               {
                 label: 'Development',
-                to: '/docs/development/CONTRIBUTING',
+                to: '/development/CONTRIBUTING',
               },
             ],
           },
@@ -238,11 +238,11 @@ const config = {
             items: [
               {
                 label: 'Configuration Examples',
-                to: '/docs/user-guides/configuration-examples',
+                to: '/user-guides/configuration-examples',
               },
               {
                 label: 'Contributing Guide',
-                to: '/docs/development/CONTRIBUTING',
+                to: '/development/CONTRIBUTING',
               },
               {
                 label: 'License',
