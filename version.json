@@ -1,11 +1,11 @@
 {
-  "version": "4.2.22",
-  "release_notes": "Release 4.2.22 - 2025-08-11\\🐛 Bug Fixes:\\  • fix: ensure Documentation navbar and homepage links navigate to first docs page\\  • fix: update navbar Documentation link to navigate to actual docs content\\📊 Summary: 2 commits in this release",
-  "release_date": "2025-08-11T09:43:12.298908",
-  "previous_version": "4.2.21",
+  "version": "4.2.23",
+  "release_notes": "Release 4.2.23 - 2025-08-11\\🐛 Bug Fixes:\\  • fix: correct N-1 versioning workflow to use previous release instead of current\\💄 Style Changes:\\  • style: replace hash symbol (#) with chain emoji (🔗) in header links\\📊 Summary: 2 commits in this release",
+  "release_date": "2025-08-11T11:09:47.182503",
+  "previous_version": "4.2.22",
   "version_bump_type": "patch",
-  "git_tag": "v4.2.22",
-  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.22",
+  "git_tag": "v4.2.23",
+  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.23",
   "triggered_by_pr": "36",
   "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/36"
 }
