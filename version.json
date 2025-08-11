@@ -1,11 +1,11 @@
 {
-  "version": "4.2.18",
-  "release_notes": "Release 4.2.18 - 2025-08-11\\🐛 Bug Fixes:\\  • fix: correct Docusaurus URL routing to resolve broken documentation links\\📊 Summary: 1 commits in this release",
-  "release_date": "2025-08-11T07:30:21.479095",
-  "previous_version": "4.2.17",
+  "version": "4.2.19",
+  "release_notes": "Release 4.2.19 - 2025-08-11\\🐛 Bug Fixes:\\  • fix: create missing v4.2.17 versioned documentation for proper N-1 strategy\\📊 Summary: 1 commits in this release",
+  "release_date": "2025-08-11T08:20:25.377554",
+  "previous_version": "4.2.18",
   "version_bump_type": "patch",
-  "git_tag": "v4.2.18",
-  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.18",
+  "git_tag": "v4.2.19",
+  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.19",
   "triggered_by_pr": "36",
   "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/36"
 }
