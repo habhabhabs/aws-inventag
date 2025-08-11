@@ -154,7 +154,7 @@ Each release includes:
 
 ## Monitoring Releases
 
-- **GitHub Releases**: https://github.com/[owner]/[repo]/releases
+- **GitHub Releases**: https://github.com/habhabhabs/inventag-aws/releases
 - **Actions Logs**: Monitor release progress in GitHub Actions
 - **Version File**: Check `version.json` for current version
 

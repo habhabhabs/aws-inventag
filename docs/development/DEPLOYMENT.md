@@ -989,8 +989,8 @@ strategy:
 ## 📞 Support
 
 - **Issues**: Create GitHub/GitLab issues in your repository
-- **Documentation**: Refer to the [Project Repository](https://github.com/habhabhabs/inventag-aws) and [Release Guide](/development/RELEASE)
-- **Security**: See [Security Guide](/development/SECURITY) for security guidelines
+- **Documentation**: Refer to the [Project Repository](https://github.com/habhabhabs/inventag-aws) and [Release Guide](RELEASE)
+- **Security**: See [Security Guide](SECURITY) for security guidelines
 
 ---
 

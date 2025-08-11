@@ -22,7 +22,7 @@ To enforce proper pull request workflows, set up these branch protection rules f
 # Set up comprehensive branch protection (corrected syntax)
 gh api \
   --method PUT \
-  repos/habhabhabs/aws-inventag/branches/main/protection \
+  repos/habhabhabs/inventag-aws/branches/main/protection \
   --raw-field required_status_checks='{"strict":true,"contexts":[]}' \
   --field enforce_admins=true \
   --raw-field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true,"require_code_owner_reviews":true}' \
@@ -34,7 +34,7 @@ gh api \
 # 1. Enable basic protection first
 gh api \
   --method PUT \
-  repos/habhabhabs/aws-inventag/branches/main/protection \
+  repos/habhabhabs/inventag-aws/branches/main/protection \
   --raw-field required_pull_request_reviews='{"required_approving_review_count":1}' \
   --field enforce_admins=true \
   --field restrictions=null
@@ -42,14 +42,14 @@ gh api \
 # 2. Add status checks after workflows are set up
 gh api \
   --method PATCH \
-  repos/habhabhabs/aws-inventag/branches/main/protection/required_status_checks \
+  repos/habhabhabs/inventag-aws/branches/main/protection/required_status_checks \
   --raw-field strict=true \
   --raw-field contexts='["ci/python-tests"]'
 ```
 
 ### Option 2: Using GitHub Web Interface
 
-1. Go to: https://github.com/habhabhabs/aws-inventag/settings/branches
+1. Go to: https://github.com/habhabhabs/inventag-aws/settings/branches
 2. Click "Add rule" for branch name pattern: `main`
 3. Enable these settings:
 
