@@ -1104,3 +1104,29 @@ div[class*="docSidebarContainer"] {
 [data-theme='dark'] .prism-code[class*="language-python"] {
   background: linear-gradient(135deg, #1e3a8a 0%, #0c1e3e 100%);
 }
+
+/* ===== HASH LINK STYLING ===== */
+/* Change hash symbol (#) to chain emoji (🔗) for header links */
+a.hash-link::before {
+  content: "🔗";
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+a.hash-link:hover::before {
+  opacity: 1;
+}
+
+/* Hide the default hash-link content since we're replacing it with the emoji */
+a.hash-link {
+  font-size: 0;
+  line-height: 0;
+  text-decoration: none;
+}
+
+a.hash-link::before {
+  font-size: 1rem;
+  line-height: normal;
+  vertical-align: middle;
+  margin-left: 0.25rem;
+}
