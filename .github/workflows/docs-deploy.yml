@@ -141,18 +141,53 @@ jobs:
           
           # Copy SBOM files to website static directory for direct access
           mkdir -p website/static/sbom
+          echo "Copying SBOM files to static directory..."
+          
+          # Copy main SBOM files
           if [ -f "docs/security/sbom/current-sbom.json" ]; then
             cp docs/security/sbom/current-sbom.json website/static/sbom/
             jq '.' docs/security/sbom/current-sbom.json > website/static/sbom/current-sbom-formatted.json
+            echo "✅ Copied current-sbom.json"
+          else
+            echo "❌ current-sbom.json not found"
           fi
+          
+          # Copy CycloneDX and SPDX files
+          if [ -f "docs/security/sbom/current-sbom-cyclonedx.json" ]; then
+            cp docs/security/sbom/current-sbom-cyclonedx.json website/static/sbom/
+            echo "✅ Copied current-sbom-cyclonedx.json"
+          else
+            echo "❌ current-sbom-cyclonedx.json not found"
+          fi
+          
+          if [ -f "docs/security/sbom/current-sbom-spdx.json" ]; then
+            cp docs/security/sbom/current-sbom-spdx.json website/static/sbom/
+            echo "✅ Copied current-sbom-spdx.json"
+          else
+            echo "❌ current-sbom-spdx.json not found"
+          fi
+          
+          # Copy Python SBOM
           if [ -f "docs/security/sbom/python-sbom.json" ]; then
             cp docs/security/sbom/python-sbom.json website/static/sbom/
             jq '.' docs/security/sbom/python-sbom.json > website/static/sbom/python-sbom-formatted.json
+            echo "✅ Copied python-sbom.json"
+          else
+            echo "❌ python-sbom.json not found"
           fi
+          
+          # Copy Node.js SBOM
           if [ -f "docs/security/sbom/nodejs-website-sbom.json" ]; then
             cp docs/security/sbom/nodejs-website-sbom.json website/static/sbom/
             jq '.' docs/security/sbom/nodejs-website-sbom.json > website/static/sbom/nodejs-website-sbom-formatted.json
+            echo "✅ Copied nodejs-website-sbom.json"
+          else
+            echo "❌ nodejs-website-sbom.json not found"
           fi
+          
+          # List what was actually copied
+          echo "Files in website/static/sbom/:"
+          ls -la website/static/sbom/ || echo "No files found in sbom directory"
           
           echo "## 📋 Components Overview" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
@@ -190,7 +225,7 @@ jobs:
             echo "" >> docs/security/current/sbom-summary.md
             echo "| Package | Version | License | Scope |" >> docs/security/current/sbom-summary.md
             echo "|---------|---------|---------|-------|" >> docs/security/current/sbom-summary.md
-            jq -r '.components[] | "| \(.name // "Unknown") | \(.version // "N/A") | \(.licenses[0].license.name // "Unknown") | \(.scope // "required") |"' docs/security/sbom/python-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Python packages found | - | - | - |" >> docs/security/current/sbom-summary.md
+            jq -r '.components[]? | "| " + (.name // "Unknown") + " | " + (.version // "N/A") + " | " + ((.licenses[0]? | if type == "object" then (.license.name // .value // "Unknown") else . end) // "Unknown") + " | " + (.scope // "required") + " |"' docs/security/sbom/python-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Python packages found | - | - | - |" >> docs/security/current/sbom-summary.md
             echo "" >> docs/security/current/sbom-summary.md
           else
             echo "| Package | Version | License | Scope |" >> docs/security/current/sbom-summary.md
@@ -208,7 +243,7 @@ jobs:
             echo "" >> docs/security/current/sbom-summary.md
             echo "| Package | Version | License | Type |" >> docs/security/current/sbom-summary.md
             echo "|---------|---------|---------|------|" >> docs/security/current/sbom-summary.md
-            jq -r '.components[] | "| \(.name // "Unknown") | \(.version // "N/A") | \(.licenses[0].license.name // "Unknown") | \(.scope // "required") |"' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Node.js packages found | - | - | - |" >> docs/security/current/sbom-summary.md
+            jq -r '.components[]? | "| " + (.name // "Unknown") + " | " + (.version // "N/A") + " | " + ((.licenses[0]? | if type == "object" then (.license.name // .value // "Unknown") else . end) // "Unknown") + " | " + (.scope // "required") + " |"' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Node.js packages found | - | - | - |" >> docs/security/current/sbom-summary.md
             echo "" >> docs/security/current/sbom-summary.md
           else
             echo "| Package | Version | License | Type |" >> docs/security/current/sbom-summary.md

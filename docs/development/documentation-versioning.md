@@ -256,4 +256,4 @@ The **Documentation Deployment** workflow automatically:
 
 ---
 
-For questions about documentation versioning, please refer to the [Contributing Guide](CONTRIBUTING.md) or open an issue on GitHub.
+For questions about documentation versioning, please refer to the [Contributing Guide](CONTRIBUTING) or open an issue on GitHub.
