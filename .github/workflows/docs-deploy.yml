@@ -225,7 +225,7 @@ jobs:
             echo "" >> docs/security/current/sbom-summary.md
             echo "| Package | Version | License | Scope |" >> docs/security/current/sbom-summary.md
             echo "|---------|---------|---------|-------|" >> docs/security/current/sbom-summary.md
-            jq -r '.components[] | "| \(.name // "Unknown") | \(.version // "N/A") | \(if .licenses and (.licenses | length > 0) then (.licenses[0].license.name // .licenses[0].value // .licenses[0] // "Unknown") else "Unknown" end) | \(.scope // "required") |"' docs/security/sbom/python-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Python packages found | - | - | - |" >> docs/security/current/sbom-summary.md
+            jq -r '.components[]? | "| " + (.name // "Unknown") + " | " + (.version // "N/A") + " | " + ((.licenses[0]? | if type == "object" then (.license.name // .value // "Unknown") else . end) // "Unknown") + " | " + (.scope // "required") + " |"' docs/security/sbom/python-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Python packages found | - | - | - |" >> docs/security/current/sbom-summary.md
             echo "" >> docs/security/current/sbom-summary.md
           else
             echo "| Package | Version | License | Scope |" >> docs/security/current/sbom-summary.md
@@ -243,7 +243,7 @@ jobs:
             echo "" >> docs/security/current/sbom-summary.md
             echo "| Package | Version | License | Type |" >> docs/security/current/sbom-summary.md
             echo "|---------|---------|---------|------|" >> docs/security/current/sbom-summary.md
-            jq -r '.components[] | "| \(.name // "Unknown") | \(.version // "N/A") | \(if .licenses and (.licenses | length > 0) then (.licenses[0].license.name // .licenses[0].value // .licenses[0] // "Unknown") else "Unknown" end) | \(.scope // "required") |"' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Node.js packages found | - | - | - |" >> docs/security/current/sbom-summary.md
+            jq -r '.components[]? | "| " + (.name // "Unknown") + " | " + (.version // "N/A") + " | " + ((.licenses[0]? | if type == "object" then (.license.name // .value // "Unknown") else . end) // "Unknown") + " | " + (.scope // "required") + " |"' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Node.js packages found | - | - | - |" >> docs/security/current/sbom-summary.md
             echo "" >> docs/security/current/sbom-summary.md
           else
             echo "| Package | Version | License | Type |" >> docs/security/current/sbom-summary.md

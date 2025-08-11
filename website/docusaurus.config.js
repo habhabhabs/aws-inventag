@@ -59,7 +59,7 @@ const config = {
       ({
         docs: {
           path: '../docs', // Single source of truth - read from root-level docs directory
-          routeBasePath: '/', // Serve current docs at root path to match versioned URL pattern
+          routeBasePath: 'docs', // Serve docs under /docs path to avoid conflicts with homepage
           sidebarPath: './sidebars.js',
           // Ensure consistent sidebar across all pages
           sidebarCollapsible: true,
@@ -168,7 +168,7 @@ const config = {
         },
         items: [
           {
-            to: '/getting-started/introduction',
+            to: '/docs/',
             position: 'left',
             label: 'Documentation',
           },
