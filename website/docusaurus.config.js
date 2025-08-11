@@ -168,11 +168,9 @@ const config = {
         },
         items: [
           {
-            type: 'docSidebar',
-            sidebarId: 'docsSidebar',
+            to: '/index',
             position: 'left',
             label: 'Documentation',
-            docsPluginId: 'default',
           },
           {
             type: 'docsVersionDropdown',
