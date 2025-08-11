@@ -1,11 +1,11 @@
 {
-  "version": "4.2.20",
-  "release_notes": "Release 4.2.20 - 2025-08-11\\🐛 Bug Fixes:\\  • fix: resolve broken homepage links after URL routing change\\  • fix: add missing v4.2.18 versioned documentation and /docs redirect\\📊 Summary: 2 commits in this release",
-  "release_date": "2025-08-11T09:00:08.935411",
-  "previous_version": "4.2.19",
+  "version": "4.2.21",
+  "release_notes": "Release 4.2.21 - 2025-08-11\\🐛 Bug Fixes:\\  • fix: update Documentation button to navigate to actual docs content\\📊 Summary: 1 commits in this release",
+  "release_date": "2025-08-11T09:15:04.853064",
+  "previous_version": "4.2.20",
   "version_bump_type": "patch",
-  "git_tag": "v4.2.20",
-  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.20",
+  "git_tag": "v4.2.21",
+  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.21",
   "triggered_by_pr": "36",
   "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/36"
 }
