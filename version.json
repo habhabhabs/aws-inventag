@@ -1,11 +1,11 @@
 {
-  "version": "4.2.24",
-  "release_notes": "Release 4.2.24 - 2025-08-11\\🐛 Bug Fixes:\\  • fix: resolve YAML syntax and MDX compilation errors in SBOM workflow\\  • fix: resolve SBOM documentation issues and add AWS Cost Allocation Templates\\📚 Documentation:\\  • docs: archive documentation for release v4.2.23 (N-1 strategy)\\📊 Summary: 3 commits in this release\\🔀 Triggered by PR #37",
-  "release_date": "2025-08-11T18:34:41.338882",
-  "previous_version": "4.2.23",
+  "version": "4.2.25",
+  "release_notes": "Release 4.2.25 - 2025-08-12\\🐛 Bug Fixes:\\  • fix: update all documentation links to use /docs/ routing\\📚 Documentation:\\  • docs: archive documentation for release v4.2.24 (N-1 strategy)\\📊 Summary: 2 commits in this release\\🔀 Triggered by PR #38",
+  "release_date": "2025-08-12T06:21:26.274041",
+  "previous_version": "4.2.24",
   "version_bump_type": "patch",
-  "git_tag": "v4.2.24",
-  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.24",
-  "triggered_by_pr": "37",
-  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/37"
+  "git_tag": "v4.2.25",
+  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.25",
+  "triggered_by_pr": "38",
+  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/38"
 }
