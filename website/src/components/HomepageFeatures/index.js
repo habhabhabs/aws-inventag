@@ -14,7 +14,7 @@ const FeatureList = [
         real-time risk assessment ensure your AWS environment stays secure.
       </>
     ),
-    link: '/user-guides/production-safety',
+    link: '/docs/user-guides/production-safety',
     linkText: 'Security Guide'
   },
   {
@@ -27,7 +27,7 @@ const FeatureList = [
         formatting for enterprise reporting needs.
       </>
     ),
-    link: '/user-guides/cli-user-guide',
+    link: '/docs/user-guides/cli-user-guide',
     linkText: 'BOM Guide'
   },
   {
@@ -40,7 +40,7 @@ const FeatureList = [
         management for complex enterprise environments.
       </>
     ),
-    link: '/examples/accounts-setup',
+    link: '/docs/examples/accounts-setup',
     linkText: 'Setup Guide'
   },
   {
@@ -53,7 +53,7 @@ const FeatureList = [
         with delta detection.
       </>
     ),
-    link: '/user-guides/configuration-examples',
+    link: '/docs/user-guides/configuration-examples',
     linkText: 'Analysis Features'
   },
   {
@@ -66,7 +66,7 @@ const FeatureList = [
         consistent resource organization.
       </>
     ),
-    link: '/architecture/tag-compliance',
+    link: '/docs/architecture/tag-compliance',
     linkText: 'Tag Compliance'
   },
   {
@@ -79,7 +79,7 @@ const FeatureList = [
         and infrastructure-as-code practices.
       </>
     ),
-    link: '/examples/cicd-integration',
+    link: '/docs/examples/cicd-integration',
     linkText: 'CI/CD Examples'
   },
 ];
@@ -106,14 +106,22 @@ function Feature({icon, title, description, link, linkText}) {
 }
 
 export default function HomepageFeatures() {
+  // Split features into rows of 3
+  const featuresInRows = [];
+  for (let i = 0; i < FeatureList.length; i += 3) {
+    featuresInRows.push(FeatureList.slice(i, i + 3));
+  }
+
   return (
     <section className={styles.features}>
       <div className="container">
-        <div className="row">
-          {FeatureList.map((props, idx) => (
-            <Feature key={idx} {...props} />
-          ))}
-        </div>
+        {featuresInRows.map((row, rowIdx) => (
+          <div className="row" key={rowIdx}>
+            {row.map((props, idx) => (
+              <Feature key={`${rowIdx}-${idx}`} {...props} />
+            ))}
+          </div>
+        ))}
       </div>
     </section>
   );
