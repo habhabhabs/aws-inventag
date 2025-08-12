@@ -198,19 +198,19 @@ const config = {
             items: [
               {
                 label: 'Getting Started',
-                to: '/',
+                to: '/docs/',
               },
               {
                 label: 'User Guides',
-                to: '/user-guides/cli-user-guide',
+                to: '/docs/user-guides/cli-user-guide',
               },
               {
                 label: 'Architecture',
-                to: '/architecture/core-module-integration',
+                to: '/docs/architecture/core-module-integration',
               },
               {
                 label: 'Development',
-                to: '/development/CONTRIBUTING',
+                to: '/docs/development/CONTRIBUTING',
               },
             ],
           },
@@ -236,11 +236,11 @@ const config = {
             items: [
               {
                 label: 'Configuration Examples',
-                to: '/user-guides/configuration-examples',
+                to: '/docs/user-guides/configuration-examples',
               },
               {
                 label: 'Contributing Guide',
-                to: '/development/CONTRIBUTING',
+                to: '/docs/development/CONTRIBUTING',
               },
               {
                 label: 'License',
