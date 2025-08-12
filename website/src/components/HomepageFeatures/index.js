@@ -116,7 +116,13 @@ export default function HomepageFeatures() {
     <section className={styles.features}>
       <div className="container">
         {featuresInRows.map((row, rowIdx) => (
-          <div className="row" key={rowIdx}>
+          <div 
+            className={clsx('row', styles.featureRow)} 
+            key={rowIdx}
+            style={{
+              marginBottom: rowIdx < featuresInRows.length - 1 ? '4rem' : '0'
+            }}
+          >
             {row.map((props, idx) => (
               <Feature key={`${rowIdx}-${idx}`} {...props} />
             ))}

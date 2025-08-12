@@ -8,14 +8,16 @@
   column-gap: 2.5rem;
 }
 
-/* Ensure proper spacing between feature cards in grid layout */
-.features .container .row .col {
-  margin-bottom: 3rem;
+/* Proper spacing for feature rows */
+.featureRow {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
 }
 
-/* Better separation for cards that wrap to next row */
-.features .container .row .col:nth-child(n+4) {
-  margin-top: 1rem;
+/* Remove old spacing rules since we now handle row spacing inline */
+.features .container .row .col {
+  margin-bottom: 0;
 }
 
 [data-theme='dark'] .features {
@@ -121,15 +123,6 @@
     row-gap: 2rem;
     column-gap: 2rem;
   }
-  
-  .features .container .row .col {
-    margin-bottom: 2.5rem;
-  }
-  
-  /* Cards wrapping to next row on tablet */
-  .features .container .row .col:nth-child(n+3) {
-    margin-top: 1rem;
-  }
 }
 
 @media (max-width: 768px) {
@@ -140,15 +133,6 @@
   .features .container .row {
     row-gap: 1.5rem;
     column-gap: 1.5rem;
-  }
-  
-  .features .container .row .col {
-    margin-bottom: 2rem;
-  }
-  
-  /* All cards stack vertically on mobile - add separation between each */
-  .features .container .row .col:nth-child(n+2) {
-    margin-top: 0.5rem;
   }
   
   .featureCard {
