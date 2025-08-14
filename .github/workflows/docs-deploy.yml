@@ -88,26 +88,28 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Generate SBOM for documentation inclusion
+      - name: Install SBOM generation tools
         shell: bash
         run: |
-          echo "🔒 Generating SBOM for Documentation Integration"
-          echo "==============================================="
-          
-          # Install SBOM generation tools
+          echo "📦 Installing SBOM generation tools..."
           pip install cyclonedx-bom cyclonedx-python-lib
           curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-          
-          # Create docs security directory
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          echo "✅ SBOM tools installed"
+
+      - name: Generate repository SBOM files  
+        shell: bash
+        run: |
+          echo "📄 Generating Software Bill of Materials..."
           mkdir -p docs/security/{current,sbom,monitoring}
           
-          # Generate current SBOM
-          echo "📄 Generating Software Bill of Materials..."
           syft . -o json=docs/security/sbom/current-sbom.json
           syft . -o cyclonedx-json=docs/security/sbom/current-sbom-cyclonedx.json
           syft . -o spdx-json=docs/security/sbom/current-sbom-spdx.json
-          
-          # Generate Python-specific SBOM with proper version detection
+
+      - name: Generate Python SBOM with versions
+        shell: bash
+        run: |
           echo "📋 Generating Python SBOM with accurate version information..."
           
           # Install requirements to ensure accurate versions
@@ -131,16 +133,24 @@ jobs:
             cyclonedx-py environment --output-format json --output-file docs/security/sbom/python-sbom.json
             echo "⚠️ No requirements.txt found, generated from environment only"
           fi
-          
-          # Generate Node.js SBOM for website
+
+      - name: Generate Node.js SBOM
+        shell: bash
+        run: |
+          echo "🟨 Generating Node.js SBOM for website..."
           cd website
           npm install -g @cyclonedx/cyclonedx-npm
           if [ -f "package.json" ]; then
             npm ci --prefer-offline --no-audit
             cyclonedx-npm --output-file ../docs/security/sbom/nodejs-website-sbom.json || true
+            echo "✅ Node.js SBOM generated"
           fi
           cd ..
-          
+
+      - name: Create SBOM summary documentation
+        shell: bash  
+        run: |
+          echo "📄 Creating enhanced SBOM summary with tables..."
           # Create enhanced SBOM summary with tables
           echo "---" > docs/security/current/sbom-summary.md
           echo "title: Software Bill of Materials (SBOM)" >> docs/security/current/sbom-summary.md
@@ -157,10 +167,12 @@ jobs:
           echo "- **Commit**: [\`${{ github.sha }}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> docs/security/current/sbom-summary.md
           echo ":::" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
-          
-          # Copy SBOM files to website static directory for direct access
-          mkdir -p website/static/sbom
+
+      - name: Copy SBOM files to static directory
+        shell: bash
+        run: |
           echo "🔗 Copying SBOM files to static directory for web access..."
+          mkdir -p website/static/sbom
           
           # Copy main SBOM files
           if [ -f "docs/security/sbom/current-sbom.json" ]; then
@@ -220,7 +232,11 @@ jobs:
           # List what was actually copied
           echo "Files in website/static/sbom/:"
           ls -la website/static/sbom/ || echo "No files found in sbom directory"
-          
+
+      - name: Generate component tables
+        shell: bash
+        run: |
+          echo "📊 Generating component overview tables..."
           echo "## 📋 Components Overview" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
           
@@ -317,13 +333,13 @@ jobs:
             echo "| No Node.js dependencies detected | - | - | - |" >> docs/security/current/sbom-summary.md
             echo "" >> docs/security/current/sbom-summary.md
           fi
-          
-          # Add security vulnerability scanning with Grype
+
+      - name: Run vulnerability analysis
+        shell: bash
+        run: |
+          echo "🔍 Running security vulnerability analysis..."
           echo "## 🔍 Security Analysis" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
-          
-          # Install Grype for vulnerability scanning
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
           
           echo "### Known Vulnerabilities" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
@@ -404,7 +420,11 @@ jobs:
             echo "| - | - | No SBOM available for scanning |" >> docs/security/current/sbom-summary.md
             echo "" >> docs/security/current/sbom-summary.md
           fi
-          
+
+      - name: Generate download tables and documentation
+        shell: bash
+        run: |
+          echo "📥 Generating download tables and usage documentation..."
           echo "## 📥 Download SBOM Files" >> docs/security/current/sbom-summary.md
           echo "" >> docs/security/current/sbom-summary.md
           echo "### Raw SBOM Files" >> docs/security/current/sbom-summary.md
