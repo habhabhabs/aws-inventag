@@ -1,11 +1,11 @@
 {
-  "version": "4.2.25",
-  "release_notes": "Release 4.2.25 - 2025-08-12\\🐛 Bug Fixes:\\  • fix: update all documentation links to use /docs/ routing\\📚 Documentation:\\  • docs: archive documentation for release v4.2.24 (N-1 strategy)\\📊 Summary: 2 commits in this release\\🔀 Triggered by PR #38",
-  "release_date": "2025-08-12T06:21:26.274041",
-  "previous_version": "4.2.24",
+  "version": "4.2.26",
+  "release_notes": "Release 4.2.26 - 2025-08-14\\🐛 Bug Fixes:\\  • fix: resolve GitHub Actions expression length limit by breaking SBOM generation into smaller steps\\  • fix: comprehensive SBOM generation and display improvements\\  • fix: improve homepage feature row spacing and layout\\  • fix: update homepage feature links and improve layout structure\\📚 Documentation:\\  • docs: archive documentation for release v4.2.25 (N-1 strategy)\\📊 Summary: 5 commits in this release\\🔀 Triggered by PR #39",
+  "release_date": "2025-08-14T14:20:12.019512",
+  "previous_version": "4.2.25",
   "version_bump_type": "patch",
-  "git_tag": "v4.2.25",
-  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.25",
-  "triggered_by_pr": "38",
-  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/38"
+  "git_tag": "v4.2.26",
+  "github_release_url": "https://github.com/habhabhabs/inventag-aws/releases/tag/v4.2.26",
+  "triggered_by_pr": "39",
+  "pr_url": "https://github.com/habhabhabs/inventag-aws/pull/39"
 }
