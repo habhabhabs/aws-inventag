@@ -107,10 +107,29 @@ jobs:
           syft . -o cyclonedx-json=docs/security/sbom/current-sbom-cyclonedx.json
           syft . -o spdx-json=docs/security/sbom/current-sbom-spdx.json
           
-          # Generate Python-specific SBOM
+          # Generate Python-specific SBOM with proper version detection
+          echo "📋 Generating Python SBOM with accurate version information..."
+          
+          # Install requirements to ensure accurate versions
           if [ -f "requirements.txt" ]; then
-            cyclonedx-py requirements --output-format json --output-file docs/security/sbom/python-sbom.json requirements.txt
-            cyclonedx-py requirements --output-format xml --output-file docs/security/sbom/python-sbom.xml requirements.txt
+            pip install -r requirements.txt > /dev/null 2>&1 || true
+            
+            # Generate SBOM from requirements.txt (shows minimum versions)
+            cyclonedx-py requirements --output-format json --output-file docs/security/sbom/python-requirements-sbom.json requirements.txt
+            cyclonedx-py requirements --output-format xml --output-file docs/security/sbom/python-requirements-sbom.xml requirements.txt
+            
+            # Generate SBOM from installed environment (shows actual versions)
+            cyclonedx-py environment --output-format json --output-file docs/security/sbom/python-sbom.json
+            
+            # Create freeze requirements for exact versions
+            pip freeze > docs/security/sbom/requirements-freeze.txt
+            cyclonedx-py requirements --output-format json --output-file docs/security/sbom/python-freeze-sbom.json docs/security/sbom/requirements-freeze.txt
+            
+            echo "✅ Python SBOM generation completed with accurate versions"
+          else
+            # Generate from environment only
+            cyclonedx-py environment --output-format json --output-file docs/security/sbom/python-sbom.json
+            echo "⚠️ No requirements.txt found, generated from environment only"
           fi
           
           # Generate Node.js SBOM for website
@@ -141,7 +160,7 @@ jobs:
           
           # Copy SBOM files to website static directory for direct access
           mkdir -p website/static/sbom
-          echo "Copying SBOM files to static directory..."
+          echo "🔗 Copying SBOM files to static directory for web access..."
           
           # Copy main SBOM files
           if [ -f "docs/security/sbom/current-sbom.json" ]; then
@@ -174,6 +193,19 @@ jobs:
             echo "✅ Copied python-sbom.json"
           else
             echo "❌ python-sbom.json not found"
+          fi
+          
+          # Copy Python freeze SBOM (with exact versions)
+          if [ -f "docs/security/sbom/python-freeze-sbom.json" ]; then
+            cp docs/security/sbom/python-freeze-sbom.json website/static/sbom/
+            jq '.' docs/security/sbom/python-freeze-sbom.json > website/static/sbom/python-freeze-sbom-formatted.json
+            echo "✅ Copied python-freeze-sbom.json (exact versions)"
+          fi
+          
+          # Copy requirements freeze file
+          if [ -f "docs/security/sbom/requirements-freeze.txt" ]; then
+            cp docs/security/sbom/requirements-freeze.txt website/static/sbom/
+            echo "✅ Copied requirements-freeze.txt"
           fi
           
           # Copy Node.js SBOM
@@ -225,7 +257,24 @@ jobs:
             echo "" >> docs/security/current/sbom-summary.md
             echo "| Package | Version | License | Scope |" >> docs/security/current/sbom-summary.md
             echo "|---------|---------|---------|-------|" >> docs/security/current/sbom-summary.md
-            jq -r '.components[]? | "| " + (.name // "Unknown") + " | " + (.version // "N/A") + " | " + ((.licenses[0]? | if type == "object" then (.license.name // .value // "Unknown") else . end) // "Unknown") + " | " + (.scope // "required") + " |"' docs/security/sbom/python-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Python packages found | - | - | - |" >> docs/security/current/sbom-summary.md
+            # Extract Python package information with better version handling
+            jq -r '.components[]? | 
+              "| " + (.name // "Unknown") + 
+              " | " + (.version // "N/A") + 
+              " | " + (
+                if (.licenses | type) == "array" and ((.licenses | length) > 0) then
+                  (.licenses[0] | 
+                    if type == "object" then 
+                      (.license.name // .license.id // .name // "Unknown")
+                    else 
+                      (. // "Unknown")
+                    end
+                  )
+                else 
+                  "Unknown"
+                end
+              ) +
+              " | " + (.scope // "required") + " |"' docs/security/sbom/python-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Python packages found | - | - | - |" >> docs/security/current/sbom-summary.md
             echo "" >> docs/security/current/sbom-summary.md
           else
             echo "| Package | Version | License | Scope |" >> docs/security/current/sbom-summary.md
@@ -243,7 +292,24 @@ jobs:
             echo "" >> docs/security/current/sbom-summary.md
             echo "| Package | Version | License | Type |" >> docs/security/current/sbom-summary.md
             echo "|---------|---------|---------|------|" >> docs/security/current/sbom-summary.md
-            jq -r '.components[]? | "| " + (.name // "Unknown") + " | " + (.version // "N/A") + " | " + ((.licenses[0]? | if type == "object" then (.license.name // .value // "Unknown") else . end) // "Unknown") + " | " + (.scope // "required") + " |"' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Node.js packages found | - | - | - |" >> docs/security/current/sbom-summary.md
+            # Extract Node.js package information with better version handling
+            jq -r '.components[]? | 
+              "| " + (.name // "Unknown") + 
+              " | " + (.version // "N/A") + 
+              " | " + (
+                if (.licenses | type) == "array" and ((.licenses | length) > 0) then
+                  (.licenses[0] | 
+                    if type == "object" then 
+                      (.license.name // .license.id // .name // "Unknown")
+                    else 
+                      (. // "Unknown")
+                    end
+                  )
+                else 
+                  "Unknown"
+                end
+              ) +
+              " | " + (.scope // "required") + " |"' docs/security/sbom/nodejs-website-sbom.json 2>/dev/null | head -15 >> docs/security/current/sbom-summary.md || echo "| No Node.js packages found | - | - | - |" >> docs/security/current/sbom-summary.md
             echo "" >> docs/security/current/sbom-summary.md
           else
             echo "| Package | Version | License | Type |" >> docs/security/current/sbom-summary.md
@@ -293,15 +359,25 @@ jobs:
                 echo "" >> docs/security/current/sbom-summary.md
                 echo "| CVE ID | Severity | Package | Version | Description |" >> docs/security/current/sbom-summary.md
                 echo "|--------|----------|---------|---------|-------------|" >> docs/security/current/sbom-summary.md
-                # Create enhanced vulnerability table with proper CVE extraction
+                # Create enhanced vulnerability table with proper CVE extraction and full descriptions
                 jq -r '.matches[] | 
                   select(.vulnerability.severity=="Critical" or .vulnerability.severity=="High" or .vulnerability.severity=="Medium") | 
-                  (if .vulnerability.relatedVulnerabilities then 
-                    (.vulnerability.relatedVulnerabilities[] | select(startswith("CVE-")) | split(",")[0]) // .vulnerability.id 
-                   else 
-                    .vulnerability.id 
-                   end) as $cve_id | 
-                  "| \($cve_id) | \(.vulnerability.severity // "Unknown") | \(.artifact.name // "Unknown") | \(.artifact.version // "N/A") | \(.vulnerability.description // "No description")[0:100]... |"' docs/security/sbom/vulnerabilities.json 2>/dev/null | head -10 >> docs/security/current/sbom-summary.md || echo "| No critical/high/medium vulnerabilities found | - | - | - | - |" >> docs/security/current/sbom-summary.md
+                  (
+                    if (.vulnerability.relatedVulnerabilities and (.vulnerability.relatedVulnerabilities | type) == "array") then 
+                      (.vulnerability.relatedVulnerabilities[] | select(test("^CVE-")) | split(",")[0]) // .vulnerability.id 
+                    else 
+                      .vulnerability.id 
+                    end
+                  ) as $cve_id | 
+                  (
+                    .vulnerability.description // "No description available" |
+                    if length > 150 then 
+                      .[0:150] + "..."
+                    else 
+                      .
+                    end
+                  ) as $description |
+                  "| " + $cve_id + " | " + (.vulnerability.severity // "Unknown") + " | " + (.artifact.name // "Unknown") + " | " + (.artifact.version // "N/A") + " | " + $description + " |"' docs/security/sbom/vulnerabilities.json 2>/dev/null | head -10 >> docs/security/current/sbom-summary.md || echo "| No critical/high/medium vulnerabilities found | - | - | - | - |" >> docs/security/current/sbom-summary.md
                 echo "" >> docs/security/current/sbom-summary.md
                 
                 if [ "$TOTAL_VULNS" -gt 10 ]; then
@@ -335,14 +411,17 @@ jobs:
           echo "" >> docs/security/current/sbom-summary.md
           echo "| Format | File | Description |" >> docs/security/current/sbom-summary.md
           echo "|--------|------|-------------|" >> docs/security/current/sbom-summary.md
-          echo "| JSON (Syft) | [current-sbom.json](/inventag-aws/sbom/current-sbom.json) | Complete repository component analysis |" >> docs/security/current/sbom-summary.md
-          echo "| CycloneDX | [current-sbom-cyclonedx.json](/inventag-aws/sbom/current-sbom-cyclonedx.json) | Industry-standard SBOM format |" >> docs/security/current/sbom-summary.md
-          echo "| SPDX | [current-sbom-spdx.json](/inventag-aws/sbom/current-sbom-spdx.json) | Software Package Data Exchange format |" >> docs/security/current/sbom-summary.md
+          echo "| JSON (Syft) | [current-sbom.json](./sbom/current-sbom.json) | Complete repository component analysis |" >> docs/security/current/sbom-summary.md
+          echo "| CycloneDX | [current-sbom-cyclonedx.json](./sbom/current-sbom-cyclonedx.json) | Industry-standard SBOM format |" >> docs/security/current/sbom-summary.md
+          echo "| SPDX | [current-sbom-spdx.json](./sbom/current-sbom-spdx.json) | Software Package Data Exchange format |" >> docs/security/current/sbom-summary.md
           if [ -f "docs/security/sbom/python-sbom.json" ]; then
-            echo "| Python (CycloneDX) | [python-sbom.json](/inventag-aws/sbom/python-sbom.json) | Python dependencies only |" >> docs/security/current/sbom-summary.md
+            echo "| Python (Environment) | [python-sbom.json](./sbom/python-sbom.json) | Python dependencies from environment |" >> docs/security/current/sbom-summary.md
+          fi
+          if [ -f "docs/security/sbom/python-freeze-sbom.json" ]; then
+            echo "| Python (Exact Versions) | [python-freeze-sbom.json](./sbom/python-freeze-sbom.json) | Python dependencies with exact versions |" >> docs/security/current/sbom-summary.md
           fi
           if [ -f "docs/security/sbom/nodejs-website-sbom.json" ]; then
-            echo "| Node.js (CycloneDX) | [nodejs-website-sbom.json](/inventag-aws/sbom/nodejs-website-sbom.json) | Website dependencies |" >> docs/security/current/sbom-summary.md
+            echo "| Node.js (CycloneDX) | [nodejs-website-sbom.json](./sbom/nodejs-website-sbom.json) | Website dependencies |" >> docs/security/current/sbom-summary.md
           fi
           echo "" >> docs/security/current/sbom-summary.md
           
@@ -350,15 +429,18 @@ jobs:
           echo "" >> docs/security/current/sbom-summary.md
           echo "| Format | File | Description |" >> docs/security/current/sbom-summary.md
           echo "|--------|------|-------------|" >> docs/security/current/sbom-summary.md
-          echo "| JSON (Formatted) | [current-sbom-formatted.json](/inventag-aws/sbom/current-sbom-formatted.json) | Pretty-printed JSON for manual review |" >> docs/security/current/sbom-summary.md
+          echo "| JSON (Formatted) | [current-sbom-formatted.json](./sbom/current-sbom-formatted.json) | Pretty-printed JSON for manual review |" >> docs/security/current/sbom-summary.md
           if [ -f "docs/security/sbom/python-sbom.json" ]; then
-            echo "| Python (Formatted) | [python-sbom-formatted.json](/inventag-aws/sbom/python-sbom-formatted.json) | Formatted Python dependencies |" >> docs/security/current/sbom-summary.md
+            echo "| Python (Formatted) | [python-sbom-formatted.json](./sbom/python-sbom-formatted.json) | Formatted Python dependencies |" >> docs/security/current/sbom-summary.md
+          fi
+          if [ -f "docs/security/sbom/python-freeze-sbom.json" ]; then
+            echo "| Python Freeze (Formatted) | [python-freeze-sbom-formatted.json](./sbom/python-freeze-sbom-formatted.json) | Formatted exact version dependencies |" >> docs/security/current/sbom-summary.md
           fi
           if [ -f "docs/security/sbom/nodejs-website-sbom.json" ]; then
-            echo "| Node.js (Formatted) | [nodejs-website-sbom-formatted.json](/inventag-aws/sbom/nodejs-website-sbom-formatted.json) | Formatted website dependencies |" >> docs/security/current/sbom-summary.md
+            echo "| Node.js (Formatted) | [nodejs-website-sbom-formatted.json](./sbom/nodejs-website-sbom-formatted.json) | Formatted website dependencies |" >> docs/security/current/sbom-summary.md
           fi
           if [ -f "docs/security/sbom/vulnerabilities.json" ]; then
-            echo "| Vulnerabilities | [vulnerabilities-formatted.json](/inventag-aws/sbom/vulnerabilities-formatted.json) | Security vulnerability report |" >> docs/security/current/sbom-summary.md
+            echo "| Vulnerabilities | [vulnerabilities-formatted.json](./sbom/vulnerabilities-formatted.json) | Security vulnerability report |" >> docs/security/current/sbom-summary.md
           fi
           echo "" >> docs/security/current/sbom-summary.md
           
